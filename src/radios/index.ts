@@ -9,6 +9,7 @@ import { UV5RMINI_DESCRIPTOR } from './uv5rmini/descriptor';
 import { FT65_DESCRIPTOR, FT4_DESCRIPTOR, FT4VR_DESCRIPTOR, FT25R_DESCRIPTOR } from './ft65/descriptor';
 import { D890UV_DESCRIPTOR, D890UV_ANYTONE_DESCRIPTOR } from './d890uv/descriptor';
 import { UVK5_DESCRIPTOR } from './uvk5/descriptor';
+import { UVK1_DESCRIPTOR } from './uvk1/descriptor';
 
 export type ProtocolFactory = () => RadioProtocol;
 
@@ -31,6 +32,10 @@ export const RADIO_DESCRIPTORS: readonly RadioDescriptor[] = [
   // ALPHA. Quansheng UV-K5 with F4HWN firmware: reads the EEPROM and shows
   // channels. Writing is not implemented yet and throws instead of sending.
   UVK5_DESCRIPTOR,
+  // ALPHA. Quansheng UV-K1 / UV-K5 V3 with Dondji or 25ja firmware: identifies
+  // the firmware by an SPI flash read, reads used channels only. Writing is not
+  // implemented yet and throws instead of sending.
+  UVK1_DESCRIPTOR,
 ];
 
 /** Backward compatibility: same radio, multiple model IDs. */
