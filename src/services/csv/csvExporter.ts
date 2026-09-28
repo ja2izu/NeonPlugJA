@@ -1,6 +1,8 @@
 import type { Channel, Contact, Zone, ScanList, RXGroup, DMRRadioID, QuickContact } from '../../models';
 import { downloadFile } from '../../utils/download';
 import { isJapaneseNamesActive } from '../../utils/japaneseNames';
+import { useRadioStore } from '../../store/radioStore';
+import { getCapabilitiesForModel } from '../../radios/capabilities';
 import { CHANNEL_CSV_COLUMN_LIST } from './channelCsvColumns';
 
 function toCSV(headers: string[], rows: (string | number)[][]): string {
@@ -132,8 +134,15 @@ export function exportQuickContactsToCSV(contacts: QuickContact[]): string {
   return toCSV(headers, rows);
 }
 
+/** UTF-8 の BOM を付けて書き出すか：日本語名 ON のとき、または無線機が常に付ける指定のとき */
+export function csvExportNeedsBom(): boolean {
+  if (isJapaneseNamesActive()) return true;
+  const model = useRadioStore.getState().selectedRadioModel ?? '';
+  return getCapabilitiesForModel(model)?.csvExportUtf8Bom === true;
+}
+
 export function downloadCSV(content: string, filename: string): void {
-  // 日本語名 ON: Excel で開いても化けないよう、UTF-8 の BOM を付ける
-  downloadFile(isJapaneseNamesActive() ? '\uFEFF' + content : content, filename, 'text/csv;charset=utf-8;');
+  // Excel で開いても化けないよう、UTF-8 の BOM を付ける
+  downloadFile(csvExportNeedsBom() ? '\uFEFF' + content : content, filename, 'text/csv;charset=utf-8;');
 }
 

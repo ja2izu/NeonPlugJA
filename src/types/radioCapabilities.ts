@@ -190,6 +190,12 @@ export interface RadioCapabilities {
    * ON のあいだ、名前を GB2312 と供出区点で読み書きする。DM-32 のみ。
    */
   supportsJapaneseNames?: boolean;
+  /**
+   * CSV の書き出しに常に UTF-8 の BOM を付ける。名前がもともと UTF-8 の日本語を
+   * 含みうる無線機（UV-K1 の 25ja / Dondji）向け。BOM が無いと Excel が
+   * CP932 として開いて化ける。日本語名スイッチには関係しない。
+   */
+  csvExportUtf8Bom?: boolean;
   /** Returns true if firmware is 049 or newer (or radio-specific threshold). */
   isFirmware049OrNewer?: (firmware: string) => boolean;
   /**

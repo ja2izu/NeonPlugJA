@@ -57,4 +57,6 @@ export const UVK1_CAPS: RadioCapabilities = {
   supportsBle: false,
   preferredTransport: 'serial',
   supportsBulkRead: false,
+  // Names are UTF-8 on the radio, so a CSV may carry kanji / kana: always BOM.
+  csvExportUtf8Bom: true,
 };
