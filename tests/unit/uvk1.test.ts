@@ -175,7 +175,7 @@ function fakeRadio(image: Uint8Array, opts: { spi: boolean; fontVersionAt?: Reco
     },
   });
   const port = { readable, writable, open: async () => {}, close: async () => {} };
-  return { port, reads, writes };
+  return { port, reads, writes, inject: (b: Uint8Array) => push(b) };
 }
 
 const serial = vi.hoisted(() => ({ port: null as unknown }));
@@ -222,5 +222,48 @@ describe('UV-K1 接続と読込（疑似無線機）', () => {
     await expect(p.connect()).rejects.toThrow(/did not answer the SPI flash read/);
     expect(p.isConnected()).toBe(false);
     expect(r.reads).toEqual([]);
+  });
+});
+
+// ---- 受信の組み立て（Web ツールと同じく AB CD を探す） ----
+import { takePacket } from '../../src/radios/uvk1/connection';
+
+describe('UV-K1 受信バッファから packet を取り出す', () => {
+  const pkt = buildFrame(Uint8Array.of(0x15, 0x05, 0x02, 0x00, 0x41, 0x42));
+  it('前にごみがあっても AB CD から読む', () => {
+    const buf = new Uint8Array([0x00, 0x55, ...pkt, 0x99]);
+    const r = takePacket(buf);
+    expect(Array.from(r.payload!)).toEqual([0x15, 0x05, 0x02, 0x00, 0x41, 0x42]);
+    expect(r.used).toBe(2 + pkt.length);
+  });
+  it('途中までしか届いていなければ待つ', () => {
+    const r = takePacket(pkt.subarray(0, pkt.length - 1));
+    expect(r.payload).toBeNull();
+    expect(r.used).toBe(0);
+  });
+  it('AB CD が無ければ捨てる（末尾の AB だけ残す）', () => {
+    expect(takePacket(Uint8Array.of(1, 2, 3)).used).toBe(3);
+    expect(takePacket(Uint8Array.of(1, 2, 0xab)).used).toBe(2);
+  });
+  it('終端が合わない AB CD は読み飛ばす', () => {
+    const bad = pkt.slice(); bad[bad.length - 1] = 0;
+    const r = takePacket(bad);
+    expect(r.payload).toBeNull();
+    expect(r.used).toBe(2);
+  });
+});
+
+describe('UV-K1 接続：関係ない packet が先に来ても待つ', () => {
+  it('挨拶の前に別の packet があっても接続できる', async () => {
+    const image = new Uint8Array(UVK1_IMAGE_SIZE).fill(0xff);
+    const r = fakeRadio(image, { spi: true, fontVersionAt: { [UVK1_FONT_BASE + UVK1_FONT_PROFILES[0].versionOffset]: 4 } });
+    serial.port = r.port;
+    const p = new UVK1Protocol();
+    const pending = p.connect();
+    // 開いた直後に、ごみ 3 バイトと関係ない packet（0x0999）を流す
+    r.inject(Uint8Array.of(0x01, 0x02, 0x03, ...buildFrame(Uint8Array.of(0x99, 0x09, 0x00, 0x00))));
+    await pending;
+    expect(p.getFontId()).toBe('25ja');
+    await p.disconnect();
   });
 });

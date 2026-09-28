@@ -56,9 +56,17 @@ export class UVK1Protocol extends BaseAnalogProtocol {
     const opts = typeof portOrOptions === 'object' ? portOrOptions : {};
     this.port = await openUVK1Port(opts.forcePortSelection ?? false);
     const conn = new UVK1Connection();
+    this.onProgress?.(0, 'UV-K1: opening port');
     await conn.open(this.port);
     this.conn = conn;
-    this.firmware = await conn.hello();
+    this.onProgress?.(0, 'UV-K1: waiting for the radio (hello)');
+    try {
+      this.firmware = await conn.hello();
+    } catch (error) {
+      await this.disconnect();
+      throw error;
+    }
+    this.onProgress?.(0, 'UV-K1: identifying firmware');
 
     const first = UVK1_FONT_PROFILES[0];
     const v = await conn.probeSpi(UVK1_FONT_BASE + first.versionOffset);
