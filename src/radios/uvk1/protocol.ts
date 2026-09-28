@@ -114,6 +114,7 @@ export class UVK1Protocol extends BaseAnalogProtocol {
   private async readImage(): Promise<Uint8Array> {
     const conn = this.conn;
     if (!conn) throw new Error('Not connected');
+    const tStart = Date.now();
     const image = new Uint8Array(UVK1_IMAGE_SIZE).fill(0xff);
     const done = new Set<number>();
 
@@ -141,6 +142,7 @@ export class UVK1Protocol extends BaseAnalogProtocol {
       count++;
       this.onProgress?.(count / total, `Reading 0x${a.toString(16)}`);
     }
+    plog.info(`read: ${done.size} block(s), ${used.length} channel(s) in use, ${Date.now() - tStart} ms`, 'UV-K1');
     this.onProgress?.(1, 'Read complete');
     this.image = image;
     this.readBlocks = done;
@@ -206,8 +208,11 @@ export class UVK1Protocol extends BaseAnalogProtocol {
       this.onProgress?.(step / total, `Writing 0x${w.address.toString(16)} (${w.data.length} bytes)`);
     }
 
+    const tVerify = Date.now();
     for (const w of writes) {
+      const tRead = Date.now();
       const back = await conn.spiRead(w.address, w.data.length);
+      plog.info(`verify 0x${w.address.toString(16)} ${w.data.length} B: ${back ? `${Date.now() - tRead} ms` : 'no answer'}`, 'UV-K1');
       if (!back || back.some((b, i) => b !== w.data[i])) {
         throw new Error(`UV-K1: verify failed at 0x${w.address.toString(16)}. Read the radio again before writing.`);
       }
@@ -215,6 +220,7 @@ export class UVK1Protocol extends BaseAnalogProtocol {
       this.onProgress?.(step / total, `Verifying 0x${w.address.toString(16)}`);
     }
 
+    plog.info(`verify done: ${writes.length} range(s) in ${Date.now() - tVerify} ms`, 'UV-K1');
     this.image = target.image;
     this.onProgress?.(1, `Wrote ${writes.length} block(s). Turn the radio off and on to see the changes.`);
   }

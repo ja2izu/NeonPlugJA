@@ -41,14 +41,25 @@ const TIMEOUT_MS = 5000;
 
 /** A write may erase a 4 KB sector (about 300 ms) before programming it. */
 /**
- * Wait for a write reply as long as the web tool does: 1500 x 10 ms = 15 s
- * (WRITE_FREQ_SPI_WRITE_WAIT_ITERATIONS in docs/js/flash.js). 5 s was not
- * enough on hardware 2026-09-28: the first write timed out with no reply.
+ * Wait per write attempt. Measured on hardware 2026-09-28: a write that is
+ * answered is answered in 26-992 ms (the slow ones erase a 4 KB sector), and
+ * about one write in nine is never answered at all; sent again, it is answered
+ * in ~35 ms. So a short wait and more resends beat one long wait (the web tool
+ * waits 15 s, which made each lost command cost 15 s).
+ *
+ * A lost command is consistent with a receive-ring bug in the firmware
+ * (usbd_cdc_acm_bulk_out leaves the write pointer at 256; the parser then
+ * skips byte 0 of the next command), reproduced in a simulation of that code,
+ * though the simulation loses fewer commands than the radio did.
  */
-const WRITE_TIMEOUT_MS = 15000;
+const WRITE_TIMEOUT_MS = 3000;
 
-/** Sends per write, and the pause before a resend (spiFlashWriteChunk: 3 tries, 150 ms). */
-const WRITE_ATTEMPTS = 3;
+/** Wait per read attempt, and attempts per read. Reads are answered in ~15-40 ms. */
+const READ_TIMEOUT_MS = 2000;
+const READ_ATTEMPTS = 3;
+
+/** Sends per write, and the pause before a resend (the web tool pauses 150 ms). */
+const WRITE_ATTEMPTS = 5;
 const WRITE_RETRY_PAUSE_MS = 150;
 
 /**
@@ -249,9 +260,33 @@ export class UVK1Connection {
   }
 
   /** Read `length` bytes (at most one block) through the EEPROM command. */
+  /**
+   * Run `op` up to READ_ATTEMPTS times when it times out with no reply. Reads
+   * change nothing on the radio, so asking again is always safe. See
+   * WRITE_TIMEOUT_MS for why commands go unanswered now and then.
+   */
+  private async retryRead<T>(what: string, op: () => Promise<T>): Promise<T> {
+    let lastError: unknown;
+    for (let attempt = 1; attempt <= READ_ATTEMPTS; attempt++) {
+      if (attempt > 1) await this.delay(WRITE_RETRY_PAUSE_MS);
+      try {
+        const result = await op();
+        if (attempt > 1) log(`${what}: answered on attempt ${attempt}`);
+        return result;
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        if (!message.startsWith('Timeout: no reply')) throw error;
+        lastError = error;
+        log(`${what}: no reply (attempt ${attempt})`);
+      }
+    }
+    throw lastError instanceof Error ? lastError : new Error(`UV-K1: ${what}: no reply`);
+  }
+
   async readBlock(offset: number, length = UVK1_BLOCK_SIZE): Promise<Uint8Array> {
     assertEvenReadLength('an EEPROM read', length);
-    const reply = await this.exchange(readMemPayload(offset, length), [CMD.READ_MEM_REPLY]);
+    const reply = await this.retryRead(`read 0x${offset.toString(16)}`, () =>
+      this.exchange(readMemPayload(offset, length), [CMD.READ_MEM_REPLY], READ_TIMEOUT_MS));
     const at = reply.length >= 6 ? reply[4] | (reply[5] << 8) : -1;
     if (at !== offset) throw new Error(`UV-K1: read at 0x${offset.toString(16)} answered for 0x${at.toString(16)}`);
     const data = memoryFromReadReply(reply);
@@ -265,12 +300,13 @@ export class UVK1Connection {
    * Read SPI flash directly (0x051F). Returns null when the radio does not
    * answer within `timeoutMs` — the F4HWN firmwares ignore this command.
    */
-  async spiRead(address: number, length: number, timeoutMs = TIMEOUT_MS): Promise<Uint8Array | null> {
+  async spiRead(address: number, length: number, timeoutMs = READ_TIMEOUT_MS, attempts = READ_ATTEMPTS): Promise<Uint8Array | null> {
     if (length < 1 || length > UVK1_SPI_READ_MAX) throw new Error(`UV-K1: SPI read size ${length} out of range`);
     assertEvenReadLength('an SPI read', length);
     let reply: Uint8Array;
     try {
-      reply = await this.exchange(spiReadPayload(address, length), [CMD_SPI_READ_REPLY], timeoutMs);
+      const once = () => this.exchange(spiReadPayload(address, length), [CMD_SPI_READ_REPLY], timeoutMs);
+      reply = attempts > 1 ? await this.retryRead(`SPI read 0x${address.toString(16)}`, once) : await once();
     } catch (error) {
       if (error instanceof Error && error.message.startsWith('Timeout: no reply')) return null;
       throw error;
@@ -316,7 +352,9 @@ export class UVK1Connection {
   async probeSpi(address: number): Promise<number | null> {
     log(`SPI read 0x${address.toString(16)} (identifies Dondji / 25ja)`);
     // 2 bytes, not 1: see assertEvenReadLength. The version byte is the first.
-    const data = await this.spiRead(address, 2, PROBE_TIMEOUT_MS);
+    // One attempt only: the F4HWN firmwares never answer, and they are what
+    // this probe exists to turn away quickly.
+    const data = await this.spiRead(address, 2, PROBE_TIMEOUT_MS, 1);
     log(data ? `SPI read answered: ${data[0]}` : 'SPI read: no answer');
     return data ? data[0] : null;
   }

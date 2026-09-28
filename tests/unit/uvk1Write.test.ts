@@ -176,8 +176,9 @@ describe('UV-K1 書込の計画', () => {
 
 // ---- 疑似無線機での書込 ----
 
-function fakeRadio(image: Uint8Array) {
+function fakeRadio(image: Uint8Array, opts: { dropEvery?: number } = {}) {
   const writes: Array<[number, number]> = [];
+  let seen = 0;
   let push: (b: Uint8Array) => void = () => {};
   const readable = new ReadableStream<Uint8Array>({ start(c) { push = (b) => c.enqueue(b); } });
   let pending = new Uint8Array(0);
@@ -187,6 +188,8 @@ function fakeRadio(image: Uint8Array) {
   const handle = (p: Uint8Array) => {
     if (hung) return;
     const id = p[0] | (p[1] << 8);
+    // 実機（2026-09-28）：コマンドがときどき黙って捨てられる（応答なし）。送り直せば通る
+    if (id !== 0x0514 && opts.dropEvery && ++seen % opts.dropEvery === 0) return;
     if ((id === 0x051b && p[6] % 2 === 1) || (id === 0x051f && (p[8] | (p[9] << 8)) % 2 === 1)) {
       hung = true; // 実機と同じく、奇数長の読出応答で固まる
       return;
@@ -281,4 +284,22 @@ describe('UV-K1 書込（疑似無線機）', () => {
     expect(f.writes).toEqual([]);
     await p.disconnect();
   });
+});
+
+describe('UV-K1 応答のないコマンドは送り直す', () => {
+  it('7 回に 1 回コマンドが捨てられても、読込・書込・照合が通る', async () => {
+    const radio = new Uint8Array(UVK1_IMAGE_SIZE).fill(0xff);
+    for (let s = 0; s < 40; s++) putSlot(radio, s, 145 + s * 0.0125, `CH${s}`, 2);
+    const f = fakeRadio(radio, { dropEvery: 7 });
+    serial.port = f.port;
+    const p = new UVK1Protocol();
+    await p.connect();
+    const read = await p.readChannels();
+    expect(read.length).toBe(40);
+    const list = read.map((c) => ({ ...c, name: `局${c.number}` }));
+    await p.writeChannels(list);
+    const again = await p.readChannels();
+    expect(again.map((c) => c.name)).toEqual(list.map((c) => c.name));
+    await p.disconnect();
+  }, 60000);
 });
