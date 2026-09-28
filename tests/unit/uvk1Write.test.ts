@@ -183,8 +183,14 @@ function fakeRadio(image: Uint8Array) {
   let pending = new Uint8Array(0);
   const reply = (p: Uint8Array) => push(buildFrame(p));
   const u32 = (p: Uint8Array, at: number) => (p[at] | (p[at + 1] << 8) | (p[at + 2] << 16) | (p[at + 3] << 24)) >>> 0;
+  let hung = false;
   const handle = (p: Uint8Array) => {
+    if (hung) return;
     const id = p[0] | (p[1] << 8);
+    if ((id === 0x051b && p[6] % 2 === 1) || (id === 0x051f && (p[8] | (p[9] << 8)) % 2 === 1)) {
+      hung = true; // 実機と同じく、奇数長の読出応答で固まる
+      return;
+    }
     if (id === 0x0514) {
       const r = new Uint8Array(40); r.set([0x15, 0x05, 36, 0]); r.set(new TextEncoder().encode('F4HWN v5.2.8'), 4); reply(r);
     } else if (id === 0x051b) {

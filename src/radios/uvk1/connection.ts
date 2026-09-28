@@ -56,6 +56,26 @@ const PORT_OP_TIMEOUT_MS = 3000;
 
 export type UVK1SerialPort = SerialLikePort;
 
+/**
+ * Reads must ask for an EVEN number of bytes.
+ *
+ * Over USB the firmware builds each reply in one buffer and puts the 4-byte
+ * footer right after the data (SendReply_VCP in App/app/uart.c):
+ *     Footer_t *pFooter = (Footer_t *)(VCP_ReplyBuf + sizeof(Header_t) + Size);
+ *     pFooter->ID = 0xBADC;   // 16-bit store
+ * With an odd reply size that store lands on an odd address, which the
+ * Cortex-M0+ (PY32F071) does not allow: HardFault, and the radio stops
+ * answering until it is switched off and on. A 1-byte SPI read (reply size 13)
+ * did exactly that on hardware 2026-09-28. Read replies are the data plus 12
+ * (0x051F) or plus 8 (0x051B), so an even length keeps the reply size even.
+ * Write replies have a fixed size (8 or 4) and are not affected.
+ */
+function assertEvenReadLength(what: string, length: number): void {
+  if (length % 2 !== 0) {
+    throw new Error(`UV-K1: refusing ${what} of ${length} bytes — an odd-sized reply stops the radio`);
+  }
+}
+
 const hex = (b: Uint8Array, max = 24) =>
   Array.from(b.subarray(0, max), (x) => x.toString(16).padStart(2, '0')).join(' ') + (b.length > max ? ' …' : '');
 
@@ -221,6 +241,7 @@ export class UVK1Connection {
 
   /** Read `length` bytes (at most one block) through the EEPROM command. */
   async readBlock(offset: number, length = UVK1_BLOCK_SIZE): Promise<Uint8Array> {
+    assertEvenReadLength('an EEPROM read', length);
     const reply = await this.exchange(readMemPayload(offset, length), [CMD.READ_MEM_REPLY]);
     const at = reply.length >= 6 ? reply[4] | (reply[5] << 8) : -1;
     if (at !== offset) throw new Error(`UV-K1: read at 0x${offset.toString(16)} answered for 0x${at.toString(16)}`);
@@ -237,6 +258,7 @@ export class UVK1Connection {
    */
   async spiRead(address: number, length: number, timeoutMs = TIMEOUT_MS): Promise<Uint8Array | null> {
     if (length < 1 || length > UVK1_SPI_READ_MAX) throw new Error(`UV-K1: SPI read size ${length} out of range`);
+    assertEvenReadLength('an SPI read', length);
     let reply: Uint8Array;
     try {
       reply = await this.exchange(spiReadPayload(address, length), [CMD_SPI_READ_REPLY], timeoutMs);
@@ -269,7 +291,8 @@ export class UVK1Connection {
   /** SPI read with the short timeout used to identify the radio. */
   async probeSpi(address: number): Promise<number | null> {
     log(`SPI read 0x${address.toString(16)} (identifies Dondji / 25ja)`);
-    const data = await this.spiRead(address, 1, PROBE_TIMEOUT_MS);
+    // 2 bytes, not 1: see assertEvenReadLength. The version byte is the first.
+    const data = await this.spiRead(address, 2, PROBE_TIMEOUT_MS);
     log(data ? `SPI read answered: ${data[0]}` : 'SPI read: no answer');
     return data ? data[0] : null;
   }

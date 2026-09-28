@@ -137,8 +137,15 @@ function fakeRadio(image: Uint8Array, opts: { spi: boolean; fontVersionAt?: Reco
   const readable = new ReadableStream<Uint8Array>({ start(c) { push = (b) => c.enqueue(b); } });
   let pending = new Uint8Array(0);
   const reply = (payload: Uint8Array) => push(buildFrame(payload));
+  let hung = false;
   const handle = (payload: Uint8Array) => {
+    if (hung) return;
     const id = payload[0] | (payload[1] << 8);
+    // 実機（2026-09-28）：応答の長さが奇数だと USB 送信の途中で HardFault、以後無反応
+    if ((id === 0x051b && payload[6] % 2 === 1) || (id === 0x051f && (payload[8] | (payload[9] << 8)) % 2 === 1)) {
+      hung = true;
+      return;
+    }
     if (id === 0x0514) {
       const r = new Uint8Array(4 + 36); r.set([0x15, 0x05, 36, 0]); r.set(utf8('F4HWN v5.2.8'), 4); reply(r);
     } else if (id === 0x051b) {
@@ -263,6 +270,36 @@ describe('UV-K1 接続：関係ない packet が先に来ても待つ', () => {
     // 開いた直後に、ごみ 3 バイトと関係ない packet（0x0999）を流す
     r.inject(Uint8Array.of(0x01, 0x02, 0x03, ...buildFrame(Uint8Array.of(0x99, 0x09, 0x00, 0x00))));
     await pending;
+    expect(p.getFontId()).toBe('25ja');
+    await p.disconnect();
+  });
+});
+
+// ---- 奇数長の読出を送らない（実機で無線機が止まった件） ----
+import { UVK1Connection } from '../../src/radios/uvk1/connection';
+
+describe('UV-K1 奇数長の読出は送る前に拒否', () => {
+  it('EEPROM 読出・SPI 読出とも、奇数なら 1 バイトも送らない', async () => {
+    const sent: Uint8Array[] = [];
+    const port = {
+      readable: new ReadableStream<Uint8Array>(),
+      writable: new WritableStream<Uint8Array>({ write(c) { sent.push(c); } }),
+      open: async () => {}, close: async () => {},
+    };
+    const c = new UVK1Connection();
+    await c.open(port);
+    await expect(c.readBlock(0x8000, 127)).rejects.toThrow(/odd-sized reply stops the radio/);
+    await expect(c.spiRead(0x51704, 1)).rejects.toThrow(/odd-sized reply stops the radio/);
+    expect(sent).toEqual([]);
+    await c.close();
+  });
+
+  it('判定の読出は 2 バイト（疑似無線機は奇数長で固まる設定のまま接続できる）', async () => {
+    const image = new Uint8Array(UVK1_IMAGE_SIZE).fill(0xff);
+    const r = fakeRadio(image, { spi: true, fontVersionAt: { [UVK1_FONT_BASE + UVK1_FONT_PROFILES[0].versionOffset]: 4 } });
+    serial.port = r.port;
+    const p = new UVK1Protocol();
+    await p.connect();
     expect(p.getFontId()).toBe('25ja');
     await p.disconnect();
   });
