@@ -43,3 +43,38 @@ export function dataFromSpiReadReply(payload: Uint8Array, address: number): Uint
   const size = payload[8] | (payload[9] << 8);
   return payload.subarray(12, 12 + size);
 }
+
+export const CMD_SPI_WRITE = 0x0521;
+export const CMD_SPI_WRITE_REPLY = 0x0522;
+
+/**
+ * Payload writing `data` (at most 120 bytes) to SPI flash at `address`.
+ *
+ *   command  21 05 | size+12 u16 | address u32 | size u16 | padding u16 | session u32 | data
+ *   reply    22 05 | 08 00 | address u32 | status u16 | padding u16
+ *
+ * The radio does the erase itself: PY25Q16_WriteBuffer reads the 4 KB sector,
+ * merges the data, erases the sector when a changed byte was not 0xFF, and
+ * programs it back. One command therefore costs at most one erase per sector
+ * it touches, where the EEPROM write (0x051D) costs one per 8 bytes.
+ */
+export function spiWritePayload(address: number, data: Uint8Array): Uint8Array {
+  const out = new Uint8Array(16 + data.length);
+  const bodyLen = 12 + data.length;
+  out.set([
+    0x21, 0x05, bodyLen & 0xff, (bodyLen >>> 8) & 0xff,
+    address & 0xff, (address >>> 8) & 0xff, (address >>> 16) & 0xff, (address >>> 24) & 0xff,
+    data.length & 0xff, (data.length >>> 8) & 0xff, 0x00, 0x00,
+  ]);
+  out.set(SESSION, 12);
+  out.set(data, 16);
+  return out;
+}
+
+/** True when a write reply confirms the address that was written. */
+export function spiWriteAccepted(payload: Uint8Array, address: number): boolean {
+  if (payload.length < 8) return false;
+  const id = payload[0] | (payload[1] << 8);
+  const at = (payload[4] | (payload[5] << 8) | (payload[6] << 16) | (payload[7] << 24)) >>> 0;
+  return id === CMD_SPI_WRITE_REPLY && at === address >>> 0;
+}

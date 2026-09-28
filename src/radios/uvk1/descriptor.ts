@@ -10,7 +10,7 @@ import { UVK1_CAPS } from './capabilities';
 
 /**
  * Quansheng UV-K1 / UV-K5 V3 with Dondji or 25ja firmware.
- * Reading only for now — see protocol.ts.
+ * Reads and writes channels — see protocol.ts. Settings are not handled.
  */
 export const UVK1_DESCRIPTOR: RadioDescriptor = {
   modelIds: ['UV-K1', 'UV-K1 (25ja)'],

@@ -24,6 +24,9 @@ export const UVK1_BLOCK_SIZE = 0x80;
 /** Largest read the radio answers with command 0x051F (SPI_FLASH_READ_SIZE). */
 export const UVK1_SPI_READ_MAX = 120;
 
+/** Largest write the radio takes with command 0x0521 (SPI_FLASH_WRITE_SIZE). */
+export const UVK1_SPI_WRITE_MAX = 120;
+
 /**
  * Memory channels. MR_CHANNELS_MAX in App/misc.h. The radio numbers them 1-1024.
  */
@@ -82,5 +85,16 @@ export const UVK1_FONT_PROFILES = [
   /** Dondji official: WenQuanYi, GB2312 (6766 characters), version 2 */
   { id: 'dondji', label: 'Dondji (WenQuanYi GB2312)', versionOffset: 205366, version: 2 },
 ] as const;
+
+/**
+ * Lower edges of the radio's bands in MHz, BAND1 .. BAND7 (frequencyBandTable
+ * with ENABLE_WIDE_RX). The attribute stores the band index; FREQUENCY_GetBand
+ * picks the highest band whose lower edge is at or below the frequency.
+ */
+export const UVK1_BAND_LOWER_MHZ = [18, 108, 137, 174, 350, 400, 470] as const;
+
+/** Receive range of the radio (BX4819_band1_lower .. BX4819_band2_upper). */
+export const UVK1_FREQ_MIN_MHZ = 18;
+export const UVK1_FREQ_MAX_MHZ = 1300;
 
 export type UVK1FontId = (typeof UVK1_FONT_PROFILES)[number]['id'] | 'unknown';

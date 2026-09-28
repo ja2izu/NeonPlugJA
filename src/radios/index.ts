@@ -33,8 +33,8 @@ export const RADIO_DESCRIPTORS: readonly RadioDescriptor[] = [
   // channels. Writing is not implemented yet and throws instead of sending.
   UVK5_DESCRIPTOR,
   // ALPHA. Quansheng UV-K1 / UV-K5 V3 with Dondji or 25ja firmware: identifies
-  // the firmware by an SPI flash read, reads used channels only. Writing is not
-  // implemented yet and throws instead of sending.
+  // the firmware by an SPI flash read, reads used channels only, writes only the
+  // channel bytes that changed and reads them back. Settings are not handled.
   UVK1_DESCRIPTOR,
 ];
 

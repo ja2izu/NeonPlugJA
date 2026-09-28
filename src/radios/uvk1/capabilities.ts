@@ -40,8 +40,11 @@ const UVK1_MEMORY_REGIONS: MemoryRegionSpec[] = [
 
 export const UVK1_CAPS: RadioCapabilities = {
   memoryRegions: UVK1_MEMORY_REGIONS,
-  // Wide receive, transmit limited by the firmware itself (F Lock).
-  bandLimits: { vhfMin: 18, vhfMax: 174, uhfMin: 350, uhfMax: 1300 },
+  // The radio stores anything from 18 to 1300 MHz (ENABLE_WIDE_RX); transmit is
+  // limited by the firmware itself (F Lock). Contiguous on purpose: the app
+  // drops channels outside these limits before a write, and a dropped channel
+  // would be deleted from the radio.
+  bandLimits: { vhfMin: 18, vhfMax: 350, uhfMin: 350, uhfMax: 1300 },
   writeValidations: { channelsMustBeInZones: false },
   maxChannels: UVK1_MAX_CHANNELS,
   // Bytes on the radio. The name is UTF-8: 15 ASCII or 5 kanji / kana.

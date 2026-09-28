@@ -16,10 +16,13 @@ import {
   buildFrame, frameBodyLength, readFrameBody, payloadCommand, helloPayload,
   readMemPayload, firmwareFromHello, memoryFromReadReply, CMD,
 } from '../uvk5/framing';
-import { spiReadPayload, dataFromSpiReadReply } from './framing';
-import { UVK1_BAUD_RATE, UVK1_BLOCK_SIZE, UVK1_SPI_READ_MAX } from './constants';
+import { spiReadPayload, dataFromSpiReadReply, spiWritePayload, spiWriteAccepted } from './framing';
+import { UVK1_BAUD_RATE, UVK1_BLOCK_SIZE, UVK1_SPI_READ_MAX, UVK1_SPI_WRITE_MAX } from './constants';
 
 const TIMEOUT_MS = 5000;
+
+/** A write may erase a 4 KB sector (about 300 ms) before programming it. */
+const WRITE_TIMEOUT_MS = 5000;
 
 /**
  * How long to wait for the SPI read that identifies the radio. A radio that
@@ -111,6 +114,21 @@ export class UVK1Connection extends BaseSerialConnection {
       throw new Error(`UV-K1: short SPI read at 0x${address.toString(16)} (${data.length} of ${length})`);
     }
     return data.subarray(0, length);
+  }
+
+  /**
+   * Write SPI flash directly (0x0521), at most 120 bytes. Throws when the radio
+   * does not confirm the address. The caller decides what may be written; see
+   * writePlan.ts for the address checks.
+   */
+  async spiWrite(address: number, data: Uint8Array): Promise<void> {
+    if (data.length < 1 || data.length > UVK1_SPI_WRITE_MAX) {
+      throw new Error(`UV-K1: SPI write size ${data.length} out of range`);
+    }
+    const reply = await this.exchange(spiWritePayload(address, data), WRITE_TIMEOUT_MS);
+    if (!spiWriteAccepted(reply, address)) {
+      throw new Error(`UV-K1: write at 0x${address.toString(16)} was not confirmed`);
+    }
   }
 
   /** SPI read with the short timeout used to identify the radio. */

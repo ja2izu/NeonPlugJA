@@ -8,8 +8,8 @@
 /**
  * UVK1Protocol — Quansheng UV-K1 / UV-K5 V3 running Dondji or 25ja.
  *
- * Stage 1: connect, identify the firmware, read channels.
- * Writing is not implemented yet; writeChannels throws before sending anything.
+ * Stage 2: connect, identify the firmware, read channels, write channels.
+ * Settings are not handled.
  *
  * Identification. Every F4HWN-derived firmware answers hello with "F4HWN ...",
  * so hello cannot tell a UV-K1 running Dondji / 25ja from a UV-K5 or from a
@@ -31,6 +31,7 @@ import {
   UVK1_FONT_PROFILES, UVK1_MAX_CHANNELS, UVK1_NAME_SIZE, type UVK1FontId,
 } from './constants';
 import { decodeAttribute, isUnusedAttribute, parseChannel } from './structures';
+import { assertWritable, buildTarget, planWrites, validateChannels } from './writePlan';
 
 /** Size of the image this driver keeps: channels, names, attributes and list names. */
 export const UVK1_IMAGE_SIZE = UVK1_ADDR.ATTR_AREA_END;
@@ -152,10 +153,56 @@ export class UVK1Protocol extends BaseAnalogProtocol {
     return this.readBlocks;
   }
 
+  /**
+   * Write the channel list: the list is what the radio should hold afterwards.
+   *
+   * Nothing is sent until every channel passes validateChannels. The radio is
+   * then read again (attributes, and records and names of channels in use), so
+   * the comparison is against what the radio holds now, not an older read.
+   * Only bytes that differ are written, then every written range is read back
+   * and compared. The radio keeps channel data cached in RAM, so it has to be
+   * switched off and on to show the new channels.
+   */
   async writeChannels(channels: Channel[]): Promise<void> {
-    throw new Error(
-      `Writing to the UV-K1 is not implemented yet in this build (${channels.length} channels not sent).`,
-    );
+    const conn = this.conn;
+    if (!conn) throw new Error('Not connected');
+
+    const problems = validateChannels(channels, this.font);
+    if (problems.length > 0) {
+      const shown = problems.slice(0, 30).join('\n');
+      const more = problems.length > 30 ? `\n... and ${problems.length - 30} more` : '';
+      throw new Error(`Nothing was written to the UV-K1:\n${shown}${more}`);
+    }
+
+    const current = await this.readImage();
+    const target = buildTarget(current, channels);
+    const writes = planWrites(current, target.image, target.touched);
+    const total = writes.length * 2;
+
+    if (writes.length === 0) {
+      this.onProgress?.(1, 'No changes to write');
+      return;
+    }
+
+    let step = 0;
+    for (const w of writes) {
+      assertWritable(w.address, w.data.length);
+      await conn.spiWrite(w.address, w.data);
+      step++;
+      this.onProgress?.(step / total, `Writing 0x${w.address.toString(16)} (${w.data.length} bytes)`);
+    }
+
+    for (const w of writes) {
+      const back = await conn.spiRead(w.address, w.data.length);
+      if (!back || back.some((b, i) => b !== w.data[i])) {
+        throw new Error(`UV-K1: verify failed at 0x${w.address.toString(16)}. Read the radio again before writing.`);
+      }
+      step++;
+      this.onProgress?.(step / total, `Verifying 0x${w.address.toString(16)}`);
+    }
+
+    this.image = target.image;
+    this.onProgress?.(1, `Wrote ${writes.length} block(s). Turn the radio off and on to see the changes.`);
   }
 }
 

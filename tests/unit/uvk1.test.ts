@@ -132,6 +132,7 @@ describe('UV-K1 空き CH の読み飛ばし', () => {
 /** Dondji / 25ja の応答を真似る。spi=false なら F4HWN のように 0x051F に答えない。 */
 function fakeRadio(image: Uint8Array, opts: { spi: boolean; fontVersionAt?: Record<number, number> }) {
   const reads: number[] = [];
+  const writes: Array<[number, number]> = [];
   let push: (b: Uint8Array) => void = () => {};
   const readable = new ReadableStream<Uint8Array>({ start(c) { push = (b) => c.enqueue(b); } });
   let pending = new Uint8Array(0);
@@ -145,11 +146,20 @@ function fakeRadio(image: Uint8Array, opts: { spi: boolean; fontVersionAt?: Reco
       reads.push(off);
       const r = new Uint8Array(8 + len); r.set([0x1c, 0x05, len + 4, 0, payload[4], payload[5], len, 0]);
       r.set(image.subarray(off, off + len), 8); reply(r);
+    } else if (id === 0x0521 && opts.spi) {
+      const addr = (payload[4] | (payload[5] << 8) | (payload[6] << 16) | (payload[7] << 24)) >>> 0;
+      const len = payload[8] | (payload[9] << 8);
+      writes.push([addr, len]);
+      image.set(payload.subarray(16, 16 + len), addr);
+      reply(Uint8Array.of(0x22, 0x05, 0x08, 0x00, payload[4], payload[5], payload[6], payload[7], 0, 0, 0, 0));
     } else if (id === 0x051f && opts.spi) {
       const addr = (payload[4] | (payload[5] << 8) | (payload[6] << 16) | (payload[7] << 24)) >>> 0;
       const len = payload[8] | (payload[9] << 8);
       const r = new Uint8Array(12 + len); r.set([0x20, 0x05, len + 8, 0]); r.set(payload.subarray(4, 10), 4);
-      for (let i = 0; i < len; i++) r[12 + i] = opts.fontVersionAt?.[addr + i] ?? 0xff;
+      for (let i = 0; i < len; i++) {
+        const a = addr + i;
+        r[12 + i] = opts.fontVersionAt?.[a] ?? (a < image.length ? image[a] : 0xff);
+      }
       reply(r);
     }
   };
@@ -165,7 +175,7 @@ function fakeRadio(image: Uint8Array, opts: { spi: boolean; fontVersionAt?: Reco
     },
   });
   const port = { readable, writable, open: async () => {}, close: async () => {} };
-  return { port, reads };
+  return { port, reads, writes };
 }
 
 const serial = vi.hoisted(() => ({ port: null as unknown }));
@@ -193,7 +203,6 @@ describe('UV-K1 接続と読込（疑似無線機）', () => {
     const attrBlocks = r.reads.filter((a) => a >= 0x8000);
     expect(attrBlocks.length).toBe(17);
     expect(r.reads.filter((a) => a < 0x8000)).toEqual([0x0000, 0x1f00, 0x4000, 0x5f00]);
-    await expect(p.writeChannels(chs)).rejects.toThrow(/not implemented/);
     await p.disconnect();
   });
 
