@@ -29,13 +29,21 @@ import { log as plog } from '../../utils/protocolLogger';
 import { UVK1Connection, openUVK1Port, type UVK1SerialPort } from './connection';
 import {
   UVK1_ADDR, UVK1_ATTR_SIZE, UVK1_BLOCK_SIZE, UVK1_CHANNEL_SIZE, UVK1_FONT_BASE,
-  UVK1_FONT_PROFILES, UVK1_MAX_CHANNELS, UVK1_NAME_SIZE, type UVK1FontId,
+  UVK1_FONT_PROFILES, UVK1_HELLO_MARKER, UVK1_IMAGE_EXT_BASE, UVK1_MAX_CHANNELS,
+  UVK1_MAX_NAME_BYTES, UVK1_MAX_NAME_BYTES_LONG, UVK1_NAME_EXT_SPI, UVK1_NAME_SIZE, type UVK1FontId,
 } from './constants';
 import { decodeAttribute, isUnusedAttribute, parseChannel } from './structures';
-import { assertWritable, buildTarget, planWrites, validateChannels } from './writePlan';
+import { assertWritable, buildTarget, imageToSpiAddress, planWrites, validateChannels } from './writePlan';
 
-/** Size of the image this driver keeps: channels, names, attributes and list names. */
-export const UVK1_IMAGE_SIZE = UVK1_ADDR.ATTR_AREA_END;
+/**
+ * Size of the image this driver keeps: channels, names, attributes and list
+ * names (image address = EEPROM / SPI address), then the second name slots of
+ * long names at UVK1_IMAGE_EXT_BASE.
+ */
+export const UVK1_IMAGE_SIZE = UVK1_IMAGE_EXT_BASE + UVK1_MAX_CHANNELS * UVK1_NAME_SIZE;
+
+/** Second name slots per SPI read (64 bytes: even, and within the 120-byte limit). */
+const EXT_SLOTS_PER_READ = 4;
 
 /** Channels per 128-byte block of records or names. */
 const SLOTS_PER_BLOCK = UVK1_BLOCK_SIZE / UVK1_CHANNEL_SIZE;
@@ -48,6 +56,8 @@ export class UVK1Protocol extends BaseAnalogProtocol {
   private port: UVK1SerialPort | null = null;
   private firmware = '';
   private font: UVK1FontId = 'unknown';
+  /** 25Ja with names of up to 31 bytes (hello marker bit 0 and the 25ja font). */
+  private longNames = false;
   /** Last image read. Bytes of blocks that were skipped stay 0xFF. */
   private image: Uint8Array | null = null;
   /** Start addresses of the blocks actually read into `image`. */
@@ -79,6 +89,14 @@ export class UVK1Protocol extends BaseAnalogProtocol {
       );
     }
     this.font = await identifyFont(conn, v);
+    const flags = conn.helloFeatureFlags();
+    this.longNames = this.font === '25ja' && flags !== null && (flags & UVK1_HELLO_MARKER.flagLongNames) !== 0;
+    plog.info(`font ${this.font}, 25Ja flags ${flags === null ? 'none' : `0x${flags.toString(16)}`}, names up to ${this.maxNameBytes()} bytes`, 'UV-K1');
+  }
+
+  /** Longest name this radio stores, in bytes. */
+  maxNameBytes(): number {
+    return this.longNames ? UVK1_MAX_NAME_BYTES_LONG : UVK1_MAX_NAME_BYTES;
   }
 
   async disconnect(): Promise<void> {
@@ -104,7 +122,7 @@ export class UVK1Protocol extends BaseAnalogProtocol {
     const profile = UVK1_FONT_PROFILES.find((p) => p.id === this.font);
     return {
       model: 'UV-K1',
-      firmware: `${this.firmware} / font: ${profile ? profile.label : 'unknown'}`,
+      firmware: `${this.firmware} / font: ${profile ? profile.label : 'unknown'} / names: ${this.maxNameBytes()} bytes`,
       buildDate: '',
       memoryLayout: { configStart: 0x0000, configEnd: UVK1_IMAGE_SIZE - 1 },
     };
@@ -142,6 +160,17 @@ export class UVK1Protocol extends BaseAnalogProtocol {
       count++;
       this.onProgress?.(count / total, `Reading 0x${a.toString(16)}`);
     }
+
+    // Second name slots, only for names that fill the first slot.
+    if (this.longNames) {
+      for (const first of extReadsForSlots(slotsNeedingExt(image, used))) {
+        const bytes = EXT_SLOTS_PER_READ * UVK1_NAME_SIZE;
+        const data = await conn.spiRead(UVK1_NAME_EXT_SPI + first * UVK1_NAME_SIZE, bytes);
+        if (!data) throw new Error(`UV-K1: no answer reading long names at slot ${first + 1}`);
+        image.set(data, UVK1_IMAGE_EXT_BASE + first * UVK1_NAME_SIZE);
+        done.add(UVK1_IMAGE_EXT_BASE + first * UVK1_NAME_SIZE);
+      }
+    }
     plog.info(`read: ${done.size} block(s), ${used.length} channel(s) in use, ${Date.now() - tStart} ms`, 'UV-K1');
     this.onProgress?.(1, 'Read complete');
     this.image = image;
@@ -151,7 +180,7 @@ export class UVK1Protocol extends BaseAnalogProtocol {
 
   async readChannels(): Promise<Channel[]> {
     const image = await this.readImage();
-    return channelsFromImage(image);
+    return channelsFromImage(image, this.longNames);
   }
 
   /** The image read last, or null when nothing has been read yet. */
@@ -178,7 +207,7 @@ export class UVK1Protocol extends BaseAnalogProtocol {
     const conn = this.conn;
     if (!conn) throw new Error('Not connected');
 
-    const problems = validateChannels(channels, this.font);
+    const problems = validateChannels(channels, this.font, this.maxNameBytes());
     if (problems.length > 0) {
       const shown = problems.slice(0, 30).join('\n');
       const more = problems.length > 30 ? `\n... and ${problems.length - 30} more` : '';
@@ -186,13 +215,13 @@ export class UVK1Protocol extends BaseAnalogProtocol {
     }
 
     const current = await this.readImage();
-    const target = buildTarget(current, channels);
-    const writes = planWrites(current, target.image, target.touched);
+    const target = buildTarget(current, channels, this.longNames);
+    const writes = planWrites(current, target.image, target.touched, this.longNames);
     const total = writes.length * 2;
 
     plog.info(
       `write plan: ${writes.length} write(s), ${writes.reduce((n, w) => n + w.data.length, 0)} bytes: ` +
-        writes.map((w) => `0x${w.address.toString(16)}+${w.data.length}`).join(' '),
+        writes.map((w) => `0x${imageToSpiAddress(w.address).toString(16)}+${w.data.length}`).join(' '),
       'UV-K1',
     );
     if (writes.length === 0) {
@@ -202,22 +231,24 @@ export class UVK1Protocol extends BaseAnalogProtocol {
 
     let step = 0;
     for (const w of writes) {
-      assertWritable(w.address, w.data.length);
-      await conn.spiWrite(w.address, w.data);
+      assertWritable(w.address, w.data.length, this.longNames);
+      const spi = imageToSpiAddress(w.address);
+      await conn.spiWrite(spi, w.data);
       step++;
-      this.onProgress?.(step / total, `Writing 0x${w.address.toString(16)} (${w.data.length} bytes)`);
+      this.onProgress?.(step / total, `Writing 0x${spi.toString(16)} (${w.data.length} bytes)`);
     }
 
     const tVerify = Date.now();
     for (const w of writes) {
       const tRead = Date.now();
-      const back = await conn.spiRead(w.address, w.data.length);
-      plog.info(`verify 0x${w.address.toString(16)} ${w.data.length} B: ${back ? `${Date.now() - tRead} ms` : 'no answer'}`, 'UV-K1');
+      const spi = imageToSpiAddress(w.address);
+      const back = await conn.spiRead(spi, w.data.length);
+      plog.info(`verify 0x${spi.toString(16)} ${w.data.length} B: ${back ? `${Date.now() - tRead} ms` : 'no answer'}`, 'UV-K1');
       if (!back || back.some((b, i) => b !== w.data[i])) {
-        throw new Error(`UV-K1: verify failed at 0x${w.address.toString(16)}. Read the radio again before writing.`);
+        throw new Error(`UV-K1: verify failed at 0x${spi.toString(16)}. Read the radio again before writing.`);
       }
       step++;
-      this.onProgress?.(step / total, `Verifying 0x${w.address.toString(16)}`);
+      this.onProgress?.(step / total, `Verifying 0x${spi.toString(16)}`);
     }
 
     plog.info(`verify done: ${writes.length} range(s) in ${Date.now() - tVerify} ms`, 'UV-K1');
@@ -256,19 +287,44 @@ export function blocksForSlots(slots: number[]): number[] {
   return [...set].sort((a, b) => a - b);
 }
 
+/** Used slots whose name fills the first slot (no 0x00 / 0xFF in it), so it goes on in the second. */
+export function slotsNeedingExt(image: Uint8Array, used: number[]): number[] {
+  return used.filter((slot) => {
+    const at = UVK1_ADDR.CHANNEL_NAMES + slot * UVK1_NAME_SIZE;
+    for (let i = 0; i < UVK1_NAME_SIZE; i++) {
+      const b = image[at + i];
+      if (b === 0x00 || b === 0xff) return false;
+    }
+    return true;
+  });
+}
+
+/** First slots of the 4-slot SPI reads that cover these slots (ascending). */
+export function extReadsForSlots(slots: number[]): number[] {
+  return [...new Set(slots.map((s) => s - (s % EXT_SLOTS_PER_READ)))].sort((a, b) => a - b);
+}
+
 /** Every used channel in an image. */
-export function channelsFromImage(image: Uint8Array): Channel[] {
+export function channelsFromImage(image: Uint8Array, longNames = false): Channel[] {
   const channels: Channel[] = [];
   for (let i = 0; i < UVK1_MAX_CHANNELS; i++) {
     const recordAt = UVK1_ADDR.CHANNELS + i * UVK1_CHANNEL_SIZE;
     const nameAt = UVK1_ADDR.CHANNEL_NAMES + i * UVK1_NAME_SIZE;
     const attrAt = UVK1_ADDR.CHANNEL_ATTR + i * UVK1_ATTR_SIZE;
+    let nameField = image.subarray(nameAt, nameAt + UVK1_NAME_SIZE);
+    if (longNames) {
+      const extAt = UVK1_IMAGE_EXT_BASE + i * UVK1_NAME_SIZE;
+      nameField = new Uint8Array(UVK1_NAME_SIZE * 2);
+      nameField.set(image.subarray(nameAt, nameAt + UVK1_NAME_SIZE));
+      nameField.set(image.subarray(extAt, extAt + UVK1_NAME_SIZE), UVK1_NAME_SIZE);
+    }
     const channel = parseChannel({
       number: i + 1,
       record: image.subarray(recordAt, recordAt + UVK1_CHANNEL_SIZE),
       attrLo: image[attrAt],
       attrHi: image[attrAt + 1],
-      nameField: image.subarray(nameAt, nameAt + UVK1_NAME_SIZE),
+      nameField,
+      maxNameBytes: longNames ? UVK1_MAX_NAME_BYTES_LONG : UVK1_MAX_NAME_BYTES,
     });
     if (channel) channels.push(channel);
   }

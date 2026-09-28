@@ -27,25 +27,40 @@ import type { Channel } from '../../models';
 import { encodeChannel } from '../uvk5/structures';
 import {
   UVK1_ADDR, UVK1_ATTR_SIZE, UVK1_BAND_EMPTY, UVK1_BAND_LOWER_MHZ, UVK1_CHANNEL_SIZE,
-  UVK1_FREQ_MAX_MHZ, UVK1_FREQ_MIN_MHZ, UVK1_MAX_CHANNELS, UVK1_MAX_NAME_BYTES,
-  UVK1_NAME_SIZE, UVK1_SPI_WRITE_MAX, type UVK1FontId,
+  UVK1_FREQ_MAX_MHZ, UVK1_FREQ_MIN_MHZ, UVK1_IMAGE_EXT_BASE, UVK1_MAX_CHANNELS, UVK1_MAX_NAME_BYTES,
+  UVK1_MAX_NAME_BYTES_LONG, UVK1_NAME_EXT_SPI, UVK1_NAME_SIZE, UVK1_SPI_WRITE_MAX, type UVK1FontId,
 } from './constants';
 import { decodeAttribute, isUnusedAttribute } from './structures';
 import { FONT_25JA_CHARS } from './font25ja';
 
-/** Address ranges a write may touch: [start, end). SPI address = EEPROM address here. */
+/**
+ * Image address ranges a write may touch: [start, end). For the channel areas
+ * the image address is the SPI address; the second name slots (long names
+ * only) sit at UVK1_IMAGE_EXT_BASE in the image, see imageToSpiAddress.
+ */
 export const WRITABLE_RANGES: ReadonlyArray<readonly [number, number]> = [
   [UVK1_ADDR.CHANNELS, UVK1_ADDR.CHANNELS + UVK1_MAX_CHANNELS * UVK1_CHANNEL_SIZE],
   [UVK1_ADDR.CHANNEL_NAMES, UVK1_ADDR.CHANNEL_NAMES + UVK1_MAX_CHANNELS * UVK1_NAME_SIZE],
   [UVK1_ADDR.CHANNEL_ATTR, UVK1_ADDR.CHANNEL_ATTR + UVK1_MAX_CHANNELS * UVK1_ATTR_SIZE],
 ];
 
+/** The second name slots, writable only on a 25Ja that reports long names. */
+export const WRITABLE_EXT_RANGE: readonly [number, number] =
+  [UVK1_IMAGE_EXT_BASE, UVK1_IMAGE_EXT_BASE + UVK1_MAX_CHANNELS * UVK1_NAME_SIZE];
+
 /** Throws unless [address, address + length) lies inside one writable range. */
-export function assertWritable(address: number, length: number): void {
-  const ok = WRITABLE_RANGES.some(([s, e]) => address >= s && address + length <= e);
+export function assertWritable(address: number, length: number, longNames = false): void {
+  const ranges = longNames ? [...WRITABLE_RANGES, WRITABLE_EXT_RANGE] : WRITABLE_RANGES;
+  const ok = ranges.some(([s, e]) => address >= s && address + length <= e);
   if (!ok || length < 1) {
     throw new Error(`UV-K1: refusing to write 0x${address.toString(16)}+${length}: outside the channel areas`);
   }
+}
+
+/** SPI address of an image address (the second name slots move to 0x020000). */
+export function imageToSpiAddress(address: number): number {
+  const [s, e] = WRITABLE_EXT_RANGE;
+  return address >= s && address < e ? UVK1_NAME_EXT_SPI + (address - s) : address;
 }
 
 /** Band index (0 = BAND1 .. 6 = BAND7) the radio uses for this frequency. */
@@ -59,12 +74,21 @@ export function bandForFrequency(mhz: number): number {
 const SECTOR = 0x1000;
 const encoder = new TextEncoder();
 
-/** 16-byte name field: UTF-8, rest 0 (as SETTINGS_SaveChannelName writes it). */
-export function encodeChannelName(name: string): Uint8Array {
-  const out = new Uint8Array(UVK1_NAME_SIZE);
+/**
+ * Name bytes as SETTINGS_SaveChannelName writes them: UTF-8, rest 0.
+ * Returns 16 bytes, or 32 (both slots) when `maxBytes` is 31. The second slot
+ * only matters when the name is 16 bytes or longer; see buildTarget.
+ */
+export function encodeChannelName(name: string, maxBytes: number = UVK1_MAX_NAME_BYTES): Uint8Array {
+  const out = new Uint8Array(maxBytes > UVK1_MAX_NAME_BYTES ? UVK1_NAME_SIZE * 2 : UVK1_NAME_SIZE);
   const bytes = encoder.encode(name.replace(/ +$/, ''));
-  out.set(bytes.subarray(0, UVK1_MAX_NAME_BYTES));
+  out.set(bytes.subarray(0, maxBytes));
   return out;
+}
+
+/** Name length in bytes as it will be stored (trailing spaces dropped). */
+export function encodedNameLength(name: string): number {
+  return encoder.encode(name.replace(/ +$/, '')).length;
 }
 
 /** Characters of `name` the radio cannot show with this font. */
@@ -80,7 +104,7 @@ export function unsupportedCharacters(name: string, font: UVK1FontId): string[] 
 }
 
 /** Every problem in the list, as one line each. Empty when the list can be written. */
-export function validateChannels(channels: Channel[], font: UVK1FontId): string[] {
+export function validateChannels(channels: Channel[], font: UVK1FontId, maxNameBytes: number = UVK1_MAX_NAME_BYTES): string[] {
   const problems: string[] = [];
   const seen = new Set<number>();
   if (channels.length === 0) {
@@ -101,8 +125,11 @@ export function validateChannels(channels: Channel[], font: UVK1FontId): string[
     }
     const name = ch.name.replace(/ +$/, '');
     const bytes = encoder.encode(name).length;
-    if (bytes > UVK1_MAX_NAME_BYTES) {
-      problems.push(`${where}: name is ${bytes} bytes, the radio holds ${UVK1_MAX_NAME_BYTES} (5 kanji / kana, or 15 ASCII)`);
+    if (bytes > maxNameBytes) {
+      problems.push(
+        `${where}: name is ${bytes} bytes, the radio holds ${maxNameBytes} ` +
+          `(${Math.floor(maxNameBytes / 3)} kanji / kana, or ${maxNameBytes} ASCII)`,
+      );
     }
     const bad = unsupportedCharacters(name, font);
     if (bad.length > 0) {
@@ -152,7 +179,7 @@ export interface WriteTarget {
  * @param current image read from the radio (attributes complete; records and
  *                names read for every slot in use on the radio)
  */
-export function buildTarget(current: Uint8Array, channels: Channel[]): WriteTarget {
+export function buildTarget(current: Uint8Array, channels: Channel[], longNames = false): WriteTarget {
   const image = new Uint8Array(current);
   const bySlot = new Map<number, Channel>();
   for (const ch of channels) bySlot.set(ch.number - 1, ch);
@@ -185,7 +212,17 @@ export function buildTarget(current: Uint8Array, channels: Channel[]): WriteTarg
     const attr = encodeAttribute(ch, usedOnRadio ? prevRaw : null);
 
     image.set(record, recAt);
-    image.set(encodeChannelName(ch.name), nameAt);
+    if (longNames) {
+      const both = encodeChannelName(ch.name, UVK1_MAX_NAME_BYTES_LONG);
+      image.set(both.subarray(0, UVK1_NAME_SIZE), nameAt);
+      // The second slot is read only when the first holds no 0x00 / 0xFF, i.e.
+      // for names of 16 bytes or more; the radio writes it only then too.
+      if (encodedNameLength(ch.name) >= UVK1_NAME_SIZE) {
+        image.set(both.subarray(UVK1_NAME_SIZE), UVK1_IMAGE_EXT_BASE + slot * UVK1_NAME_SIZE);
+      }
+    } else {
+      image.set(encodeChannelName(ch.name), nameAt);
+    }
     image[attrAt] = attr & 0xff;
     image[attrAt + 1] = (attr >> 8) & 0xff;
     touched.push(slot);
@@ -204,12 +241,13 @@ export interface PlannedWrite {
  * 4 KB sector boundary (so each costs at most one erase) and never carries a
  * byte of a slot that was not touched.
  */
-export function planWrites(current: Uint8Array, target: Uint8Array, touched: number[]): PlannedWrite[] {
+export function planWrites(current: Uint8Array, target: Uint8Array, touched: number[], longNames = false): PlannedWrite[] {
   const writes: PlannedWrite[] = [];
   const areas = [
     { base: UVK1_ADDR.CHANNELS, size: UVK1_CHANNEL_SIZE },
     { base: UVK1_ADDR.CHANNEL_NAMES, size: UVK1_NAME_SIZE },
     { base: UVK1_ADDR.CHANNEL_ATTR, size: UVK1_ATTR_SIZE },
+    ...(longNames ? [{ base: UVK1_IMAGE_EXT_BASE, size: UVK1_NAME_SIZE }] : []),
   ];
   const slots = [...touched].sort((a, b) => a - b);
 
@@ -233,7 +271,7 @@ export function planWrites(current: Uint8Array, target: Uint8Array, touched: num
         end += size;
         j++;
       }
-      assertWritable(start, end - start);
+      assertWritable(start, end - start, longNames);
       writes.push({ address: start, data: target.slice(start, end) });
       i = j;
     }

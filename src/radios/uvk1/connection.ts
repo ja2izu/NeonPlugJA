@@ -35,7 +35,7 @@ import {
   spiReadPayload, dataFromSpiReadReply, spiWritePayload, spiWriteAccepted,
   CMD_SPI_READ_REPLY, CMD_SPI_WRITE_REPLY,
 } from './framing';
-import { UVK1_BAUD_RATE, UVK1_BLOCK_SIZE, UVK1_SPI_READ_MAX, UVK1_SPI_WRITE_MAX } from './constants';
+import { UVK1_BAUD_RATE, UVK1_BLOCK_SIZE, UVK1_HELLO_MARKER, UVK1_SPI_READ_MAX, UVK1_SPI_WRITE_MAX } from './constants';
 
 const TIMEOUT_MS = 5000;
 
@@ -150,6 +150,21 @@ export class UVK1Connection {
   private reading = false;
   private loop: Promise<void> | null = null;
   private readError: Error | null = null;
+  private helloReply: Uint8Array | null = null;
+
+  /**
+   * 25Ja feature bits from the last hello reply, or null when the reply does
+   * not carry the 25Ja marker (Version[13..15] = 0x25 'J' flags). Older 25ja
+   * builds, Dondji and F4HWN leave those bytes as whatever was on the stack,
+   * so both tag bytes have to match.
+   */
+  helloFeatureFlags(): number | null {
+    const r = this.helloReply;
+    const { offset, tag } = UVK1_HELLO_MARKER;
+    if (!r || r.length < offset + 3) return null;
+    if (r[offset] !== tag[0] || r[offset + 1] !== tag[1]) return null;
+    return r[offset + 2];
+  }
 
   async open(port: UVK1SerialPort): Promise<void> {
     if (!port.readable || !port.writable) throw new Error('UV-K1: port streams unavailable');
@@ -247,6 +262,7 @@ export class UVK1Connection {
       try {
         log(`hello (attempt ${attempt})`);
         const reply = await this.exchange(helloPayload(), [CMD.HELLO_REPLY], 1500);
+        this.helloReply = reply.slice();
         const firmware = firmwareFromHello(reply);
         log(`hello reply: "${firmware}"`);
         if (firmware) return firmware;

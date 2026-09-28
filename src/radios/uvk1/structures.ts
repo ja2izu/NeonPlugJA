@@ -65,10 +65,11 @@ export function scanListLabel(scanList: number): string {
  * Name of a channel, read the way the radio reads it (SETTINGS_FetchChannelName
  * with the 25ja lead-byte range 0xE3-0xEF): stop at 0x00 or 0xFF; a byte
  * 0xE3-0xEF starts a 3-byte character; any other byte outside 0x20-0x7F ends
- * the name. Trailing spaces are dropped.
+ * the name. Trailing spaces are dropped. With long names pass the 32 bytes of
+ * both slots and maxBytes 31.
  */
-export function decodeChannelName(nameField: Uint8Array): string {
-  const limit = Math.min(nameField.length, UVK1_MAX_NAME_BYTES);
+export function decodeChannelName(nameField: Uint8Array, maxBytes: number = UVK1_MAX_NAME_BYTES): string {
+  const limit = Math.min(nameField.length, maxBytes);
   let end = 0;
   while (end < limit) {
     const c = nameField[end];
@@ -90,11 +91,14 @@ export interface ParseChannelInput {
   record: Uint8Array;
   attrLo: number;
   attrHi: number;
+  /** The 16-byte name slot, or 32 bytes (slot + second slot) for long names */
   nameField: Uint8Array;
+  /** 15, or 31 with long names */
+  maxNameBytes?: number;
 }
 
 /** Turn one slot into a Channel, or null when the slot is unused. */
-export function parseChannel({ number, record, attrLo, attrHi, nameField }: ParseChannelInput): Channel | null {
+export function parseChannel({ number, record, attrLo, attrHi, nameField, maxNameBytes }: ParseChannelInput): Channel | null {
   const attr = decodeAttribute(attrLo, attrHi);
   if (isUnusedAttribute(attr)) return null;
   if (record.length < UVK1_CHANNEL_SIZE || isEmptyChannelRecord(record)) return null;
@@ -106,7 +110,7 @@ export function parseChannel({ number, record, attrLo, attrHi, nameField }: Pars
 
   return {
     ...base,
-    name: decodeChannelName(nameField),
+    name: decodeChannelName(nameField, maxNameBytes ?? UVK1_MAX_NAME_BYTES),
     scanAdd: attr.scanList !== 0 && !attr.exclude,
   };
 }

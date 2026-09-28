@@ -69,6 +69,26 @@ export const UVK1_LIST_NAME_SIZE = 4;
  */
 export const UVK1_MAX_NAME_BYTES = 15;
 
+/**
+ * 25Ja with long names (hello marker bit 0): a name is up to 31 bytes, the
+ * first 16 in the name slot (0x4000 + 16*n, all 16 used) and the rest in a
+ * second 16-byte slot at SPI 0x020000 + 16*n. A 0x00 / 0xFF in the first 16
+ * ends the name there and the second slot is not read. 10 kanji / kana.
+ */
+export const UVK1_MAX_NAME_BYTES_LONG = 31;
+export const UVK1_NAME_EXT_SPI = 0x020000;
+
+/**
+ * Where this driver keeps the second name slots in its image: right after the
+ * attribute area, on a 4 KB boundary like the SPI area it mirrors, so sector
+ * arithmetic on image addresses holds for both. Image address -> SPI address:
+ * see imageToSpiAddress.
+ */
+export const UVK1_IMAGE_EXT_BASE = 0x9000;
+
+/** Hello reply marker of 25Ja: Version[13..15] = 0x25 'J' flags (payload bytes 17..19). */
+export const UVK1_HELLO_MARKER = { offset: 17, tag: [0x25, 0x4a] as const, flagLongNames: 0x01 } as const;
+
 /** Attribute band value of an unused slot (band > BAND7_470MHz means empty). */
 export const UVK1_BAND_EMPTY = 7;
 

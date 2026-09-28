@@ -176,7 +176,7 @@ describe('UV-K1 書込の計画', () => {
 
 // ---- 疑似無線機での書込 ----
 
-function fakeRadio(image: Uint8Array, opts: { dropEvery?: number } = {}) {
+function fakeRadio(image: Uint8Array, opts: { dropEvery?: number; longNames?: boolean } = {}) {
   const writes: Array<[number, number]> = [];
   let seen = 0;
   let push: (b: Uint8Array) => void = () => {};
@@ -195,7 +195,9 @@ function fakeRadio(image: Uint8Array, opts: { dropEvery?: number } = {}) {
       return;
     }
     if (id === 0x0514) {
-      const r = new Uint8Array(40); r.set([0x15, 0x05, 36, 0]); r.set(new TextEncoder().encode('F4HWN v5.2.8'), 4); reply(r);
+      const r = new Uint8Array(40); r.set([0x15, 0x05, 36, 0]); r.set(new TextEncoder().encode('F4HWN v5.2.8'), 4);
+      if (opts.longNames) r.set([0x25, 0x4a, 0x01], 17); // 25Ja: Version[13..15]
+      reply(r);
     } else if (id === 0x051b) {
       const off = p[4] | (p[5] << 8); const len = p[6];
       const r = new Uint8Array(8 + len); r.set([0x1c, 0x05, len + 4, 0, p[4], p[5], len, 0]); r.set(image.subarray(off, off + len), 8); reply(r);
@@ -203,12 +205,15 @@ function fakeRadio(image: Uint8Array, opts: { dropEvery?: number } = {}) {
       const addr = u32(p, 4); const len = p[8] | (p[9] << 8);
       const r = new Uint8Array(12 + len); r.set([0x20, 0x05, len + 8, 0]); r.set(p.subarray(4, 10), 4);
       const ver = UVK1_FONT_BASE + UVK1_FONT_PROFILES[0].versionOffset;
-      for (let i = 0; i < len; i++) r[12 + i] = addr + i === ver ? 4 : addr + i < image.length ? image[addr + i] : 0xff;
+      for (let i = 0; i < len; i++) {
+        const at = spiToImage(addr + i);
+        r[12 + i] = addr + i === ver ? 4 : at < image.length ? image[at] : 0xff;
+      }
       reply(r);
     } else if (id === 0x0521) {
       const addr = u32(p, 4); const len = p[8] | (p[9] << 8);
       writes.push([addr, len]);
-      image.set(p.subarray(16, 16 + len), addr);
+      image.set(p.subarray(16, 16 + len), spiToImage(addr));
       reply(Uint8Array.of(0x22, 0x05, 8, 0, p[4], p[5], p[6], p[7], 0, 0, 0, 0));
     }
   };
@@ -225,6 +230,9 @@ function fakeRadio(image: Uint8Array, opts: { dropEvery?: number } = {}) {
   });
   return { port: { readable, writable, open: async () => {}, close: async () => {} }, writes };
 }
+
+/** SPI address -> fake radio image index (second name slots at 0x020000 live at 0x9000). */
+const spiToImage = (a: number) => (a >= 0x20000 && a < 0x24000 ? 0x9000 + (a - 0x20000) : a);
 
 const serial = vi.hoisted(() => ({ port: null as unknown }));
 vi.mock('../../src/radios/shared/serialPort', () => ({ requestSerialPort: async () => serial.port }));
@@ -302,4 +310,92 @@ describe('UV-K1 応答のないコマンドは送り直す', () => {
     expect(again.map((c) => c.name)).toEqual(list.map((c) => c.name));
     await p.disconnect();
   }, 60000);
+});
+
+// ---- 25Ja の長い名前（31 バイト = 前半 16 B + 後半 0x020000） ----
+import { slotsNeedingExt, extReadsForSlots } from '../../src/radios/uvk1/protocol';
+import { imageToSpiAddress } from '../../src/radios/uvk1/writePlan';
+
+describe('UV-K1 長い名前（25Ja）', () => {
+  const k10 = '名古屋駅前レピータ北'; // 10 字 = 30 バイト
+
+  it('名前欄 32 バイトから最大 31 バイトを読む（途中で切れた字は捨てる）', () => {
+    const f = encodeChannelName(k10, 31);
+    expect(f.length).toBe(32);
+    expect(decodeChannelName(f, 31)).toBe(k10);
+    const eleven = encodeChannelName(k10 + 'あ', 31); // 33 B -> 31 B（11 字目の途中）
+    expect(decodeChannelName(eleven, 31)).toBe(k10);
+    expect(decodeChannelName(encodeChannelName('ABCDEFGHIJKLMNOPQRSTUVWXYZ01234', 31), 31)).toBe('ABCDEFGHIJKLMNOPQRSTUVWXYZ01234');
+  });
+
+  it('後半の置き場所（画像 0x9000〜 ⇔ SPI 0x020000〜）', () => {
+    expect(imageToSpiAddress(0x9000)).toBe(0x20000);
+    expect(imageToSpiAddress(0x9000 + 1023 * 16)).toBe(0x20000 + 1023 * 16);
+    expect(imageToSpiAddress(0x4010)).toBe(0x4010);
+    expect(() => assertWritable(0x9000, 16)).toThrow(/refusing/);
+    expect(() => assertWritable(0x9000, 16, true)).not.toThrow();
+    expect(() => assertWritable(0xd000, 16, true)).toThrow(/refusing/);
+  });
+
+  it('上限は無線機ごと：目印なし 15 B、目印あり 31 B', () => {
+    expect(validateChannels([ch(1, '六文字の名前', 145)], '25ja', 15).length).toBe(1);
+    expect(validateChannels([ch(1, k10, 145)], '25ja', 31)).toEqual([]);
+    expect(validateChannels([ch(1, k10 + 'あ', 145)], '25ja', 31)[0]).toMatch(/33 bytes, the radio holds 31 \(10 kanji/);
+  });
+
+  it('16 B 以上のときだけ後半を書く、15 B 以下なら後半は触らない', () => {
+    const cur = new Uint8Array(UVK1_IMAGE_SIZE).fill(0xff);
+    putSlot(cur, 0, 145, 'A', 2);
+    putSlot(cur, 1, 146, 'B', 2);
+    const list = channelsFromImage(cur, true);
+    list[0] = { ...list[0], name: k10 };
+    list[1] = { ...list[1], name: 'みじかい' }; // 12 B
+    const t = buildTarget(cur, list, true);
+    const w = planWrites(cur, t.image, t.touched, true).map((x) => [imageToSpiAddress(x.address), x.data.length]);
+    // 隣り合う 2 CH の名前は 1 回（32 B）にまとめる。後半は CH 1 の分だけ
+    expect(w).toEqual([[0x4000, 32], [0x20000, 16]]);
+  });
+
+  it('後半を読むのは前半が埋まっている CH だけ（4 CH = 64 B ずつ）', () => {
+    const img = new Uint8Array(UVK1_IMAGE_SIZE).fill(0xff);
+    img.set(encodeChannelName(k10, 31).subarray(0, 16), UVK1_ADDR.CHANNEL_NAMES + 5 * 16);
+    img.set(encodeChannelName('SHORT'), UVK1_ADDR.CHANNEL_NAMES + 6 * 16);
+    img.set(encodeChannelName('0123456789ABCDEF', 31).subarray(0, 16), UVK1_ADDR.CHANNEL_NAMES + 9 * 16);
+    expect(slotsNeedingExt(img, [5, 6, 9])).toEqual([5, 9]);
+    expect(extReadsForSlots([5, 9, 10])).toEqual([4, 8]);
+  });
+
+  it('疑似 25Ja：10 字の名前を書いて読み直すと一致、後半は 0x020000 に書かれる', async () => {
+    const radio = new Uint8Array(UVK1_IMAGE_SIZE).fill(0xff);
+    for (let s = 0; s < 6; s++) putSlot(radio, s, 145 + s * 0.025, `C${s}`, 2);
+    const f = fakeRadio(radio, { longNames: true });
+    serial.port = f.port;
+    const p = new UVK1Protocol();
+    await p.connect();
+    expect(p.maxNameBytes()).toBe(31);
+    const read = await p.readChannels();
+    const list = read.map((c, i) => ({ ...c, name: i % 2 === 0 ? k10 : `短${i}` }));
+    await p.writeChannels(list);
+    expect(f.writes.some(([a]) => a >= 0x20000 && a < 0x24000)).toBe(true);
+    for (const [a, n] of f.writes) {
+      const ok = (a < 0x8800) || (a >= 0x20000 && a + n <= 0x24000);
+      expect(ok).toBe(true);
+    }
+    const again = await p.readChannels();
+    expect(again.map((c) => c.name)).toEqual(list.map((c) => c.name));
+    await p.disconnect();
+  });
+
+  it('目印のない 25ja には 16 B 以上の名前を送らない', async () => {
+    const radio = new Uint8Array(UVK1_IMAGE_SIZE).fill(0xff);
+    putSlot(radio, 0, 145, 'A', 2);
+    const f = fakeRadio(radio);
+    serial.port = f.port;
+    const p = new UVK1Protocol();
+    await p.connect();
+    expect(p.maxNameBytes()).toBe(15);
+    await expect(p.writeChannels([ch(1, k10, 145)])).rejects.toThrow(/30 bytes, the radio holds 15/);
+    expect(f.writes).toEqual([]);
+    await p.disconnect();
+  });
 });

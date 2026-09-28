@@ -147,7 +147,9 @@ function fakeRadio(image: Uint8Array, opts: { spi: boolean; fontVersionAt?: Reco
       return;
     }
     if (id === 0x0514) {
-      const r = new Uint8Array(4 + 36); r.set([0x15, 0x05, 36, 0]); r.set(utf8('F4HWN v5.2.8'), 4); reply(r);
+      const r = new Uint8Array(4 + 36); r.set([0x15, 0x05, 36, 0]); r.set(utf8('F4HWN v5.2.8'), 4);
+      if (opts.longNames) r.set([0x25, 0x4a, 0x01], 17); // 25Ja: Version[13..15]
+      reply(r);
     } else if (id === 0x051b) {
       const off = payload[4] | (payload[5] << 8); const len = payload[6];
       reads.push(off);
@@ -157,7 +159,7 @@ function fakeRadio(image: Uint8Array, opts: { spi: boolean; fontVersionAt?: Reco
       const addr = (payload[4] | (payload[5] << 8) | (payload[6] << 16) | (payload[7] << 24)) >>> 0;
       const len = payload[8] | (payload[9] << 8);
       writes.push([addr, len]);
-      image.set(payload.subarray(16, 16 + len), addr);
+      image.set(payload.subarray(16, 16 + len), spiToImage(addr));
       reply(Uint8Array.of(0x22, 0x05, 0x08, 0x00, payload[4], payload[5], payload[6], payload[7], 0, 0, 0, 0));
     } else if (id === 0x051f && opts.spi) {
       const addr = (payload[4] | (payload[5] << 8) | (payload[6] << 16) | (payload[7] << 24)) >>> 0;
@@ -165,7 +167,8 @@ function fakeRadio(image: Uint8Array, opts: { spi: boolean; fontVersionAt?: Reco
       const r = new Uint8Array(12 + len); r.set([0x20, 0x05, len + 8, 0]); r.set(payload.subarray(4, 10), 4);
       for (let i = 0; i < len; i++) {
         const a = addr + i;
-        r[12 + i] = opts.fontVersionAt?.[a] ?? (a < image.length ? image[a] : 0xff);
+        const at = spiToImage(a);
+        r[12 + i] = opts.fontVersionAt?.[a] ?? (at < image.length ? image[at] : 0xff);
       }
       reply(r);
     }
@@ -184,6 +187,9 @@ function fakeRadio(image: Uint8Array, opts: { spi: boolean; fontVersionAt?: Reco
   const port = { readable, writable, open: async () => {}, close: async () => {} };
   return { port, reads, writes, inject: (b: Uint8Array) => push(b) };
 }
+
+/** SPI address -> fake radio image index (second name slots at 0x020000 live at 0x9000). */
+const spiToImage = (a: number) => (a >= 0x20000 && a < 0x24000 ? 0x9000 + (a - 0x20000) : a);
 
 const serial = vi.hoisted(() => ({ port: null as unknown }));
 vi.mock('../../src/radios/shared/serialPort', () => ({ requestSerialPort: async () => serial.port }));

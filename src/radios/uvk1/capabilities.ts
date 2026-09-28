@@ -6,8 +6,8 @@
  */
 import type { RadioCapabilities, MemoryRegionSpec } from '../../types/radioCapabilities';
 import {
-  UVK1_ADDR, UVK1_ATTR_SIZE, UVK1_CHANNEL_SIZE, UVK1_LIST_NAME_SIZE, UVK1_MAX_CHANNELS,
-  UVK1_MAX_NAME_BYTES, UVK1_NAME_SIZE, UVK1_SCAN_LISTS,
+  UVK1_ADDR, UVK1_ATTR_SIZE, UVK1_CHANNEL_SIZE, UVK1_IMAGE_EXT_BASE, UVK1_LIST_NAME_SIZE, UVK1_MAX_CHANNELS,
+  UVK1_MAX_NAME_BYTES, UVK1_MAX_NAME_BYTES_LONG, UVK1_NAME_SIZE, UVK1_SCAN_LISTS,
 } from './constants';
 
 /** Map of the image this driver reads, for the Diagnostics image viewer. */
@@ -22,7 +22,13 @@ const UVK1_MEMORY_REGIONS: MemoryRegionSpec[] = [
     label: 'Channel names',
     start: UVK1_ADDR.CHANNEL_NAMES,
     length: UVK1_MAX_CHANNELS * UVK1_NAME_SIZE,
-    notes: `UTF-8, at most ${UVK1_MAX_NAME_BYTES} bytes (5 kanji / kana), rest 0.`,
+    notes: `UTF-8, at most ${UVK1_MAX_NAME_BYTES} bytes (5 kanji / kana), rest 0. On 25Ja with long names all 16 bytes are used and the name goes on in the second slot.`,
+  },
+  {
+    label: 'Channel names, second slot (25Ja long names)',
+    start: UVK1_IMAGE_EXT_BASE,
+    length: UVK1_MAX_CHANNELS * UVK1_NAME_SIZE,
+    notes: `SPI 0x020000 + 16*n on the radio. Bytes 17-${UVK1_MAX_NAME_BYTES_LONG} of names that fill the first slot; read only for those.`,
   },
   {
     label: 'Channel attributes',
@@ -47,8 +53,9 @@ export const UVK1_CAPS: RadioCapabilities = {
   bandLimits: { vhfMin: 18, vhfMax: 350, uhfMin: 350, uhfMax: 1300 },
   writeValidations: { channelsMustBeInZones: false },
   maxChannels: UVK1_MAX_CHANNELS,
-  // Bytes on the radio. The name is UTF-8: 15 ASCII or 5 kanji / kana.
-  maxChannelNameLength: UVK1_MAX_NAME_BYTES,
+  // Characters the editor accepts. The radio counts bytes (UTF-8): 15 on 25ja /
+  // Dondji, 31 on 25Ja with long names; the write checks bytes per radio.
+  maxChannelNameLength: UVK1_MAX_NAME_BYTES_LONG,
   channelDeleteKeepsNumbers: true,
   supportsZones: false,
   supportsScanLists: false,
