@@ -40,7 +40,16 @@ import { UVK1_BAUD_RATE, UVK1_BLOCK_SIZE, UVK1_SPI_READ_MAX, UVK1_SPI_WRITE_MAX 
 const TIMEOUT_MS = 5000;
 
 /** A write may erase a 4 KB sector (about 300 ms) before programming it. */
-const WRITE_TIMEOUT_MS = 5000;
+/**
+ * Wait for a write reply as long as the web tool does: 1500 x 10 ms = 15 s
+ * (WRITE_FREQ_SPI_WRITE_WAIT_ITERATIONS in docs/js/flash.js). 5 s was not
+ * enough on hardware 2026-09-28: the first write timed out with no reply.
+ */
+const WRITE_TIMEOUT_MS = 15000;
+
+/** Sends per write, and the pause before a resend (spiFlashWriteChunk: 3 tries, 150 ms). */
+const WRITE_ATTEMPTS = 3;
+const WRITE_RETRY_PAUSE_MS = 150;
 
 /**
  * How long to wait for the SPI read that identifies the radio. A radio that
@@ -282,10 +291,25 @@ export class UVK1Connection {
     if (data.length < 1 || data.length > UVK1_SPI_WRITE_MAX) {
       throw new Error(`UV-K1: SPI write size ${data.length} out of range`);
     }
-    const reply = await this.exchange(spiWritePayload(address, data), [CMD_SPI_WRITE_REPLY], WRITE_TIMEOUT_MS);
-    if (!spiWriteAccepted(reply, address)) {
-      throw new Error(`UV-K1: write at 0x${address.toString(16)} was not confirmed`);
+    // Resending the same bytes to the same address is harmless: the radio
+    // compares with what is there and only rewrites a sector that differs.
+    let lastError: unknown;
+    for (let attempt = 1; attempt <= WRITE_ATTEMPTS; attempt++) {
+      if (attempt > 1) await this.delay(WRITE_RETRY_PAUSE_MS);
+      const t0 = Date.now();
+      try {
+        const reply = await this.exchange(spiWritePayload(address, data), [CMD_SPI_WRITE_REPLY], WRITE_TIMEOUT_MS);
+        if (!spiWriteAccepted(reply, address)) {
+          throw new Error(`write at 0x${address.toString(16)} was not confirmed`);
+        }
+        log(`write 0x${address.toString(16)} ${data.length} B: ${Date.now() - t0} ms${attempt > 1 ? ` (attempt ${attempt})` : ''}`);
+        return;
+      } catch (error) {
+        lastError = error;
+        log(`write 0x${address.toString(16)} ${data.length} B attempt ${attempt} failed after ${Date.now() - t0} ms: ${error instanceof Error ? error.message : String(error)}`);
+      }
     }
+    throw new Error(`UV-K1: write at 0x${address.toString(16)} failed: ${lastError instanceof Error ? lastError.message : String(lastError)}`);
   }
 
   /** SPI read with the short timeout used to identify the radio. */

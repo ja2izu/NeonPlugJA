@@ -25,6 +25,7 @@
 import type { RadioInfo } from '../../types/radio';
 import type { Channel } from '../../models';
 import { BaseAnalogProtocol } from '../shared/BaseProtocols';
+import { log as plog } from '../../utils/protocolLogger';
 import { UVK1Connection, openUVK1Port, type UVK1SerialPort } from './connection';
 import {
   UVK1_ADDR, UVK1_ATTR_SIZE, UVK1_BLOCK_SIZE, UVK1_CHANNEL_SIZE, UVK1_FONT_BASE,
@@ -187,6 +188,11 @@ export class UVK1Protocol extends BaseAnalogProtocol {
     const writes = planWrites(current, target.image, target.touched);
     const total = writes.length * 2;
 
+    plog.info(
+      `write plan: ${writes.length} write(s), ${writes.reduce((n, w) => n + w.data.length, 0)} bytes: ` +
+        writes.map((w) => `0x${w.address.toString(16)}+${w.data.length}`).join(' '),
+      'UV-K1',
+    );
     if (writes.length === 0) {
       this.onProgress?.(1, 'No changes to write');
       return;
