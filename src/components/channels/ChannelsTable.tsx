@@ -4,6 +4,7 @@ import { useChannelsStore } from '../../store/channelsStore';
 import type { ChannelColumnGroup } from '../../types/radioCapabilities';
 import { useRadioCapabilities } from '../../hooks/useRadioCapabilities';
 import { useChannelWriteRule } from '../../hooks/useChannelWriteRule';
+import { useJapaneseNamesActive } from '../../hooks/useJapaneseNamesActive';
 import { useRadioSettingsStore } from '../../store/radioSettingsStore';
 import { useScanListsStore } from '../../store/scanListsStore';
 import { useRXGroupsStore } from '../../store/rxGroupsStore';
@@ -72,6 +73,7 @@ export const ChannelsTable: React.FC<ChannelsTableProps> = ({
   // and the editor checks by it: no band errors while the hidden out-of-band
   // switch is on, and no RX band errors where the write keeps every channel.
   const writeRule = useChannelWriteRule();
+  const japaneseNames = useJapaneseNamesActive();
   const bandLimits = writeRule.outOfBand ? null : (caps?.bandLimits ?? null);
   const maxChannels = caps?.maxChannels ?? 4000;
   const analogOnly = caps?.analogOnly === true;
@@ -355,7 +357,8 @@ export const ChannelsTable: React.FC<ChannelsTableProps> = ({
             <th className="px-2 py-2 text-left text-neon-cyan font-bold sticky left-[28px] bg-dark-charcoal z-30 min-w-[40px]" aria-sort={sortState('number')}>
               <SortButton label="#" state={sortState('number')} onClick={() => toggleSort('number')} title={sortTitle('Channel number')} />
             </th>
-            <th className="px-2 py-2 text-left text-neon-cyan font-bold sticky left-[68px] bg-dark-charcoal z-30 min-w-[120px]" aria-sort={sortState('name')}>
+            {/* 日本語名 ON: 全角 8 字（16 バイト）が収まる幅。text-xs 12px × 8 = 96px ＋ 入力欄と列の余白 */}
+            <th className={`px-2 py-2 text-left text-neon-cyan font-bold sticky left-[68px] bg-dark-charcoal z-30 ${japaneseNames ? 'min-w-[144px]' : 'min-w-[120px]'}`} aria-sort={sortState('name')}>
               <SortButton label="Name" state={sortState('name')} onClick={() => toggleSort('name')} title={sortTitle('Channel name')} />
             </th>
             <th className="px-2 py-2 text-left text-neon-cyan font-bold min-w-[90px]" aria-sort={sortState('rxFrequency')}>

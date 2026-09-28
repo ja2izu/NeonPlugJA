@@ -12,8 +12,11 @@ import { exportScanListsToCSV, importScanListsFromCSV, downloadCSV } from '../..
 import { addScanLists } from '../../services/csv/importModes';
 import { checkScanListLimits } from '../../services/csv/importLimits';
 import { nothingImportedMessage } from '../../services/csv/importProblems';
+import { useJapaneseNamesActive } from '../../hooks/useJapaneseNamesActive';
+import { readCsvText } from '../../utils/readCsvText';
 
 export const ScanListsTab: React.FC = () => {
+  const ja = useJapaneseNamesActive();
   const { scanLists, setScanLists } = useScanListsStore();
   const { caps } = useRadioCapabilities();
   const { alertOpen, alertMessage, alertTitle, showAlert, closeAlert } = useAlert('Full CSV Export/Import');
@@ -24,7 +27,7 @@ export const ScanListsTab: React.FC = () => {
   }, [scanLists]);
 
   const handleImportScanListsFile = useCallback((file: File) => {
-    file.text().then(content => {
+    readCsvText(file, ja).then(content => {
       const result = importScanListsFromCSV(content);
       // Rows that can't be read are left out and named; only a file with
       // nothing readable stops here.
@@ -45,7 +48,7 @@ export const ScanListsTab: React.FC = () => {
     }).catch(err => {
       showAlert(err instanceof Error ? err.message : 'Failed to read CSV file', 'Import failed');
     });
-  }, [showAlert, startImport, scanLists, caps, setScanLists]);
+  }, [showAlert, startImport, scanLists, caps, setScanLists, ja]);
 
   return (
     <div className="h-full flex flex-col">

@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { useDebugStore } from '../../store/debugStore';
 import { useOutOfBandStore } from '../../store/outOfBandStore';
+import { useJapaneseNamesStore } from '../../store/japaneseNamesStore';
+import { FORK_LABEL, FORK_AUTHOR } from '../../utils/forkVersion';
 import { useRadioCapabilities } from '../../hooks/useRadioCapabilities';
 import { RADIO_DESCRIPTORS } from '../../radios';
 import { Card } from '../ui/Card';
@@ -26,6 +28,8 @@ export const AboutTab: React.FC = () => {
   const { allowOutOfBandFrequencies, setAllowOutOfBandFrequencies } = useOutOfBandStore();
   const { caps } = useRadioCapabilities();
   const [outOfBandConfirmOpen, setOutOfBandConfirmOpen] = useState(false);
+  const { japaneseNames, setJapaneseNames } = useJapaneseNamesStore();
+  const [japaneseNamesConfirmOpen, setJapaneseNamesConfirmOpen] = useState(false);
   const [offlineFallbackOpen, setOfflineFallbackOpen] = useState(false);
 
   return (
@@ -37,6 +41,22 @@ export const AboutTab: React.FC = () => {
       />
 
       <div className="space-y-6">
+        {/* NeonPlugJA: フォークの版と出典。上流の版とは別に出す */}
+        <Card>
+          <div className="flex items-baseline justify-between gap-3 flex-wrap">
+            <SectionTitle>{FORK_LABEL}</SectionTitle>
+            <span className="text-xs font-mono text-muted">NeonPlug {VERSION_LABEL} ベース</span>
+          </div>
+          <p className="text-cool-gray text-sm">
+            DM-32UV の日本語（GB2312・供出区点）対応フォークです。日本語化した字庫（master_1990）を焼いた
+            無線機で、チャンネル名などに日本語を使えます。About の「日本語名」で切り替えます。
+          </p>
+          <p className="text-xs text-muted mt-2">
+            Copyright (c) 2026 {FORK_AUTHOR} · MIT License ·
+            Based on NeonPlug (Copyright (c) NeonPlug contributors), MIT License
+          </p>
+        </Card>
+
         {/* What's new — parsed from the bundled CHANGELOG.md so it works offline */}
         {LATEST_RELEASE && (
           <Card>
@@ -415,6 +435,37 @@ export const AboutTab: React.FC = () => {
             </div>
           </div>
         )}
+
+        {/* 日本語名。日本語化した字庫を焼いた DM-32 向け。shown whenever the radio supports it
+            or the switch is on, so it can always be turned off. */}
+        {(caps?.supportsJapaneseNames || japaneseNames) && (
+          <div className="bg-deep-gray rounded-lg border-2 border-yellow-500 p-6">
+            <h3 className="text-2xl font-bold text-yellow-400 mb-3">日本語名（Japanese names）</h3>
+            <div className="space-y-3">
+              <p className="text-base font-semibold text-yellow-300">
+                日本語化した字庫（master_1990）を焼いた無線機専用です。純正の字庫のままでは、
+                GB2312 に無い字（ー 東 関 塚 など）が別の中国漢字で表示されます。
+              </p>
+              <p className="text-cool-gray text-sm">
+                ON のあいだ、チャンネル・ゾーン・スキャンリスト・連絡先・トークグループ・RX グループ・無線機 ID・
+                緊急システム・暗号鍵の名前を GB2312 と供出区点で読み書きします。長さは文字数ではなくバイト数で数えます
+                （英数字 1、漢字・かな 2）。切り替えたら、無線機から読み直してください。
+                読み込み済みの名前は、読んだときの設定で解釈されています。
+              </p>
+              <button
+                type="button"
+                onClick={() => (japaneseNames ? setJapaneseNames(false) : setJapaneseNamesConfirmOpen(true))}
+                className={`px-6 py-3 rounded-lg font-semibold transition-colors ${
+                  japaneseNames
+                    ? 'bg-yellow-900/40 text-yellow-300 border border-yellow-500 hover:bg-yellow-900/60'
+                    : 'bg-yellow-900/20 text-yellow-400 border border-yellow-600/40 hover:bg-yellow-900/30'
+                }`}
+              >
+                {japaneseNames ? '日本語名 ON：OFF にする' : '日本語名を ON にする'}
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
     <ConfirmModal
@@ -441,6 +492,19 @@ export const AboutTab: React.FC = () => {
       }
       confirmLabel="Turn on"
       variant="danger"
+    />
+    <ConfirmModal
+      isOpen={japaneseNamesConfirmOpen}
+      onClose={() => setJapaneseNamesConfirmOpen(false)}
+      onConfirm={() => setJapaneseNames(true)}
+      title="日本語名を ON にしますか？"
+      message={
+        '日本語化した字庫（master_1990）を焼いた無線機専用です。\n\n' +
+        '純正の字庫のままだと、GB2312 に無い字が別の中国漢字で表示されます。\n\n' +
+        'ON にしたら、無線機から読み直してください。About で OFF にするまで ON のままです。'
+      }
+      confirmLabel="ON にする"
+      variant="default"
     />
     </>
   );

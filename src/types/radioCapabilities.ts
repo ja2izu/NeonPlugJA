@@ -185,6 +185,11 @@ export interface RadioCapabilities {
    * For radios with modified firmware. The DM-32 only, for now.
    */
   supportsOutOfBandFrequencies?: boolean;
+  /**
+   * 日本語名スイッチ（About）がこの無線機に効く。日本語化した字庫を焼いた DM-32 向け。
+   * ON のあいだ、名前を GB2312 と供出区点で読み書きする。DM-32 のみ。
+   */
+  supportsJapaneseNames?: boolean;
   /** Returns true if firmware is 049 or newer (or radio-specific threshold). */
   isFirmware049OrNewer?: (firmware: string) => boolean;
   /**

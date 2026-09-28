@@ -14,6 +14,8 @@ import { SectionTitle } from '../ui/SectionTitle';
 import { EmptyState } from '../ui/EmptyState';
 import { ConfirmModal } from '../ui/ConfirmModal';
 import { BUTTON, FIELD } from '../ui/controlStyles';
+import { useJapaneseNamesActive } from '../../hooks/useJapaneseNamesActive';
+import { fitNameBytes, JA_NAME_BYTES } from '../../utils/japaneseNames';
 
 /** One of the two per-zone VFO channel pickers. Hoisted, not nested in its
  *  parent's render: a component defined inside a render is a new type on every
@@ -152,6 +154,7 @@ export const ZonesList: React.FC = () => {
   const maxZones = caps?.maxZones ?? 250;
   const { zones, selectedZoneId, setSelectedZoneId, addZone, deleteZone, renameZone } = useZonesStore();
   const [newZoneName, setNewZoneName] = useState('');
+  const ja = useJapaneseNamesActive();
   const [editingZoneId, setEditingZoneId] = useState<string | null>(null);
   const [editZoneName, setEditZoneName] = useState('');
   const [zoneToDelete, setZoneToDelete] = useState<{ id: string; name: string } | null>(null);
@@ -190,7 +193,9 @@ export const ZonesList: React.FC = () => {
       setEditingZoneId(null);
       setEditZoneName('');
     } else {
-      showAlert('Invalid zone name. Zone names must be 1-10 characters.');
+      showAlert(ja
+        ? `ゾーン名は 1〜${JA_NAME_BYTES.zone} バイトです（英数字 1、漢字・かな 2）。`
+        : 'Invalid zone name. Zone names must be 1-10 characters.');
     }
   };
 
@@ -230,7 +235,7 @@ export const ZonesList: React.FC = () => {
                     <input
                       type="text"
                       value={editZoneName}
-                      onChange={(e) => setEditZoneName(e.target.value)}
+                      onChange={(e) => setEditZoneName(ja ? fitNameBytes(e.target.value, JA_NAME_BYTES.zone) : e.target.value)}
                           onKeyPress={(e) => {
                             if (e.key === 'Enter') {
                               handleSaveEdit(zone.id);
@@ -240,7 +245,7 @@ export const ZonesList: React.FC = () => {
                           }}
                       onClick={(e) => e.stopPropagation()}
                       className={`${FIELD} flex-1 border rounded px-2 py-1 text-sm`}
-                      maxLength={10}
+                      maxLength={ja ? undefined : 10}
                       autoFocus
                     />
                     <button
@@ -340,10 +345,10 @@ export const ZonesList: React.FC = () => {
         listSubtitle={`${zones.length}/${maxZones} zones`}
         addInputPlaceholder="Zone name..."
         addInputValue={newZoneName}
-        onAddInputChange={setNewZoneName}
+        onAddInputChange={ja ? (v: string) => setNewZoneName(fitNameBytes(v, JA_NAME_BYTES.zone)) : setNewZoneName}
         onAdd={handleAddZone}
         addDisabled={zones.length >= maxZones}
-        addInputMaxLength={10}
+        addInputMaxLength={ja ? undefined : 10}
         listContent={listContent}
         detailContent={detailContent}
         fullHeight

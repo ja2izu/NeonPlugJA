@@ -15,8 +15,14 @@ import { Card } from '../ui/Card';
 import { EmptyState } from '../ui/EmptyState';
 import { ConfirmModal } from '../ui/ConfirmModal';
 import { BUTTON, FIELD } from '../ui/controlStyles';
+import { useJapaneseNamesActive } from '../../hooks/useJapaneseNamesActive';
+import { fitNameBytes, JA_NAME_BYTES } from '../../utils/japaneseNames';
+
+/** 日本語名 ON: 10 バイト（書きと同じ）。OFF: 上流どおり 11 文字 */
+const fitRxName = (v: string, ja: boolean) => (ja ? fitNameBytes(v, JA_NAME_BYTES.rxGroup) : v.slice(0, 11));
 
 export const RXGroupsList: React.FC = () => {
+  const ja = useJapaneseNamesActive();
   const { caps } = useRadioCapabilities();
   // One maximum for the subtitle, the add handler and the Add button. The button
   // checked a literal 32, so a DA-7X2 (250 groups) could never add a 33rd.
@@ -36,7 +42,7 @@ export const RXGroupsList: React.FC = () => {
     }
     if (newGroupName.trim()) {
       addGroup({
-        name: newGroupName.trim().slice(0, 11),
+        name: fitRxName(newGroupName.trim(), ja),
         bitmask: 0,
         statusFlag: 0,
         entryFlag: 0x01,
@@ -76,17 +82,17 @@ export const RXGroupsList: React.FC = () => {
                 <input
                   type="text"
                   value={editingNameValue}
-                  onChange={(e) => setEditingNameValue(e.target.value.slice(0, 11))}
+                  onChange={(e) => setEditingNameValue(fitRxName(e.target.value, ja))}
                   onBlur={() => {
                     if (editingNameValue.trim()) {
-                      updateGroup(group.index, { name: editingNameValue.trim().slice(0, 11) });
+                      updateGroup(group.index, { name: fitRxName(editingNameValue.trim(), ja) });
                     }
                     setEditingName(null);
                   }}
                   onKeyPress={(e) => {
                     if (e.key === 'Enter') {
                       if (editingNameValue.trim()) {
-                        updateGroup(group.index, { name: editingNameValue.trim().slice(0, 11) });
+                        updateGroup(group.index, { name: fitRxName(editingNameValue.trim(), ja) });
                       }
                       setEditingName(null);
                     } else if (e.key === 'Escape') {
@@ -95,7 +101,7 @@ export const RXGroupsList: React.FC = () => {
                   }}
                   onClick={(e) => e.stopPropagation()}
                   autoFocus
-                  maxLength={11}
+                  maxLength={ja ? undefined : 11}
                   className={`${FIELD} border rounded px-2 py-1 text-sm font-medium w-full`}
                 />
               ) : (
@@ -146,17 +152,17 @@ export const RXGroupsList: React.FC = () => {
               <input
                 type="text"
                 value={editingNameValue}
-                onChange={(e) => setEditingNameValue(e.target.value.slice(0, 11))}
+                onChange={(e) => setEditingNameValue(fitRxName(e.target.value, ja))}
                 onBlur={() => {
                   if (editingNameValue.trim()) {
-                    updateGroup(selectedGroupData.index, { name: editingNameValue.trim().slice(0, 11) });
+                    updateGroup(selectedGroupData.index, { name: fitRxName(editingNameValue.trim(), ja) });
                   }
                   setEditingName(null);
                 }}
                 onKeyPress={(e) => {
                   if (e.key === 'Enter') {
                     if (editingNameValue.trim()) {
-                      updateGroup(selectedGroupData.index, { name: editingNameValue.trim().slice(0, 11) });
+                      updateGroup(selectedGroupData.index, { name: fitRxName(editingNameValue.trim(), ja) });
                     }
                     setEditingName(null);
                   } else if (e.key === 'Escape') {
@@ -164,7 +170,7 @@ export const RXGroupsList: React.FC = () => {
                   }
                 }}
                 autoFocus
-                maxLength={11}
+                maxLength={ja ? undefined : 11}
                 className={`${FIELD} border rounded px-2 py-1 text-neon-cyan font-bold flex-1`}
               />
             ) : (
@@ -271,6 +277,7 @@ interface RXGroupEditorProps {
 }
 
 const RXGroupEditor: React.FC<RXGroupEditorProps> = ({ group, onAlert }) => {
+  const ja = useJapaneseNamesActive();
   // Per-radio limit, not a hardcoded DM-32 value.
   const { caps } = useRadioCapabilities();
   const { updateGroup } = useRXGroupsStore();
@@ -298,8 +305,8 @@ const RXGroupEditor: React.FC<RXGroupEditorProps> = ({ group, onAlert }) => {
         <input
           type="text"
           value={group.name}
-          onChange={(e) => updateGroup(group.index, { name: e.target.value.slice(0, 11) })}
-          maxLength={11}
+          onChange={(e) => updateGroup(group.index, { name: fitRxName(e.target.value, ja) })}
+          maxLength={ja ? undefined : 11}
           className={`${FIELD} flex-1 border rounded px-3 py-2 text-sm`}
           placeholder="Enter group name"
         />

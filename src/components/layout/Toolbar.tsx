@@ -39,6 +39,9 @@ import { ReadProgressModal } from '../ui/ReadProgressModal';
 import { ConfirmModal } from '../ui/ConfirmModal';
 import { WriteConfirmBody } from './WriteConfirmBody';
 import { WriteBlockedBody } from './WriteBlockedBody';
+import { JapaneseNamesBlockedBody } from './JapaneseNamesBlockedBody';
+import { findUnwritableNames } from '../../services/validation/japaneseNameCheck';
+import { isJapaneseNamesActive } from '../../utils/japaneseNames';
 import { WriteRefusalBody } from './WriteRefusalBody';
 import { CodeplugSummaryBody } from './CodeplugSummaryBody';
 import { ConvertLossList } from './ConvertLossList';
@@ -360,6 +363,24 @@ export const Toolbar: React.FC = () => {
     if (blocksWriting(integrity)) {
       showAlertBody(<WriteBlockedBody findings={integrity} />, 'Write blocked');
       return;
+    }
+    // 日本語名 ON: 字庫に無い字を含む名前があれば、何も送らずに止める
+    if (isJapaneseNamesActive()) {
+      const unwritable = findUnwritableNames({
+        channels,
+        zones,
+        scanLists,
+        talkGroups: useQuickContactsStore.getState().contacts,
+        rxGroups: useRXGroupsStore.getState().groups,
+        radioIds: useDMRRadioIDsStore.getState().radioIds,
+        digitalEmergencies: useDigitalEmergencyStore.getState().systems,
+        analogEmergencies: useAnalogEmergencyStore.getState().systems,
+        encryptionKeys: useEncryptionKeysStore.getState().keys,
+      });
+      if (unwritable.length) {
+        showAlertBody(<JapaneseNamesBlockedBody items={unwritable} />, '書込を中止しました', 'lg');
+        return;
+      }
     }
 
     const preview = previewChannelWrite(channels);

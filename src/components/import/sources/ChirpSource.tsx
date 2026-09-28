@@ -13,6 +13,8 @@ import { checkChannelLimits } from '../../../services/csv/importLimits';
 import { nothingImportedMessage } from '../../../services/csv/importProblems';
 import { useCsvImport, type CsvImportMode } from '../../../hooks/useCsvImport';
 import { useRadioCapabilities } from '../../../hooks/useRadioCapabilities';
+import { useJapaneseNamesActive } from '../../../hooks/useJapaneseNamesActive';
+import { readCsvText } from '../../../utils/readCsvText';
 import { Button } from '../../ui/Button';
 import { Card } from '../../ui/Card';
 import { SectionTitle } from '../../ui/SectionTitle';
@@ -34,6 +36,7 @@ export const ChirpSource: React.FC<ChirpSourceProps> = ({ onError }) => {
     errors?: string[];
   } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const ja = useJapaneseNamesActive();
 
   // CHIRP rows used to be appended straight onto the channel list: no Add or
   // Replace choice, no check for channels already there, no radio limit, so the
@@ -48,7 +51,7 @@ export const ChirpSource: React.FC<ChirpSourceProps> = ({ onError }) => {
     setChirpImportResult(null);
 
     try {
-      const content = await file.text();
+      const content = await readCsvText(file, ja);
       // A NeonPlug channels CSV is read by its own importer, rather than failing
       // every row as a CHIRP file.
       const format = detectChannelCsvFormat(content);

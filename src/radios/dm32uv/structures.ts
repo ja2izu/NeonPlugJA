@@ -8,6 +8,7 @@ import { generateZoneId } from '../../utils/zoneHelpers';
 import { OFFSET, BLOCK_SIZE, LIMITS } from './constants';
 import { createDefaultChannel } from '../../utils/channelHelpers';
 import { log } from '../../utils/protocolLogger';
+import { decodeName, encodeNameForWrite, japaneseNamesOn } from './nameMode';
 import { NO_TX_FREQUENCY, isNoTxFrequency, isRxInNoTxBand } from '../../services/validation/frequencyValidator';
 
 // --- BCD frequency and CTCSS/DCS encoding (inlined from encoding.ts) ---
@@ -193,8 +194,7 @@ export function parseChannel(data: Uint8Array, channelNumber: number): Channel {
   // Name (0x00-0x0F, 16 bytes, null-terminated)
   const nameBytes = data.slice(0, 16);
   const nullIndex = nameBytes.indexOf(0);
-  const name = new TextDecoder('ascii', { fatal: false })
-    .decode(nameBytes.slice(0, nullIndex >= 0 ? nullIndex : 16))
+  const name = decodeName(nameBytes.slice(0, nullIndex >= 0 ? nullIndex : 16))
     .replace(/\x00/g, '')
     .trim();
 
@@ -566,7 +566,9 @@ export function encodeChannel(channel: Channel): Uint8Array {
   data.fill(0xFF);
   
   // Name (0x00-0x0F, 16 bytes, null-terminated)
-  const nameBytes = new TextEncoder().encode(channel.name.slice(0, 16));
+  const nameBytes = japaneseNamesOn()
+    ? encodeNameForWrite(channel.name, 16, 'Channel')
+    : new TextEncoder().encode(channel.name.slice(0, 16));
   data.set(nameBytes, 0);
   if (nameBytes.length < 16) {
     data[nameBytes.length] = 0; // Null terminator
@@ -815,12 +817,13 @@ export function parseZones(
 
     const zoneData = data.slice(offset, offset + 145);
 
-    // Name (11 bytes, null-terminated)
-    // The zone name is null-terminated, and bytes after the null may be padding or metadata
-    const nameBytes = zoneData.slice(0, 11);
+    // Name (16 bytes, null-terminated only when shorter than 16)
+    // The zone name is null-terminated, and bytes after the null may be padding or leftovers
+    // of an older name (vendor CPS doesn't clear them). A 16-byte name has no terminator:
+    // byte 16 is the channel count. Verified on a DP570UV written by the vendor CPS, 2026-09-22.
+    const nameBytes = zoneData.slice(0, BLOCK_SIZE.ZONE_NAME);
     const nullIndex = nameBytes.indexOf(0);
-    const name = new TextDecoder('ascii', { fatal: false })
-      .decode(nameBytes.slice(0, nullIndex >= 0 ? nullIndex : 11))
+    const name = decodeName(nameBytes.slice(0, nullIndex >= 0 ? nullIndex : BLOCK_SIZE.ZONE_NAME))
       .replace(/\x00/g, '')
       .trim();
 
@@ -839,7 +842,7 @@ export function parseZones(
     }
 
     // Channel list structure (from debug analysis):
-    // - Bytes 11-15: Padding (0xFF)
+    // - Bytes 0-15: Name (see above)
     // - Byte 16: Channel count (but may be unreliable for some zones)
     // - Bytes 17-18: Channel 1 (16-bit little-endian)
     // - Bytes 19-20: Channel 2 (16-bit little-endian)
@@ -943,24 +946,24 @@ export function encodeZone(zone: Zone, _zoneIndex: number): Uint8Array {
   // Initialize to 0xFF (empty zone marker)
   data.fill(0xFF);
   
-  // Name (bytes 0-10, 11 bytes, null-terminated)
-  // The name field is 11 bytes total, with the name null-terminated and the rest padded with 0xFF
-  const nameBytes = new TextEncoder().encode(zone.name.slice(0, 10)); // Max 10 chars to leave room for null terminator
-  const nameLength = Math.min(nameBytes.length, 10);
+  // Name (bytes 0-15, 16 bytes, null-terminated only when shorter than 16)
+  // A 16-byte name has no terminator: byte 16 is the channel count, as the vendor CPS
+  // writes it (verified on a DP570UV, 2026-09-22). After the terminator, 0xFF padding.
+  const ZONE_NAME = BLOCK_SIZE.ZONE_NAME;
+  const nameBytes = japaneseNamesOn()
+    ? encodeNameForWrite(zone.name, ZONE_NAME, 'Zone')
+    : new TextEncoder().encode(zone.name.slice(0, ZONE_NAME));
+  const nameLength = Math.min(nameBytes.length, ZONE_NAME);
   
   // Write name bytes
   data.set(nameBytes.slice(0, nameLength), 0);
   
-  // Always null-terminate the name
-  data[nameLength] = 0;
-  
-  // Fill remaining bytes in name field (bytes nameLength+1 to 10) with 0xFF padding
-  for (let i = nameLength + 1; i < 11; i++) {
-    data[i] = 0xFF;
+  // Null-terminate the name when it is shorter than the field
+  if (nameLength < ZONE_NAME) {
+    data[nameLength] = 0;
   }
   
-  // Padding (bytes 11-15, 5 bytes of 0xFF)
-  // Already initialized to 0xFF
+  // Bytes after the terminator up to 15 are already 0xFF
   
   // Channel count (byte 16)
   const channelCount = Math.min(zone.channels.length, 64); // Max 64 channels per zone
@@ -1053,8 +1056,7 @@ export function parseScanLists(
     const nameEnd = nullIndex >= 0 ? nullIndex : nameBytes.length;
     let name = '';
     if (nameEnd > 0) {
-      name = new TextDecoder('ascii', { fatal: false })
-        .decode(nameBytes.slice(0, nameEnd))
+      name = decodeName(nameBytes.slice(0, nameEnd))
         .trim();
     }
     if (!name) {
@@ -1161,7 +1163,9 @@ export function encodeScanList(scanList: ScanList, _listNum: number): Uint8Array
   data.fill(0x00);
   
   // Name at +0x00 (11 bytes; null-terminated only when shorter than 11 chars)
-  const nameBytes = new TextEncoder().encode(scanList.name.slice(0, 11));
+  const nameBytes = japaneseNamesOn()
+    ? encodeNameForWrite(scanList.name, 11, 'ScanList')
+    : new TextEncoder().encode(scanList.name.slice(0, 11));
   const nameLength = Math.min(nameBytes.length, 11);
   for (let i = 0; i < nameLength; i++) {
     data[0x00 + i] = nameBytes[i];
@@ -1282,8 +1286,8 @@ export function parseContactEntry(entryData: Uint8Array, contactIndex: number): 
   const nameBytes = entryData.slice(NAME_OFFSET, NAME_OFFSET + FIELD_SIZE);
   const nullIndex = nameBytes.indexOf(0x00);
   const name = (nullIndex >= 0 
-    ? decoder.decode(nameBytes.slice(0, nullIndex))
-    : decoder.decode(nameBytes.filter(b => b !== 0xFF && b !== 0x00))
+    ? decodeName(nameBytes.slice(0, nullIndex))
+    : decodeName(nameBytes.filter(b => b !== 0xFF && b !== 0x00))
   ).trim();
   
   if (!name) return null;
@@ -1335,7 +1339,7 @@ export function parseContactEntry(entryData: Uint8Array, contactIndex: number): 
       : fieldBytes.slice(dataStart).filter(b => b !== 0xFF && b !== 0x00);
     
     if (!valueBytes.length) return undefined;
-    const value = decoder.decode(valueBytes).trim();
+    const value = decodeName(valueBytes).trim();
     return value || undefined;
   };
 
@@ -1392,7 +1396,9 @@ export function encodeContactEntry(contact: Contact): Uint8Array {
 
   // Name (0x00-0x0F, 16 bytes, null-terminated)
   if (contact.name) {
-    const nameBytes = encoder.encode(contact.name);
+    const nameBytes = japaneseNamesOn()
+      ? encodeNameForWrite(contact.name, 15, 'Contact', false)
+      : encoder.encode(contact.name);
     const len = Math.min(nameBytes.length, 15);
     entryData.set(nameBytes.slice(0, len), 0x00);
     entryData[len] = 0x00;
@@ -1436,7 +1442,9 @@ export function encodeContactEntry(contact: Contact): Uint8Array {
 
   for (const field of fields) {
     if (field.value) {
-      const bytes = encoder.encode(field.value);
+      const bytes = japaneseNamesOn()
+        ? encodeNameForWrite(field.value, 15, 'Contact field', false)
+        : encoder.encode(field.value);
       const len = Math.min(bytes.length, 15);
       entryData.set(bytes.slice(0, len), field.offset);
       entryData[field.offset + len] = 0x00;
@@ -2487,8 +2495,7 @@ export function parseDigitalEmergencies(data: Uint8Array): { systems: DigitalEme
 
     const nameBytes = entry.slice(0x00, 0x0A);
     const nullIdx = nameBytes.indexOf(0);
-    const name = new TextDecoder('ascii', { fatal: false })
-      .decode(nameBytes.slice(0, nullIdx >= 0 ? nullIdx : nameBytes.length))
+    const name = decodeName(nameBytes.slice(0, nullIdx >= 0 ? nullIdx : nameBytes.length))
       .replace(/\x00/g, '').trim();
 
     // +0x0A: Alarm Type (raw 0–5)
@@ -2552,7 +2559,9 @@ export function encodeDigitalEmergencies(systems: DigitalEmergency[], _config: D
 
     const nameBytes = new Uint8Array(10);
     if (s.name) {
-      const enc = new TextEncoder().encode(s.name.slice(0, 10));
+      const enc = japaneseNamesOn()
+        ? encodeNameForWrite(s.name, 10, 'Digital emergency')
+        : new TextEncoder().encode(s.name.slice(0, 10));
       nameBytes.set(enc);
     }
     data.set(nameBytes, base + 0x00);
@@ -2621,8 +2630,7 @@ export function parseEncryptionKeys(data: Uint8Array): EncryptionKey[] {
     // Name (10 bytes at +0x01-0x0A, ASCII string)
     const nameBytes = data.slice(entryOffset + 0x01, entryOffset + 0x0B);
     const nullIndex = nameBytes.indexOf(0);
-    const name = new TextDecoder('ascii', { fatal: false })
-      .decode(nameBytes.slice(0, nullIndex >= 0 ? nullIndex : nameBytes.length))
+    const name = decodeName(nameBytes.slice(0, nullIndex >= 0 ? nullIndex : nameBytes.length))
       .replace(/\x00/g, '')
       .trim();
 
@@ -2675,7 +2683,9 @@ export function encodeEncryptionKey(key: EncryptionKey, data: Uint8Array): void 
   const nameBytes = new Uint8Array(10);
   nameBytes.fill(0);
   if (key.name) {
-    const encoded = new TextEncoder().encode(key.name.slice(0, 10));
+    const encoded = japaneseNamesOn()
+      ? encodeNameForWrite(key.name, 10, 'Encryption key')
+      : new TextEncoder().encode(key.name.slice(0, 10));
     nameBytes.set(encoded, 0);
   }
   data.set(nameBytes, entryOffset + 0x01);
@@ -2731,13 +2741,16 @@ export function parseAnalogEmergencies(data: Uint8Array): AnalogEmergency[] {
     
     if (nullIndex >= 0) {
       // Try ASCII decoding
-      const decoded = new TextDecoder('ascii', { fatal: false })
-        .decode(nameBytes.slice(0, nullIndex))
+      const decoded = decodeName(nameBytes.slice(0, nullIndex))
         .replace(/\x00/g, '')
         .trim();
       
-      // Only use if it looks like readable text (printable ASCII)
-      if (decoded.length > 0 && /^[\x20-\x7E]+$/.test(decoded)) {
+      // Only use if it looks like readable text (printable ASCII; with Japanese names on,
+      // anything without control characters)
+      const readable = japaneseNamesOn()
+        ? !Array.from(decoded).some((ch) => { const c = ch.codePointAt(0) ?? 0; return c < 0x20 || c === 0x7f; })
+        : /^[\x20-\x7E]+$/.test(decoded);
+      if (decoded.length > 0 && readable) {
         name = decoded;
       }
     }
@@ -2812,7 +2825,9 @@ export function encodeAnalogEmergency(system: AnalogEmergency, index: number, da
 
   // Name (17 bytes, null-terminated)
   const nameBytes = new Uint8Array(17);
-  const nameEncoded = new TextEncoder().encode(system.name.substring(0, 16));
+  const nameEncoded = japaneseNamesOn()
+    ? encodeNameForWrite(system.name, 16, 'Analog emergency')
+    : new TextEncoder().encode(system.name.substring(0, 16));
   nameBytes.set(nameEncoded, 0);
   nameBytes[nameEncoded.length] = 0; // Null terminator
   data.set(nameBytes, entryOffset);
@@ -2936,8 +2951,7 @@ export function parseDMRRadioIDs(
     // Read name (12 bytes at offset +0x03, null-terminated)
     const nameBytes = entryData.slice(3, 15);
     const nullIndex = nameBytes.indexOf(0);
-    const name = new TextDecoder('ascii', { fatal: false })
-      .decode(nameBytes.slice(0, nullIndex >= 0 ? nullIndex : 12))
+    const name = decodeName(nameBytes.slice(0, nullIndex >= 0 ? nullIndex : 12))
       .replace(/\x00/g, '')
       .replace(/\xFF/g, '')
       .trim();
@@ -2994,7 +3008,9 @@ export function encodeDMRRadioID(radioId: DMRRadioID): Uint8Array {
   data[2] = (dmrIdValue >> 16) & 0xFF;
 
   // Name (12 bytes at offset +0x03, null-terminated)
-  const nameBytes = new TextEncoder().encode(radioId.name);
+  const nameBytes = japaneseNamesOn()
+    ? encodeNameForWrite(radioId.name, 11, 'Radio ID')
+    : new TextEncoder().encode(radioId.name);
   const maxNameLength = 12;
   const nameLength = Math.min(nameBytes.length, maxNameLength - 1); // -1 for null terminator
   
@@ -3192,8 +3208,7 @@ export function parseRXGroups(
     const nameBytes = entryData.slice(0, 11);
     const nullIndex = nameBytes.indexOf(0);
     const endIndex = nullIndex >= 0 ? nullIndex : 11;
-    const name = new TextDecoder('ascii', { fatal: false })
-      .decode(nameBytes.slice(0, endIndex))
+    const name = decodeName(nameBytes.slice(0, endIndex))
       .replace(/\x00/g, '')
       .trim();
 
@@ -3260,7 +3275,9 @@ export function encodeRXGroup(group: RXGroup): Uint8Array {
   data.fill(0x00);
 
   // Name (11 bytes at 0x00-0x0A, ASCII, null-terminated, 0x00 padded)
-  const nameBytes = new TextEncoder().encode(group.name.slice(0, 10));
+  const nameBytes = japaneseNamesOn()
+    ? encodeNameForWrite(group.name, 10, 'RX group')
+    : new TextEncoder().encode(group.name.slice(0, 10));
   for (let i = 0; i < 11; i++) {
     if (i < nameBytes.length) {
       data[i] = nameBytes[i];
@@ -3447,8 +3464,7 @@ export function parseQuickContacts(
     }
     
     const nameBytes = data.slice(nameStart, nameStart + nameLength);
-    const name = new TextDecoder('ascii', { fatal: false })
-      .decode(nameBytes)
+    const name = decodeName(nameBytes)
       .trim();
 
     // The null terminator is at nameEnd (after 16-byte name field)
@@ -3554,10 +3570,18 @@ export function encodeQuickContactsBlock(contacts: QuickContact[], metadata: num
     offset++;
 
     // Write name (16 single bytes, null-padded)
+    if (japaneseNamesOn()) {
+      const nameBytes = encodeNameForWrite(contact.name, 16, 'Talk group');
+      for (let j = 0; j < 16; j++) {
+        data[offset] = j < nameBytes.length ? nameBytes[j] : 0x00;
+        offset++;
+      }
+    } else {
     const cleanName = talkGroupNameOnRadio(contact.name);
     for (let j = 0; j < 16; j++) {
       data[offset] = j < cleanName.length ? (cleanName.charCodeAt(j) & 0xFF) : 0x00;
       offset++;
+    }
     }
 
     // Null terminator (after 16-byte name field)

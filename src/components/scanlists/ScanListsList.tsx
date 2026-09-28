@@ -18,6 +18,8 @@ import { SectionTitle } from '../ui/SectionTitle';
 import { EmptyState } from '../ui/EmptyState';
 import { ConfirmModal } from '../ui/ConfirmModal';
 import { BUTTON, FIELD, FIELD_INVALID } from '../ui/controlStyles';
+import { useJapaneseNamesActive } from '../../hooks/useJapaneseNamesActive';
+import { fitNameBytes } from '../../utils/japaneseNames';
 
 export const ScanListsList: React.FC = () => {
   const { caps } = useRadioCapabilities();
@@ -26,6 +28,8 @@ export const ScanListsList: React.FC = () => {
   const maxScanLists = caps?.maxScanLists ?? 32;
   // The DM-32 stores 11 characters, the D890UV family 16.
   const maxNameLength = caps?.maxScanListNameLength ?? 16;
+  // 日本語名 ON: maxNameLength をバイト数として数える（DM-32 は 11 バイト）
+  const ja = useJapaneseNamesActive();
   // The number a channel stores for each list, shown beside its name.
   const scanListsBySlot = caps?.scanListsBySlot === true;
   const { scanLists, selectedScanList, setSelectedScanList, addScanList, deleteScanList, renameScanList } = useScanListsStore();
@@ -56,7 +60,9 @@ export const ScanListsList: React.FC = () => {
       showAlert('A scan list with this name already exists.');
       return;
     }
-    const scanListName = newScanListName.trim().slice(0, maxNameLength);
+    const scanListName = ja
+      ? fitNameBytes(newScanListName.trim(), maxNameLength)
+      : newScanListName.trim().slice(0, maxNameLength);
     // The LOWEST FREE slot, not the list length. `slot` is a hardware slot and
     // the table can have holes: deleting a list clears its presence bit and
     // leaves the survivors where they are, so a radio holding one list in slot 1
@@ -113,7 +119,9 @@ export const ScanListsList: React.FC = () => {
       setEditingScanList(null);
       setEditScanListName('');
     } else {
-      showAlert(`Invalid scan list name or name already exists. Scan list names must be 1-${maxNameLength} characters and unique.`);
+      showAlert(ja
+        ? `スキャンリスト名が不正か、同じ名前があります。名前は 1〜${maxNameLength} バイト（英数字 1、漢字・かな 2）で、重複できません。`
+        : `Invalid scan list name or name already exists. Scan list names must be 1-${maxNameLength} characters and unique.`);
     }
   };
 
@@ -149,7 +157,7 @@ export const ScanListsList: React.FC = () => {
                   <input
                     type="text"
                     value={editScanListName}
-                    onChange={(e) => setEditScanListName(e.target.value)}
+                    onChange={(e) => setEditScanListName(ja ? fitNameBytes(e.target.value, maxNameLength) : e.target.value)}
                     onKeyPress={(e) => {
                       if (e.key === 'Enter') {
                         handleSaveEdit(index);
@@ -159,7 +167,7 @@ export const ScanListsList: React.FC = () => {
                     }}
                     onClick={(e) => e.stopPropagation()}
                     className={`${FIELD} flex-1 border rounded px-2 py-1 text-sm`}
-                    maxLength={maxNameLength}
+                    maxLength={ja ? undefined : maxNameLength}
                     autoFocus
                   />
                   <button
@@ -250,10 +258,10 @@ export const ScanListsList: React.FC = () => {
         listSubtitle={`${scanLists.length}/${maxScanLists} scan lists`}
         addInputPlaceholder="Scan list name..."
         addInputValue={newScanListName}
-        onAddInputChange={setNewScanListName}
+        onAddInputChange={ja ? (v: string) => setNewScanListName(fitNameBytes(v, maxNameLength)) : setNewScanListName}
         onAdd={handleAddScanList}
         addDisabled={scanLists.length >= maxScanLists}
-        addInputMaxLength={maxNameLength}
+        addInputMaxLength={ja ? undefined : maxNameLength}
         listContent={listContent}
         detailContent={detailContent}
         fullHeight
@@ -455,6 +463,7 @@ const SearchableChannelSelect: React.FC<SearchableChannelSelectProps> = ({
  */
 const ScanListNameField: React.FC<{ index: number; name: string; maxLength: number }> = ({ index, name, maxLength }) => {
   const { scanLists, renameScanList } = useScanListsStore();
+  const ja = useJapaneseNamesActive();
   const id = useId();
   // What is being typed; null while the field shows the saved name.
   const [draft, setDraft] = useState<string | null>(null);
@@ -475,7 +484,7 @@ const ScanListNameField: React.FC<{ index: number; name: string; maxLength: numb
       setDraft(null);
       setError(null);
     } else {
-      setError(`Names are 1 to ${maxLength} characters.`);
+      setError(ja ? `名前は 1〜${maxLength} バイトです（英数字 1、漢字・かな 2）。` : `Names are 1 to ${maxLength} characters.`);
     }
   };
 
@@ -488,9 +497,9 @@ const ScanListNameField: React.FC<{ index: number; name: string; maxLength: numb
         id={id}
         type="text"
         value={shown}
-        maxLength={maxLength}
+        maxLength={ja ? undefined : maxLength}
         onChange={(e) => {
-          setDraft(e.target.value);
+          setDraft(ja ? fitNameBytes(e.target.value, maxLength) : e.target.value);
           setError(null);
         }}
         onBlur={commit}

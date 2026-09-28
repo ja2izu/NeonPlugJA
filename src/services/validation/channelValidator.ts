@@ -2,6 +2,7 @@ import type { Channel } from '../../models/Channel';
 import type { RadioBandLimits } from '../../types/radioCapabilities';
 import { isNoTxFrequency, isRxInNoTxBand, isValidFrequencyRange } from './frequencyValidator';
 import { isValidColorCode, isValidTimeSlot } from './dmrValidator';
+import { nameByteLength, unwritableChars } from '../../utils/japaneseNames';
 
 export interface ValidationError {
   field: string;
@@ -17,6 +18,8 @@ const DEFAULT_MAX_NAME_LENGTH = 16;
 export interface ChannelValidationOptions {
   /** capabilities.maxChannelNameLength */
   maxNameLength?: number;
+  /** 日本語名 ON: maxNameLength をバイト数として数え、書けない字もエラーにする */
+  nameBytes?: boolean;
   /** capabilities.blankTxAnyBand: a blank TX is allowed whatever the RX. */
   blankTxAnyBand?: boolean;
   /** False where a write keeps a channel whatever its RX (the DA-7X2's planner checks TX only). */
@@ -40,7 +43,14 @@ export function validateChannel(
   if (!channel.name || channel.name.trim().length === 0) {
     errors.push({ field: 'name', message: 'Channel name is required' });
   }
-  if (channel.name.length > maxNameLength) {
+  if (options.nameBytes) {
+    const bad = unwritableChars(channel.name);
+    if (bad.length) {
+      errors.push({ field: 'name', message: `書けない字があります: ${bad.join(' ')}` });
+    } else if (nameByteLength(channel.name) > maxNameLength) {
+      errors.push({ field: 'name', message: `チャンネル名は ${maxNameLength} バイト以内です（英数字 1、漢字・かな 2）` });
+    }
+  } else if (channel.name.length > maxNameLength) {
     errors.push({ field: 'name', message: `Channel name must be ${maxNameLength} characters or less` });
   }
 

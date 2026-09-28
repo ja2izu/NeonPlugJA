@@ -1,5 +1,6 @@
 import { getCapabilitiesForModel } from '../radios/capabilities';
 import { useRadioStore } from './radioStore';
+import { isJapaneseNamesActive, nameByteLength, JA_NAME_BYTES } from '../utils/japaneseNames';
 import { create } from 'zustand';
 import type { Zone } from '../models/Zone';
 
@@ -76,7 +77,7 @@ export const useZonesStore = create<ZonesState>((set, get) => ({
     if (!trimmedNewName || trimmedNewName.length === 0) {
       return false;
     }
-    if (trimmedNewName.length > 10) {
+    if (isJapaneseNamesActive() ? nameByteLength(trimmedNewName) > JA_NAME_BYTES.zone : trimmedNewName.length > 10) {
       return false;
     }
     

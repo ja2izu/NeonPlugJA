@@ -20,6 +20,8 @@ import {
 } from './extraChannelColumns';
 import { BUTTON, FIELD } from '../ui/controlStyles';
 import { FrequencyInput } from './FrequencyInput';
+import { useJapaneseNamesActive } from '../../hooks/useJapaneseNamesActive';
+import { fitNameBytes, nameByteLength, unwritableChars } from '../../utils/japaneseNames';
 
 interface ChannelEditModalProps {
   isOpen: boolean;
@@ -58,6 +60,7 @@ export const ChannelEditModal: React.FC<ChannelEditModalProps> = ({
   const { caps } = useRadioCapabilities();
   const powerLevels = powerLevelsFor(caps);
   const maxNameLength = caps?.maxChannelNameLength ?? 16;
+  const nameBytes = useJapaneseNamesActive();
   // What is wrong with text typed into a frequency field that isn't a frequency
   // yet. Save refuses while there is any, rather than save the old value.
   const [frequencyTyping, setFrequencyTyping] = React.useState<{ rx?: string | null; tx?: string | null }>({});
@@ -97,6 +100,7 @@ export const ChannelEditModal: React.FC<ChannelEditModalProps> = ({
       ...(frequencyTyping.tx ? [{ field: 'txFrequency', message: frequencyTyping.tx }] : []),
       ...validateChannel(editedChannel, bandLimits, maxChannels, {
         maxNameLength,
+        nameBytes,
         blankTxAnyBand: caps?.blankTxAnyBand,
         checkRxBand,
       }),
@@ -171,10 +175,21 @@ export const ChannelEditModal: React.FC<ChannelEditModalProps> = ({
                     <input
                       type="text"
                       value={editedChannel.name}
-                      onChange={(e) => handleChange('name', e.target.value)}
+                      onChange={(e) => handleChange('name', nameBytes ? fitNameBytes(e.target.value, maxNameLength) : e.target.value)}
                       className={`${FIELD} w-full border rounded px-2 py-1 text-sm`}
-                      maxLength={maxNameLength}
+                      maxLength={nameBytes ? undefined : maxNameLength}
                     />
+                    {nameBytes ? (
+                      <p
+                        className={`text-xs mt-0.5 ${
+                          nameByteLength(editedChannel.name) > maxNameLength || unwritableChars(editedChannel.name).length
+                            ? 'text-red-300'
+                            : 'text-cool-gray'
+                        }`}
+                      >
+                        {nameByteLength(editedChannel.name)}/{maxNameLength} バイト
+                      </p>
+                    ) : (
                     <p
                       className={`text-xs mt-0.5 ${
                         editedChannel.name.length > maxNameLength ? 'text-red-300' : 'text-cool-gray'
@@ -182,6 +197,7 @@ export const ChannelEditModal: React.FC<ChannelEditModalProps> = ({
                     >
                       {editedChannel.name.length}/{maxNameLength} characters
                     </p>
+                    )}
                   </>
                 )}
               </div>

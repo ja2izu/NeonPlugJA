@@ -14,8 +14,11 @@ import { exportZonesToCSV, importZonesFromCSV, downloadCSV } from '../../service
 import { addZones } from '../../services/csv/importModes';
 import { checkZoneLimits } from '../../services/csv/importLimits';
 import { nothingImportedMessage } from '../../services/csv/importProblems';
+import { useJapaneseNamesActive } from '../../hooks/useJapaneseNamesActive';
+import { readCsvText } from '../../utils/readCsvText';
 
 export const ZonesTab: React.FC = () => {
+  const ja = useJapaneseNamesActive();
   const { zones, updateZone, setZones } = useZonesStore();
   const { channels } = useChannelsStore();
   const { caps } = useRadioCapabilities();
@@ -28,7 +31,7 @@ export const ZonesTab: React.FC = () => {
   }, [zones]);
 
   const handleImportZonesFile = useCallback((file: File) => {
-    file.text().then(content => {
+    readCsvText(file, ja).then(content => {
       const result = importZonesFromCSV(content);
       // Rows that can't be read are left out and named; only a file with
       // nothing readable stops here.
@@ -49,7 +52,7 @@ export const ZonesTab: React.FC = () => {
     }).catch(err => {
       showAlert(err instanceof Error ? err.message : 'Failed to read CSV file', 'Import failed');
     });
-  }, [showAlert, startImport, zones, caps, setZones]);
+  }, [showAlert, startImport, zones, caps, setZones, ja]);
 
   // On zone page: remove any zone channel refs that point to non-existent channels, and log to debug
   useEffect(() => {

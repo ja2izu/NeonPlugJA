@@ -37,7 +37,7 @@ export const BLOCK_SIZE = {
   SCAN_LIST: 57,            // Bytes per scan list (per spec: 57-byte entries)
   DIGITAL_EMERGENCY: 40,    // Bytes per digital emergency entry
   ANALOG_EMERGENCY: 36,     // Bytes per analog emergency entry
-  ZONE_NAME: 11,            // Bytes for zone name
+  ZONE_NAME: 16,            // Bytes for zone name (16-byte name has no terminator; verified on DP570UV 2026-09-22)
   CHANNEL_NAME: 16,         // Bytes for channel name
   QUICK_MESSAGE: 129,       // Bytes per quick message entry (0x81)
   RX_GROUP: 109,            // Bytes per DMR RX group entry (0x6D)

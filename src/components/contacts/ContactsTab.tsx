@@ -21,6 +21,11 @@ import { PageHeader } from '../ui/PageHeader';
 import { resolveContactCapacity } from '../../utils/contactCapacity';
 import { useRadioCapabilities } from '../../hooks/useRadioCapabilities';
 import { BUTTON, FIELD } from '../ui/controlStyles';
+import { useJapaneseNamesActive } from '../../hooks/useJapaneseNamesActive';
+import { readCsvText } from '../../utils/readCsvText';
+import { isJapaneseNamesActive } from '../../utils/japaneseNames';
+import { findUnwritableContactNames } from '../../services/validation/japaneseNameCheck';
+import { JapaneseNamesBlockedBody } from '../layout/JapaneseNamesBlockedBody';
 
 // RadioID User interface
 interface RadioIDUser {
@@ -218,6 +223,7 @@ const RegionSelector: React.FC<{
 };
 
 export const ContactsTab: React.FC = () => {
+  const ja = useJapaneseNamesActive();
   const { contacts, setContacts } = useContactsStore();
   const { radioInfo } = useRadioStore();
   const { readContacts, writeContacts, isConnecting } = useRadioConnection();
@@ -245,7 +251,7 @@ export const ContactsTab: React.FC = () => {
   const { caps } = useRadioCapabilities();
   const contactCapacity = resolveContactCapacity(caps, radioInfo);
 
-  const { alertOpen, alertMessage, alertTitle, showAlert, closeAlert } = useAlert('Full CSV Export/Import');
+  const { alertOpen, alertMessage, alertBody, alertSize, alertTitle, showAlert, showAlertBody, closeAlert } = useAlert('Full CSV Export/Import');
   const { startImport, csvImportDialog } = useCsvImport();
 
   // Full-fidelity CSV export/import (ID, DMR ID, call sign, city, province, country, remark) —
@@ -255,8 +261,8 @@ export const ContactsTab: React.FC = () => {
   }, [contacts]);
 
   const handleImportContactsFile = useCallback((file: File) => {
-    file.text().then(content => {
-      const result = importContactsFromCSV(content);
+    readCsvText(file, ja).then(content => {
+      const result = importContactsFromCSV(content, { cpsHeaders: ja });
       // Rows that can't be read are left out and named; only a file with
       // nothing readable stops here.
       if (!result.contacts || result.contacts.length === 0) {
@@ -276,7 +282,7 @@ export const ContactsTab: React.FC = () => {
     }).catch(err => {
       showAlert(err instanceof Error ? err.message : 'Failed to read CSV file', 'Import failed');
     });
-  }, [showAlert, startImport, contacts, contactCapacity, setContacts]);
+  }, [showAlert, startImport, contacts, contactCapacity, setContacts, ja]);
 
 
   const handleReadContacts = async () => {
@@ -341,6 +347,15 @@ export const ContactsTab: React.FC = () => {
     if (contacts.length === 0) {
       setDownloadError('No contacts to write. Please load contacts first.');
       return;
+    }
+
+    // 日本語名 ON: 字庫に無い字を含む連絡先があれば、何も送らずに止める
+    if (isJapaneseNamesActive()) {
+      const unwritable = findUnwritableContactNames(contacts);
+      if (unwritable.length) {
+        showAlertBody(<JapaneseNamesBlockedBody items={unwritable} />, '書込を中止しました', 'lg');
+        return;
+      }
     }
 
     setIsWriting(true);
@@ -820,6 +835,8 @@ export const ContactsTab: React.FC = () => {
         onClose={closeAlert}
         title={alertTitle}
         message={alertMessage}
+        body={alertBody}
+        size={alertSize}
         confirmLabel="OK"
         variant="alert"
       />

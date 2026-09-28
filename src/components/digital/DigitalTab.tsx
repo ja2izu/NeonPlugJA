@@ -38,6 +38,9 @@ import { planTalkGroupDelete, describeTalkGroupDelete } from '../../services/csv
 import { describeTalkGroupUsage, talkGroupMatchesSearch, talkGroupUsage } from '../../services/talkGroupUsage';
 import { nothingImportedMessage } from '../../services/csv/importProblems';
 import { useCsvImport } from '../../hooks/useCsvImport';
+import { useJapaneseNamesActive } from '../../hooks/useJapaneseNamesActive';
+import { fitNameBytes, JA_NAME_BYTES } from '../../utils/japaneseNames';
+import { readCsvText } from '../../utils/readCsvText';
 
 const DEFAULT_TALK_GROUPS_MAX = 800;
 const DEFAULT_DMR_RADIO_IDS_MAX = 250;
@@ -54,6 +57,7 @@ const DEFAULT_DMR_RADIO_IDS_MAX = 250;
 const LIST_CARD_CLASS = 'max-h-[70vh] flex flex-col';
 
 export const DigitalTab: React.FC = () => {
+  const ja = useJapaneseNamesActive();
   const { blockMetadata, blockData } = useRadioStore();
   const { caps } = useRadioCapabilities();
   const limits = caps?.digital?.limits;
@@ -192,7 +196,7 @@ export const DigitalTab: React.FC = () => {
 
   const handleExportRadioIdsCsv = () => downloadCSV(exportDMRRadioIDsToCSV(radioIds), 'dmr_radio_ids.csv');
   const handleImportRadioIdsFile = (file: File) => {
-    file.text().then(content => {
+    readCsvText(file, ja).then(content => {
       const result = importDMRRadioIDsFromCSV(content);
       // Rows that can't be read are left out and named; only a file with
       // nothing readable stops here.
@@ -225,7 +229,7 @@ export const DigitalTab: React.FC = () => {
       'rx_groups.csv'
     );
   const handleImportRXGroupsFile = (file: File) => {
-    file.text().then(content => {
+    readCsvText(file, ja).then(content => {
       const result = importRXGroupsFromCSV(content);
       // Rows that can't be read are left out and named; only a file with
       // nothing readable stops here.
@@ -255,7 +259,7 @@ export const DigitalTab: React.FC = () => {
 
   const handleExportTalkGroupsCsv = () => downloadCSV(exportQuickContactsToCSV(quickContacts), 'talk_groups.csv');
   const handleImportTalkGroupsFile = (file: File) => {
-    file.text().then(content => {
+    readCsvText(file, ja).then(content => {
       const result = importQuickContactsFromCSV(content);
       // Rows that can't be read are left out and named; only a file with
       // nothing readable stops here.
@@ -499,10 +503,10 @@ export const DigitalTab: React.FC = () => {
                             type="text"
                             value={radioId.name}
                             onChange={(e) => {
-                              const newName = e.target.value.slice(0, 12);
+                              const newName = ja ? fitNameBytes(e.target.value, JA_NAME_BYTES.radioId) : e.target.value.slice(0, 12);
                               updateRadioId(radioId.index, { name: newName });
                             }}
-                            maxLength={12}
+                            maxLength={ja ? undefined : 12}
                             className={`${FIELD} border rounded px-2 py-1 w-full text-xs`}
                             placeholder="Enter name"
                           />
@@ -649,7 +653,7 @@ export const DigitalTab: React.FC = () => {
                             <input
                               type="text"
                               value={contact.name}
-                              onChange={(e) => handleContactChange(contact.index, 'name', e.target.value)}
+                              onChange={(e) => handleContactChange(contact.index, 'name', ja ? fitNameBytes(e.target.value, JA_NAME_BYTES.talkGroup) : e.target.value)}
                               className={`${FIELD} border rounded px-2 py-1 w-full text-xs`}
                             />
                           </td>
@@ -808,8 +812,8 @@ export const DigitalTab: React.FC = () => {
                           <input
                             type="text"
                             value={system.name}
-                            onChange={(e) => updateSystem(i, { name: e.target.value.slice(0, 10) })}
-                            maxLength={10}
+                            onChange={(e) => updateSystem(i, { name: ja ? fitNameBytes(e.target.value, JA_NAME_BYTES.digitalEmergency) : e.target.value.slice(0, 10) })}
+                            maxLength={ja ? undefined : 10}
                             className={`${FIELD} border rounded px-2 py-1 w-full text-xs`}
                           />
                         </td>
@@ -977,8 +981,8 @@ export const DigitalTab: React.FC = () => {
                           <input
                             type="text"
                             value={key.name}
-                            onChange={(e) => handleKeyChange(key.entryNumber, 'name', e.target.value.slice(0, 10))}
-                            maxLength={10}
+                            onChange={(e) => handleKeyChange(key.entryNumber, 'name', ja ? fitNameBytes(e.target.value, JA_NAME_BYTES.encryptionKey) : e.target.value.slice(0, 10))}
+                            maxLength={ja ? undefined : 10}
                             className={`${FIELD} border rounded px-2 py-1 w-full text-xs`}
                             placeholder="Enter name"
                           />

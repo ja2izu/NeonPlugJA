@@ -1,5 +1,6 @@
 import type { Channel, Contact, Zone, ScanList, RXGroup, DMRRadioID, QuickContact } from '../../models';
 import { downloadFile } from '../../utils/download';
+import { isJapaneseNamesActive } from '../../utils/japaneseNames';
 import { CHANNEL_CSV_COLUMN_LIST } from './channelCsvColumns';
 
 function toCSV(headers: string[], rows: (string | number)[][]): string {
@@ -132,6 +133,7 @@ export function exportQuickContactsToCSV(contacts: QuickContact[]): string {
 }
 
 export function downloadCSV(content: string, filename: string): void {
-  downloadFile(content, filename, 'text/csv;charset=utf-8;');
+  // 日本語名 ON: Excel で開いても化けないよう、UTF-8 の BOM を付ける
+  downloadFile(isJapaneseNamesActive() ? '\uFEFF' + content : content, filename, 'text/csv;charset=utf-8;');
 }
 

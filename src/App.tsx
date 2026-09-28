@@ -34,6 +34,8 @@ import { sampleChannels, sampleContacts, sampleZones } from './utils/sampleData'
 import { setLogStore, logger, LogLevel } from './utils/protocolLogger';
 import { installDevStoreHandle } from './utils/devStoreHandle';
 import { useLogStore } from './store/logStore';
+import { isJapaneseNamesActive } from './utils/japaneseNames';
+import { readCsvText } from './utils/readCsvText';
 
 function App() {
   const [activeTab, setActiveTab] = useState('channels');
@@ -185,7 +187,9 @@ function App() {
       }
     } else {
       // Legacy CSV import support
-      const text = await file.text();
+      // 日本語名 ON: UTF-8／GB2312（字庫の区点）／CP932 を判定して読む
+      const ja = isJapaneseNamesActive();
+      const text = await readCsvText(file, ja);
 
       // Rows that can't be read are left out and named; only a file with nothing
       // readable is refused. Either list replaces the current one, so unsaved
@@ -203,7 +207,7 @@ function App() {
           showAlert(nothingImportedMessage(result.errors));
         }
       } else if (fileName.includes('contact')) {
-        const result = importContactsFromCSV(text);
+        const result = importContactsFromCSV(text, { cpsHeaders: ja });
         const read = result.contacts ?? [];
         if (read.length > 0) {
           await backupUnsavedEdits(`opening ${file.name}`);

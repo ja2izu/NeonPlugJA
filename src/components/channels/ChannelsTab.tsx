@@ -37,11 +37,14 @@ import { isChannelWritable } from '../../services/validation/writeFilter';
 import { MOD_KEY } from '../../utils/keyboardTargets';
 import { useZonesStore } from '../../store/zonesStore';
 import { CHANNEL_SEARCH_HELP, matchesChannelSearch, parseChannelSearch } from './channelSearch';
+import { useJapaneseNamesActive } from '../../hooks/useJapaneseNamesActive';
+import { readCsvText } from '../../utils/readCsvText';
 
 /** Which channel table the tab is showing. */
 type ChannelView = 'main' | 'am' | 'fm';
 
 export const ChannelsTab: React.FC = () => {
+  const ja = useJapaneseNamesActive();
   const { channels, addChannel, deleteChannels, setChannels } = useChannelsStore();
   const { settings: radioSettings } = useRadioSettingsStore();
   const { caps } = useRadioCapabilities();
@@ -138,7 +141,7 @@ export const ChannelsTab: React.FC = () => {
   }, [channels]);
 
   const handleImportChannelsFile = useCallback((file: File) => {
-    file.text().then(content => {
+    readCsvText(file, ja).then(content => {
       const result = importChannelsFromCSV(content);
       // Rows that can't be read are left out and named; only a file with
       // nothing readable stops here.
@@ -171,7 +174,7 @@ export const ChannelsTab: React.FC = () => {
     }).catch(err => {
       showAlert(err instanceof Error ? err.message : 'Failed to read CSV file', 'Import failed');
     });
-  }, [showAlert, startImport, channels, caps, setChannels]);
+  }, [showAlert, startImport, channels, caps, setChannels, ja]);
 
   // VFO A/B as channels 4001/4002 — DM-32 only; UV5R-Mini and other radios do not have these in the channel list
   const vfoChannels = useMemo(() => {

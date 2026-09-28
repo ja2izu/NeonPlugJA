@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import type { QuickContact } from '../models/QuickContact';
+import { isJapaneseNamesActive } from '../utils/japaneseNames';
 
 const DEFAULT_TALK_GROUPS_MAX = 800;
 
@@ -20,6 +21,10 @@ interface QuickContactsState {
 // Helper function to clean contact names (remove non-ASCII printable characters)
 // Allows spaces (0x20) - only filters out control characters and non-printable chars
 const cleanContactName = (name: string): string => {
+  // 日本語名 ON: 制御文字だけを除く（日本語を残す）
+  if (isJapaneseNamesActive()) {
+    return Array.from(name).filter((ch) => (ch.codePointAt(0) ?? 0) >= 0x20 && ch !== '\x7f').join('');
+  }
   return name
     .split('')
     .filter(char => {

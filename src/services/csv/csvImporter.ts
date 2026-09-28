@@ -151,7 +151,13 @@ export function importChannelsFromCSV(content: string): ImportResult {
   }
 }
 
-export function importContactsFromCSV(content: string): ImportResult {
+/**
+ * @param options.cpsHeaders 日本語名 ON: DM-32 の CPS の連絡先 CSV の見出し
+ *   （No.,ID,Repeater,Name,City,Province,Country,Remark,Type,Alert Call）も受け付ける。
+ *   見出しに repeater があり dmr id が無ければ CPS の形式とみなし、ID→DMR ID、Repeater→コールサイン、
+ *   No.→番号として読む。Type・Alert Call は読まない。
+ */
+export function importContactsFromCSV(content: string, options: { cpsHeaders?: boolean } = {}): ImportResult {
   try {
     const rows = parseCSV(content);
     if (rows.length < 2) {
@@ -159,6 +165,9 @@ export function importContactsFromCSV(content: string): ImportResult {
     }
 
     const headers = rows[0].map(h => h.toLowerCase().trim());
+    if (options.cpsHeaders && headers.includes('repeater') && !headers.includes('dmr id')) {
+      return importCpsContacts(rows, headers);
+    }
     const contacts: Contact[] = [];
     const errors: string[] = [];
 
@@ -197,6 +206,36 @@ export function importContactsFromCSV(content: string): ImportResult {
       errors: [error instanceof Error ? error.message : 'Failed to parse CSV'],
     };
   }
+}
+
+/** DM-32 の CPS の連絡先 CSV（No.,ID,Repeater,Name,...）を読む。importContactsFromCSV から呼ぶ */
+function importCpsContacts(rows: string[][], headers: string[]): ImportResult {
+  const contacts: Contact[] = [];
+  const errors: string[] = [];
+  for (let i = 1; i < rows.length; i++) {
+    const row = rows[i];
+    if (row.length === 0 || row.every(cell => !cell.trim())) continue;
+    const dmrId = getInt(headers, row, 'id', 0);
+    if (!(dmrId > 0 && dmrId <= 0xFFFFFF)) {
+      errors.push(`Row ${i + 1}: ID が DMR ID として正しくない (${getValue(headers, row, 'id')})`);
+      continue;
+    }
+    contacts.push({
+      id: getInt(headers, row, 'no.', 0) || i,
+      name: getValue(headers, row, 'name') || `Contact ${i}`,
+      dmrId,
+      callSign: getValue(headers, row, 'repeater') || undefined,
+      city: getValue(headers, row, 'city') || undefined,
+      province: getValue(headers, row, 'province') || undefined,
+      country: getValue(headers, row, 'country') || undefined,
+      remark: getValue(headers, row, 'remark') || undefined,
+    });
+  }
+  return {
+    success: errors.length === 0,
+    contacts,
+    errors: errors.length > 0 ? errors : undefined,
+  };
 }
 
 export function importZonesFromCSV(content: string): ImportResult {
