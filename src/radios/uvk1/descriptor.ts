@@ -14,7 +14,7 @@ import { UVK1_CAPS } from './capabilities';
  */
 export const UVK1_DESCRIPTOR: RadioDescriptor = {
   modelIds: ['UV-K1', 'UV-K1 (25ja)'],
-  label: 'UV-K1 (25ja / Dondji)',
+  label: 'UV-K1 (25Ja)',
   icon: '📻',
   group: 'Quansheng',
   supportsBle: false,
