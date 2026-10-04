@@ -3,6 +3,7 @@ import { useRadioStore } from '../../store/radioStore';
 import { useRadioCapabilities } from '../../hooks/useRadioCapabilities';
 import { Modal } from '../ui/Modal';
 import { BUTTON } from '../ui/controlStyles';
+import { FORK_VERSION, FORK_AUTHOR } from '../../utils/forkVersion';
 
 const USER_GESTURE_MESSAGE = 'Unable to read from radio, please read from a radio or load a codeplug to continue';
 
@@ -77,8 +78,11 @@ export const StatusBar: React.FC = () => {
             </button>
           </div>
         )}
-        <div className="text-sm text-cool-gray flex-shrink-0">
+        {/* NeonPlugJA: Web プログラム作成基準 — 右上に Ver とコールサインを常に出す */}
+        <div className="text-sm text-cool-gray flex-shrink-0 whitespace-nowrap">
           NEONPLUG
+          <span className="ml-3 text-white">Ver {FORK_VERSION}</span>
+          <span className="ml-2 text-white">{FORK_AUTHOR}</span>
         </div>
       </div>
     <Modal
