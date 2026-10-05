@@ -115,6 +115,8 @@ export interface DM32Protocol extends DigitalRadioProtocol {
 export interface RadioInfo {
   model: string;               // "DP570UV"
   firmware: string;            // "DM32.01.01.046"
+  /** Label shown before the firmware in the status bar; omitted: the usual "Firmware:". */
+  firmwareLabel?: string;
   buildDate: string;           // "2022-06-27"
   dspVersion?: string;         // "D1.01.01.004"
   radioVersion?: string;       // "R1.00.01.001"

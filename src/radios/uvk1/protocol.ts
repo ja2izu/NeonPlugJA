@@ -131,9 +131,12 @@ export class UVK1Protocol extends BaseAnalogProtocol {
 
   async getRadioInfo(): Promise<RadioInfo> {
     const profile = UVK1_FONT_PROFILES.find((p) => p.id === this.font);
+    // 25ja: "25Ja(F4HWN v5.2.8)". The 25Ja version number is not read: the radio gives none yet.
+    const firmware = this.font === '25ja' ? `25Ja(${this.firmware})` : this.firmware;
     return {
       model: 'UV-K1',
-      firmware: `${this.firmware} / font: ${profile ? profile.label : 'unknown'} / names: ${this.maxNameBytes()} bytes`,
+      firmwareLabel: 'F/W:',
+      firmware: `${firmware} / font: ${profile ? profile.label : 'unknown'} / names: ${this.maxNameBytes()} bytes`,
       buildDate: '',
       memoryLayout: { configStart: 0x0000, configEnd: UVK1_IMAGE_SIZE - 1 },
     };

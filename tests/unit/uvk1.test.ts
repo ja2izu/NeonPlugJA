@@ -211,6 +211,9 @@ describe('UV-K1 接続と読込（疑似無線機）', () => {
     await p.connect();
     expect(p.getFontId()).toBe('25ja');
     expect((await p.getRadioInfo()).firmware).toContain('F4HWN v5.2.8');
+    const info = await p.getRadioInfo();
+    expect(info.firmwareLabel).toBe('F/W:');
+    expect(info.firmware).toMatch(/^25Ja\(F4HWN v5\.2\.8\) \/ font: 25ja \(Shinonome JIS X 0208\) \/ names: \d+ bytes$/);
     const chs = await p.readChannels();
     expect(chs.map((c) => [c.number, c.name])).toEqual([[1, '名古屋'], [501, 'かな']]);
     const attrBlocks = r.reads.filter((a) => a >= 0x8000);

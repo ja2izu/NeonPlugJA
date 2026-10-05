@@ -35,7 +35,7 @@ export const StatusBar: React.FC = () => {
               </div>
               <span className="text-cool-gray">|</span>
               <div className="flex items-center space-x-2">
-                <span className="text-sm text-cool-gray">{tr("Firmware:")}</span>
+                <span className="text-sm text-cool-gray">{radioInfo.firmwareLabel ?? tr("Firmware:")}</span>
                 <span className="text-sm text-white">{deviceValue(radioInfo.firmware)}</span>
                 {(needsFirmwareUpdate || isNewerFirmware) && (
                   <button
