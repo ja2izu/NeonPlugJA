@@ -40,6 +40,7 @@ import { CHANNEL_SEARCH_HELP, matchesChannelSearch, parseChannelSearch } from '.
 import { useJapaneseNamesActive } from '../../hooks/useJapaneseNamesActive';
 import { readCsvText } from '../../utils/readCsvText';
 
+import { tr } from '../../utils/tr';  // NeonPlugJA: 日本語表示
 /** Which channel table the tab is showing. */
 type ChannelView = 'main' | 'am' | 'fm';
 
@@ -102,7 +103,7 @@ export const ChannelsTab: React.FC = () => {
     );
   }, [broadcast, searchQuery]);
 
-  const { alertOpen, alertMessage, alertTitle, showAlert, closeAlert } = useAlert('Full CSV Export/Import');
+  const { alertOpen, alertMessage, alertTitle, showAlert, closeAlert } = useAlert(tr('Full CSV Export/Import'));
   const { startImport, csvImportDialog } = useCsvImport();
 
   const handleAddChannel = () => {
@@ -119,7 +120,7 @@ export const ChannelsTab: React.FC = () => {
       name: `Channel ${nextNumber}`,
     });
     
-    recordChannelEdit(`add ${channelsLabel([nextNumber])}`, () => addChannel(newChannel));
+    recordChannelEdit(tr('add {0}', channelsLabel([nextNumber])), () => addChannel(newChannel));
     
     // Scroll to the new channel after adding
     setScrollToChannel(nextNumber);
@@ -146,7 +147,7 @@ export const ChannelsTab: React.FC = () => {
       // Rows that can't be read are left out and named; only a file with
       // nothing readable stops here.
       if (!result.channels || result.channels.length === 0) {
-        showAlert(nothingImportedMessage(result.errors), 'Import failed');
+        showAlert(nothingImportedMessage(result.errors), tr("Import failed"));
         return;
       }
       const imported = result.channels;
@@ -160,19 +161,19 @@ export const ChannelsTab: React.FC = () => {
         apply: (list, mode) => {
           const added = list.length - channels.length;
           recordChannelEdit(
-            mode === 'replace' ? 'replace the channels from a CSV file' : 'add channels from a CSV file',
+            mode === 'replace' ? tr('replace the channels from a CSV file') : tr('add channels from a CSV file'),
             () => setChannels(list),
             {
               announce:
                 mode === 'replace'
-                  ? `Replaced the channels with the file's ${list.length}.`
-                  : `Added ${added} ${formatPlural(added, 'channel')} from the file.`,
+                  ? tr("Replaced the channels with the file's {0}.", list.length)
+                  : tr('Added {0} {1} from the file.', added, formatPlural(added, 'channel')),
             }
           );
         },
       });
     }).catch(err => {
-      showAlert(err instanceof Error ? err.message : 'Failed to read CSV file', 'Import failed');
+      showAlert(err instanceof Error ? err.message : tr("Failed to read CSV file"), tr("Import failed"));
     });
   }, [showAlert, startImport, channels, caps, setChannels, ja]);
 
@@ -225,15 +226,15 @@ export const ChannelsTab: React.FC = () => {
     const effect = describeChannelDelete(channels, toDelete, hidden, deleteRules);
     setPendingDelete({
       numbers: toDelete,
-      message: `Delete ${channelsLabel(toDelete)}?${effect ? `\n\n${effect}` : ''}`,
+      message: tr("Delete {0}?{1}", channelsLabel(toDelete), effect ? `\n\n${effect}` : ''),
     });
   };
 
   const handleDeleteSelectedConfirm = () => {
     if (!pendingDelete) return;
     const label = channelsLabel(pendingDelete.numbers);
-    recordChannelEdit(`delete ${label}`, () => deleteChannels(pendingDelete.numbers, deleteRules), {
-      announce: `Deleted ${label}.`,
+    recordChannelEdit(tr('delete {0}', label), () => deleteChannels(pendingDelete.numbers, deleteRules), {
+      announce: tr('Deleted {0}.', label),
     });
     setSelectedChannelNumbers(new Set());
   };
@@ -245,13 +246,13 @@ export const ChannelsTab: React.FC = () => {
   const channelCountLabel =
     (shownChannels === totalChannels
       ? `${totalChannels} ${formatPlural(totalChannels, 'channel')}`
-      : `${shownChannels} of ${totalChannels} ${formatPlural(totalChannels, 'channel')}`) +
+      : tr('{0} of {1} {2}', shownChannels, totalChannels, formatPlural(totalChannels, 'channel'))) +
     (shownVfos > 0 ? ` (${shownVfos} ${formatPlural(shownVfos, 'VFO')})` : '');
 
   return (
     <div className="h-full flex flex-col min-h-0">
       <PageHeader
-        title="Channels"
+        title={tr("Channels")}
         actions={<>
           {tables.broadcast && (
             <div className="flex items-center gap-1">
@@ -269,7 +270,7 @@ export const ChannelsTab: React.FC = () => {
                       : 'border-neon-cyan border-opacity-20 text-cool-gray hover:text-neon-cyan hover:border-opacity-50'
                   }`}
                 >
-                  {title} <span className="opacity-70">{count}</span>
+                  {tr(title)} <span className="opacity-70">{count}</span>
                 </button>
               ))}
             </div>
@@ -288,8 +289,8 @@ export const ChannelsTab: React.FC = () => {
                 }}
                 disabled={!undoLabel}
                 className={`${BUTTON.subtle} px-2 py-1 text-xs border rounded`}
-                title={undoLabel ? `Undo ${undoLabel} (${UNDO_SHORTCUT})` : 'Nothing to undo'}
-                aria-label={undoLabel ? `Undo ${undoLabel}` : 'Undo'}
+                title={undoLabel ? tr("Undo {0} ({1})", undoLabel, UNDO_SHORTCUT) : tr("Nothing to undo")}
+                aria-label={undoLabel ? tr("Undo {0}", undoLabel) : tr("Undo")}
               >
                 ↶
               </button>
@@ -300,8 +301,8 @@ export const ChannelsTab: React.FC = () => {
                 }}
                 disabled={!redoLabel}
                 className={`${BUTTON.subtle} px-2 py-1 text-xs border rounded`}
-                title={redoLabel ? `Redo ${redoLabel} (${REDO_SHORTCUT})` : 'Nothing to redo'}
-                aria-label={redoLabel ? `Redo ${redoLabel}` : 'Redo'}
+                title={redoLabel ? tr("Redo {0} ({1})", redoLabel, REDO_SHORTCUT) : tr("Nothing to redo")}
+                aria-label={redoLabel ? tr("Redo {0}", redoLabel) : 'Redo'}
               >
                 ↷
               </button>
@@ -313,9 +314,9 @@ export const ChannelsTab: React.FC = () => {
             <button
               onClick={handleAddChannel}
               className={`${BUTTON.subtle} px-2 py-1 text-xs border rounded`}
-              title="Add new channel"
+              title={tr("Add new channel")}
             >
-              + Add
+              {tr("+ Add")}
             </button>
           )}
           {!isBroadcast && (
@@ -333,8 +334,7 @@ export const ChannelsTab: React.FC = () => {
           role="alert"
           className="mb-3 shrink-0 rounded border-2 border-red-500 bg-red-900/30 px-4 py-2 text-sm font-semibold text-red-300"
         >
-          ⚠ Out-of-band frequencies are ON. Channels aren't checked against the radio's bands, and a write keeps
-          them as they are. Turn it off in About.
+          {tr("⚠ Out-of-band frequencies are ON. Channels aren't checked against the radio's bands, and a write keeps them as they are. Turn it off in About.")}
         </div>
       )}
       <div className="mb-3 flex items-center gap-3 shrink-0">
@@ -352,11 +352,11 @@ export const ChannelsTab: React.FC = () => {
             }}
             placeholder={
               isBroadcast
-                ? 'Search by name, frequency, number...'
-                : 'Search name, number or frequency · #12 jumps · mode:dig zone:none'
+                ? tr("Search by name, frequency, number...")
+                : tr("Search name, number or frequency · #12 jumps · mode:dig zone:none")
             }
-            title={isBroadcast ? undefined : CHANNEL_SEARCH_HELP}
-            aria-label="Search channels"
+            title={isBroadcast ? undefined : tr(CHANNEL_SEARCH_HELP)}
+            aria-label={tr("Search channels")}
             className={`${FIELD} w-full border rounded px-4 py-2 pl-10 text-sm`}
           />
           <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-cool-gray text-sm">
@@ -366,7 +366,7 @@ export const ChannelsTab: React.FC = () => {
             <button
               onClick={() => setSearchQuery('')}
               className={`${BUTTON.ghost} absolute right-3 top-1/2 transform -translate-y-1/2 text-sm`}
-              title="Clear search"
+              title={tr("Clear search")}
             >
               ×
             </button>
@@ -380,11 +380,11 @@ export const ChannelsTab: React.FC = () => {
             className={`${BUTTON.danger} px-2 py-1.5 text-xs border rounded whitespace-nowrap shrink-0`}
             title={
               showingUnwritable
-                ? 'Show every channel again'
-                : "Show only the channels a write leaves out, because this radio can't hold them"
+                ? tr("Show every channel again")
+                : tr("Show only the channels a write leaves out, because this radio can't hold them")
             }
           >
-            {showingUnwritable ? 'Show all channels' : `⚠ ${unwritable.size} won't be written`}
+            {showingUnwritable ? tr("Show all channels") : tr("⚠ {0} won't be written", unwritable.size)}
           </button>
         )}
         {selectedCount > 0 && !isBroadcast ? (
@@ -393,25 +393,25 @@ export const ChannelsTab: React.FC = () => {
             <button
               onClick={handleDeleteSelectedClick}
               className={`${BUTTON.danger} px-2 py-1.5 text-xs border rounded whitespace-nowrap`}
-              title="Delete selected channels"
+              title={tr("Delete selected channels")}
             >
-              Delete ({selectedCount})
+              {tr("Delete (")}{selectedCount})
             </button>
             <button
               onClick={clearSelection}
               className={`${BUTTON.subtle} px-2 py-1.5 text-xs border rounded whitespace-nowrap`}
-              title="Clear selection"
+              title={tr("Clear selection")}
             >
-              Clear
+              {tr("Clear")}
             </button>
           </div>
         ) : (
           !isBroadcast && (
             <p
               className="text-cool-gray text-xs shrink-0 whitespace-nowrap"
-              title={`Click a row to select it, Shift+click for a range, ${MOD_KEY}+click to add or remove one, ${MOD_KEY}+A for every channel shown. Then Delete to delete, Enter to edit one, Esc to clear.`}
+              title={tr("Click a row to select it, Shift+click for a range, {0}+click to add or remove one, {1}+A for every channel shown. Then Delete to delete, Enter to edit one, Esc to clear.", MOD_KEY, MOD_KEY)}
             >
-              Shift or {MOD_KEY}+click to select more
+              {tr("Shift or")} {MOD_KEY}{tr("+click to select more")}
             </p>
           )
         )}
@@ -426,7 +426,7 @@ export const ChannelsTab: React.FC = () => {
             vfo={view === 'am' ? tables.broadcast?.amVfo : tables.broadcast?.fmVfo}
             zones={view === 'am' ? tables.amZones ?? undefined : undefined}
             emptyMessage={
-              view === 'am' ? 'No AM airband memories stored' : 'No FM broadcast memories stored'
+              view === 'am' ? tr('No AM airband memories stored') : tr('No FM broadcast memories stored')
             }
           />
         ) : (
@@ -444,9 +444,9 @@ export const ChannelsTab: React.FC = () => {
         isOpen={pendingDelete !== null}
         onClose={() => setPendingDelete(null)}
         onConfirm={handleDeleteSelectedConfirm}
-        title={pendingDelete?.numbers.length === 1 ? 'Delete channel' : 'Delete channels'}
+        title={pendingDelete?.numbers.length === 1 ? tr("Delete channel") : tr("Delete channels")}
         message={pendingDelete?.message}
-        confirmLabel="Delete"
+        confirmLabel={tr("Delete")}
         variant="danger"
       />
       <ChannelUndoNotice onUndo={clearSelection} />

@@ -4,7 +4,9 @@ import { useRadioCapabilities } from '../../hooks/useRadioCapabilities';
 import { Modal } from '../ui/Modal';
 import { BUTTON } from '../ui/controlStyles';
 import { FORK_VERSION, FORK_AUTHOR } from '../../utils/forkVersion';
+import { UiLanguageSwitch } from './UiLanguageSwitch';  // NeonPlugJA: 日本語表示
 
+import { tr } from '../../utils/tr';  // NeonPlugJA: 日本語表示
 const USER_GESTURE_MESSAGE = 'Unable to read from radio, please read from a radio or load a codeplug to continue';
 
 export const StatusBar: React.FC = () => {
@@ -28,18 +30,18 @@ export const StatusBar: React.FC = () => {
           {radioInfo ? (
             <>
               <div className="flex items-center space-x-2">
-                <span className="text-sm text-cool-gray">Radio:</span>
+                <span className="text-sm text-cool-gray">{tr("Radio:")}</span>
                 <span className="text-sm text-white font-medium">{radioInfo.model}</span>
               </div>
               <span className="text-cool-gray">|</span>
               <div className="flex items-center space-x-2">
-                <span className="text-sm text-cool-gray">Firmware:</span>
+                <span className="text-sm text-cool-gray">{tr("Firmware:")}</span>
                 <span className="text-sm text-white">{deviceValue(radioInfo.firmware)}</span>
                 {(needsFirmwareUpdate || isNewerFirmware) && (
                   <button
                     onClick={() => setShowFirmwareWarning(true)}
                     className={`${BUTTON.cautionLink} cursor-pointer`}
-                    title={isNewerFirmware ? "Firmware version not recommended" : "Firmware update recommended"}
+                    title={isNewerFirmware ? tr("Firmware version not recommended") : tr("Firmware update recommended")}
                   >
                     ⚠️
                   </button>
@@ -47,7 +49,7 @@ export const StatusBar: React.FC = () => {
               </div>
               <span className="text-cool-gray">|</span>
               <div className="flex items-center space-x-2">
-                <span className="text-sm text-cool-gray">Build:</span>
+                <span className="text-sm text-cool-gray">{tr("Build:")}</span>
                 <span className="text-sm text-white">{deviceValue(radioInfo.buildDate)}</span>
               </div>
             {radioInfo.dspVersion && (
@@ -61,34 +63,37 @@ export const StatusBar: React.FC = () => {
             )}
           </>
         ) : (
-          <span className="text-sm text-cool-gray">No radio data loaded</span>
+          <span className="text-sm text-cool-gray">{tr("No radio data loaded")}</span>
         )}
         </div>
         {showUserGestureInBar && (
           <div className="flex-1 flex items-center justify-center gap-2 min-w-0">
-            <span className="text-sm text-amber-400">{USER_GESTURE_MESSAGE}</span>
+            <span className="text-sm text-amber-400">{tr(USER_GESTURE_MESSAGE)}</span>
             <button
               type="button"
               onClick={() => setConnectionError(null)}
               className={`${BUTTON.ghost} flex-shrink-0`}
-              title="Dismiss"
-              aria-label="Dismiss"
+              title={tr("Dismiss")}
+              aria-label={tr("Dismiss")}
             >
               ×
             </button>
           </div>
         )}
+        <div className="flex items-center gap-3 flex-shrink-0">
+        <UiLanguageSwitch />
         {/* NeonPlugJA: Web プログラム作成基準 — 右上に Ver とコールサインを常に出す */}
         <div className="text-sm text-cool-gray flex-shrink-0 whitespace-nowrap">
           NEONPLUG
           <span className="ml-3 text-white">Ver {FORK_VERSION}</span>
           <span className="ml-2 text-white">{FORK_AUTHOR}</span>
         </div>
+        </div>
       </div>
     <Modal
       isOpen={showFirmwareWarning}
       onClose={() => setShowFirmwareWarning(false)}
-      title={isNewerFirmware ? "Firmware Version Not Recommended" : "Firmware Update Recommended"}
+      title={isNewerFirmware ? tr("Firmware Version Not Recommended") : tr("Firmware Update Recommended")}
     >
       <div className="space-y-4">
         <div className="flex items-start space-x-3">
@@ -97,23 +102,19 @@ export const StatusBar: React.FC = () => {
             {isNewerFirmware ? (
               <>
                 <p className="text-white mb-2">
-                  Your radio firmware version is <span className="font-mono text-neon-cyan">{radioInfo?.firmware}</span>, 
-                  which is not recommended and has not been tested with this software.
+                  {tr("Your radio firmware version is")} <span className="font-mono text-neon-cyan">{radioInfo?.firmware}</span>{tr(", which is not recommended and has not been tested with this software.")}
                 </p>
                 <p className="text-cool-gray">
-                  This firmware version (049 or newer) may have compatibility issues or untested behavior. 
-                  Use at your own risk.
+                  {tr("This firmware version (049 or newer) may have compatibility issues or untested behavior. Use at your own risk.")}
                 </p>
               </>
             ) : (
               <>
                 <p className="text-white mb-2">
-                  Your radio firmware version is <span className="font-mono text-neon-cyan">{radioInfo?.firmware}</span>, 
-                  but the recommended version is <span className="font-mono text-neon-cyan">{expectedFirmware}</span>.
+                  {tr("Your radio firmware version is")} <span className="font-mono text-neon-cyan">{radioInfo?.firmware}</span>{tr(", but the recommended version is")} <span className="font-mono text-neon-cyan">{expectedFirmware}</span>.
                 </p>
                 <p className="text-cool-gray">
-                  We recommend updating your firmware to ensure compatibility with all features and bug fixes. 
-                  Please check the official Baofeng website or your radio's documentation for firmware update instructions.
+                  {tr("We recommend updating your firmware to ensure compatibility with all features and bug fixes. Please check the official Baofeng website or your radio's documentation for firmware update instructions.")}
                 </p>
               </>
             )}

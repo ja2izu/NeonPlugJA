@@ -10,6 +10,7 @@
 import type { MigrationLoss } from '../../services/codeplugMigration';
 import { formatPlural } from '../../utils/formatPlural';
 
+import { tr } from '../../utils/tr';  // NeonPlugJA: 日本語表示
 const count = (n: number, noun: string) => `${n.toLocaleString()} ${formatPlural(n, noun)}`;
 
 export function describeMigrationLoss(loss: MigrationLoss): string[] {
@@ -27,22 +28,22 @@ export function describeMigrationLoss(loss: MigrationLoss): string[] {
     [loss.digitalEmergenciesLost, 'digital emergency system'],
     [loss.encryptionKeysLost, 'encryption key'],
   ];
-  for (const [n, noun] of removed) if (n > 0) items.push(`${count(n, noun)} removed`);
+  for (const [n, noun] of removed) if (n > 0) items.push(tr("{0} removed", count(n, noun)));
 
   if (loss.zoneChannelsTrimmed > 0)
-    items.push(`${count(loss.zoneChannelsTrimmed, 'zone member')} trimmed to this radio's per-zone limit`);
+    items.push(tr("{0} trimmed to this radio's per-zone limit", count(loss.zoneChannelsTrimmed, 'zone member')));
   if (loss.scanListChannelsTrimmed > 0)
-    items.push(`${count(loss.scanListChannelsTrimmed, 'scan list member')} trimmed to this radio's limit`);
+    items.push(tr("{0} trimmed to this radio's limit", count(loss.scanListChannelsTrimmed, 'scan list member')));
   if (loss.rxGroupMembersTrimmed > 0)
-    items.push(`${count(loss.rxGroupMembersTrimmed, 'RX group member')} trimmed to this radio's limit`);
+    items.push(tr("{0} trimmed to this radio's limit", count(loss.rxGroupMembersTrimmed, 'RX group member')));
   if (loss.scanListRefsCleared > 0)
     items.push(
-      `${count(loss.scanListRefsCleared, 'channel')} lost a scan list reference: the list does not exist on this radio`
+      tr("{0} lost a scan list reference: the list does not exist on this radio", count(loss.scanListRefsCleared, 'channel'))
     );
   if (loss.powerLevelsDowngraded > 0)
     items.push(
-      `${count(loss.powerLevelsDowngraded, 'channel')} stepped down to the strongest power this radio supports`
+      tr("{0} stepped down to the strongest power this radio supports", count(loss.powerLevelsDowngraded, 'channel'))
     );
-  if (loss.settingsCleared) items.push('Radio settings cleared: they do not map between radios');
+  if (loss.settingsCleared) items.push(tr("Radio settings cleared: they do not map between radios"));
   return items;
 }

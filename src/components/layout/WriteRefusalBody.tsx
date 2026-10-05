@@ -6,6 +6,7 @@
 import React from 'react';
 import { parseRefusal } from './writeRefusal';
 
+import { tr } from '../../utils/tr';  // NeonPlugJA: 日本語表示
 export const WriteRefusalBody: React.FC<{ refusal: string }> = ({ refusal }) => {
   const { lead, blocks } = parseRefusal(refusal);
   return (
@@ -18,7 +19,7 @@ export const WriteRefusalBody: React.FC<{ refusal: string }> = ({ refusal }) => 
               <li key={j}>{item}</li>
             ))}
             {block.more > 0 && (
-              <li className="list-none -ml-4 text-muted">…and {block.more.toLocaleString()} more</li>
+              <li className="list-none -ml-4 text-muted">{tr("…and")} {block.more.toLocaleString()} more</li>
             )}
           </ul>
         ) : (
@@ -28,7 +29,7 @@ export const WriteRefusalBody: React.FC<{ refusal: string }> = ({ refusal }) => 
         )
       )}
       <p className="border-t border-neon-cyan border-opacity-20 pt-3 text-xs text-muted">
-        Nothing was sent to the radio.
+        {tr("Nothing was sent to the radio.")}
       </p>
     </div>
   );

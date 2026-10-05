@@ -28,3 +28,10 @@
 :root[data-theme="ja"] .glow-cyan {
   text-shadow: none;
 }
+
+/* 日本語表示: 主ボタンの色を文字に使う所は明るい方（primaryBright）で描く（暗い背景で読めるように） */
+:root[data-theme="ja"] .text-neon-magenta { color: rgb(var(--np-magenta-bright)); }
+:root[data-theme="ja"] .text-neon-magenta\/70 { color: rgb(var(--np-magenta-bright) / 0.7); }
+
+/* 日本語表示: 表の見出しを折り返さない（日本語は 1 字ずつ縦に割れてしまうため。横は表の中でスクロール） */
+:root[data-theme="ja"] thead th { white-space: nowrap; }

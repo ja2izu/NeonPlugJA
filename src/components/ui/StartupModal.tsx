@@ -11,6 +11,7 @@ import { BUTTON } from './controlStyles';
 import { useConfirmDialog } from '../../hooks/useConfirmDialog';
 import { confirmNewerFormat } from '../../utils/codeplugFormatPrompt';
 
+import { tr } from '../../utils/tr';  // NeonPlugJA: 日本語表示
 function formatEventType(eventType?: SnapshotEventType): string {
   if (!eventType) return '';
   return eventType.charAt(0).toUpperCase() + eventType.slice(1);
@@ -24,9 +25,9 @@ function formatRelativeTime(iso: string): string {
   const diffHours = Math.floor(diffMs / 3600000);
   const diffDays = Math.floor(diffMs / 86400000);
   if (diffMins < 1) return 'just now';
-  if (diffMins < 60) return `${diffMins} min ago`;
-  if (diffHours < 24) return `${diffHours} hr ago`;
-  if (diffDays < 7) return `${diffDays} days ago`;
+  if (diffMins < 60) return tr("{0} min ago", diffMins);
+  if (diffHours < 24) return tr("{0} hr ago", diffHours);
+  if (diffDays < 7) return tr("{0} days ago", diffDays);
   return d.toLocaleDateString();
 }
 
@@ -41,10 +42,11 @@ interface StartupModalProps {
   onRestoreSnapshot?: (data: CodeplugData) => void;
 }
 
-const OFFLINE_FALLBACK_MESSAGE =
-  'The latest tagged release is published as a single downloadable HTML file.\n\n' +
-  'Click Download to save neonplug-latest.html from GitHub Releases.\n\n' +
-  'Or build it locally using the instructions in the About tab.';
+// NeonPlugJA: 表示のたびに組み立てる（日本語表示の切替に追従するため）
+const offlineFallbackMessage = () =>
+  tr('The latest tagged release is published as a single downloadable HTML file.') + '\n\n' +
+  tr('Click Download to save neonplug-latest.html from GitHub Releases.') + '\n\n' +
+  tr('Or build it locally using the instructions in the About tab.');
 
 export const StartupModal: React.FC<StartupModalProps> = ({
   isOpen,
@@ -138,7 +140,7 @@ export const StartupModal: React.FC<StartupModalProps> = ({
       >
         <div className="text-center mb-6">
           <h1 className="text-4xl font-bold text-neon-cyan mb-2">NEONPLUG</h1>
-          <p className="text-cool-gray text-sm">Channel programming software</p>
+          <p className="text-cool-gray text-sm">{tr("Channel programming software")}</p>
         </div>
 
         {/* Brands beside radios, not one behind the other.
@@ -146,7 +148,7 @@ export const StartupModal: React.FC<StartupModalProps> = ({
             second name, and a drill-down fixed that by charging a click for
             something the eye can do — so both columns are on screen, and the
             one that grows scrolls. */}
-        <p className="text-white text-center mb-4">Pick a radio</p>
+        <p className="text-white text-center mb-4">{tr("Pick a radio")}</p>
         <div className="mb-6 grid grid-cols-[7rem_1fr] gap-2 max-h-64">
           <div className="overflow-y-auto pr-1 space-y-1">
             {Array.from(groupedOptions.entries()).map(([group, opts]) => (
@@ -184,7 +186,7 @@ export const StartupModal: React.FC<StartupModalProps> = ({
                   // doc: this driver writes to the radio and not every region
                   // has been proven on hardware.
                   <span
-                    title="Alpha: writes are supported but not every region is hardware-verified"
+                    title={tr("Alpha: writes are supported but not every region is hardware-verified")}
                     className="ml-2 px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-yellow-500 bg-opacity-20 text-yellow-400 border border-yellow-600 border-opacity-50"
                   >
                     Alpha
@@ -203,13 +205,13 @@ export const StartupModal: React.FC<StartupModalProps> = ({
                   <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
                 </svg>
                 <div>
-                  <p className="text-yellow-500 font-semibold text-sm mb-1">Browser Not Supported</p>
+                  <p className="text-yellow-500 font-semibold text-sm mb-1">{tr("Browser Not Supported")}</p>
                   <p className="text-yellow-200 text-xs">
                     {showTransportChoice
-                      ? 'Your browser does not support Web Serial or Web Bluetooth.'
-                      : 'Your browser does not support the Web Serial API.'
+                      ? tr("Your browser does not support Web Serial or Web Bluetooth.")
+                      : tr("Your browser does not support the Web Serial API.")
                     }
-                    {' '}To connect to your radio, please use {supportedBrowsers.slice(0, -1).join(', ')}, or {supportedBrowsers[supportedBrowsers.length - 1]}.
+                    {' '}{tr("To connect to your radio, please use")} {supportedBrowsers.slice(0, -1).join(', ')}{tr(", or")} {supportedBrowsers[supportedBrowsers.length - 1]}.
                   </p>
                 </div>
               </div>
@@ -223,9 +225,9 @@ export const StartupModal: React.FC<StartupModalProps> = ({
             className="w-full px-4 py-4 text-lg disabled:bg-deep-gray disabled:text-cool-gray disabled:shadow-none"
             glow={canConnect}
             disabled={!canConnect || !effectiveSelected}
-            title={!canConnect ? 'Web Serial and Web Bluetooth are not supported in this browser' : `Read codeplug from ${selectedOption?.label ?? 'radio'}`}
+            title={!canConnect ? tr("Web Serial and Web Bluetooth are not supported in this browser") : tr("Read codeplug from {0}", selectedOption?.label ?? 'radio')}
           >
-            {selectedOption ? `Read from ${selectedOption.label}` : 'Pick a radio first'}
+            {selectedOption ? tr("Read from {0}", selectedOption.label) : tr("Pick a radio first")}
           </Button>
 
           <Button
@@ -234,10 +236,10 @@ export const StartupModal: React.FC<StartupModalProps> = ({
             size="none"
             className="w-full px-4 py-4 text-lg"
           >
-            Import Codeplug
+            {tr("Import Codeplug")}
           </Button>
           <p className="text-xs text-cool-gray text-center mt-2">
-            Import from codeplug file (.neonplug)
+            {tr("Import from codeplug file (.neonplug)")}
           </p>
 
           {snapshots.length > 0 && onRestoreSnapshot && (
@@ -247,7 +249,7 @@ export const StartupModal: React.FC<StartupModalProps> = ({
                 onClick={() => setRecentExpanded(!recentExpanded)}
                 className={`${BUTTON.menuItem} w-full px-4 py-2 flex items-center justify-between text-left`}
               >
-                <span className="text-sm font-medium">Recent codeplugs ({snapshots.length})</span>
+                <span className="text-sm font-medium">{tr("Recent codeplugs (")}{snapshots.length})</span>
                 <span className="text-xs">{recentExpanded ? '▼' : '▶'}</span>
               </button>
               {recentExpanded && (
@@ -286,7 +288,7 @@ export const StartupModal: React.FC<StartupModalProps> = ({
                             );
                           } catch (error) {
                             setRestoreError(
-                              error instanceof Error ? error.message : 'Unknown error'
+                              error instanceof Error ? error.message : tr("Unknown error")
                             );
                             return;
                           }
@@ -297,7 +299,7 @@ export const StartupModal: React.FC<StartupModalProps> = ({
                         }}
                         className={`${BUTTON.outline} flex-shrink-0 px-3 py-1 text-xs font-semibold border rounded`}
                       >
-                        Restore
+                        {tr("Restore")}
                       </button>
                     </div>
                   ))}
@@ -307,7 +309,7 @@ export const StartupModal: React.FC<StartupModalProps> = ({
                       onClick={() => setClearConfirmOpen(true)}
                       className={`${BUTTON.dangerQuiet} text-xs`}
                     >
-                      Clear all
+                      {tr("Clear all")}
                     </button>
                   </div>
                 </div>
@@ -327,7 +329,7 @@ export const StartupModal: React.FC<StartupModalProps> = ({
               }}
               className={`${BUTTON.link} hover:underline cursor-pointer p-0`}
             >
-              Download offline version (ZIP)
+              {tr("Download offline version (ZIP)")}
             </button>
           </p>
 
@@ -336,7 +338,7 @@ export const StartupModal: React.FC<StartupModalProps> = ({
               onClick={onDismiss}
               className={`${BUTTON.ghost} w-full text-sm py-2`}
             >
-              Continue with sample data
+              {tr("Continue with sample data")}
             </button>
           )}
           {onCancel && (
@@ -344,7 +346,7 @@ export const StartupModal: React.FC<StartupModalProps> = ({
               onClick={onCancel}
               className={`${BUTTON.ghost} w-full text-sm py-2`}
             >
-              Cancel
+              {tr("Cancel")}
             </button>
           )}
         </div>
@@ -353,7 +355,7 @@ export const StartupModal: React.FC<StartupModalProps> = ({
       {transportChoiceOpen && (
         <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-80 z-10 rounded-lg">
           <div className="bg-deep-gray rounded-lg p-6 border border-neon-cyan mx-4 max-w-sm w-full">
-            <p className="text-white text-center mb-4">Connect via</p>
+            <p className="text-white text-center mb-4">{tr("Connect via")}</p>
             <div className="flex gap-4">
               <Button
                 variant="primary"
@@ -367,7 +369,7 @@ export const StartupModal: React.FC<StartupModalProps> = ({
                 className="flex-1"
                 onClick={() => handleTransportChoice('serial')}
               >
-                Serial
+                {tr("Serial")}
               </Button>
             </div>
             <button
@@ -375,7 +377,7 @@ export const StartupModal: React.FC<StartupModalProps> = ({
               onClick={() => setTransportChoiceOpen(false)}
               className={`${BUTTON.ghost} w-full text-sm mt-4`}
             >
-              Cancel
+              {tr("Cancel")}
             </button>
           </div>
         </div>
@@ -385,10 +387,10 @@ export const StartupModal: React.FC<StartupModalProps> = ({
         isOpen={offlineFallbackOpen}
         onClose={() => setOfflineFallbackOpen(false)}
         onConfirm={() => window.open(OFFLINE_RELEASE_URL, '_blank')}
-        title="Download offline version"
-        message={OFFLINE_FALLBACK_MESSAGE}
-        confirmLabel="Download"
-        cancelLabel="Close"
+        title={tr("Download offline version")}
+        message={offlineFallbackMessage()}
+        confirmLabel={tr("Download")}
+        cancelLabel={tr("Close")}
         variant="default"
       />
       <ConfirmModal
@@ -399,15 +401,15 @@ export const StartupModal: React.FC<StartupModalProps> = ({
           setSnapshots([]);
           setClearConfirmOpen(false);
         }}
-        title="Clear all snapshots"
-        message="Remove all recent codeplug snapshots from local storage? This cannot be undone."
-        confirmLabel="Clear all"
+        title={tr("Clear all snapshots")}
+        message={tr("Remove all recent codeplug snapshots from local storage? This cannot be undone.")}
+        confirmLabel={tr("Clear all")}
         variant="danger"
       />
       <ConfirmModal
         isOpen={restoreError !== null}
         onClose={() => setRestoreError(null)}
-        title="Cannot restore snapshot"
+        title={tr("Cannot restore snapshot")}
         message={restoreError ?? ''}
         confirmLabel="OK"
         variant="alert"

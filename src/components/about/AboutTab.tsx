@@ -15,10 +15,12 @@ import { VERSION_LABEL, COMMIT_HASH, BUILD_TIME, IS_RELEASE_BUILD, RELEASE_NOTES
 import { latestEntry, whatsNewItems } from '../../utils/changelog';
 import changelogSource from '../../../CHANGELOG.md?raw';
 
-const OFFLINE_FALLBACK_MESSAGE =
-  'The latest tagged release is published as a single downloadable HTML file.\n\n' +
-  'Click Download to save neonplug-latest.html from GitHub Releases.\n\n' +
-  'Or build it locally using the instructions below.';
+import { tr } from '../../utils/tr';  // NeonPlugJA: 日本語表示
+// NeonPlugJA: 表示のたびに組み立てる（日本語表示の切替に追従するため）
+const offlineFallbackMessage = () =>
+  tr('The latest tagged release is published as a single downloadable HTML file.') + '\n\n' +
+  tr('Click Download to save neonplug-latest.html from GitHub Releases.') + '\n\n' +
+  tr('Or build it locally using the instructions below.');
 
 const LATEST_RELEASE = latestEntry(changelogSource);
 const WHATS_NEW = LATEST_RELEASE ? whatsNewItems(LATEST_RELEASE) : [];
@@ -36,8 +38,8 @@ export const AboutTab: React.FC = () => {
     <>
     <div>
       <PageHeader
-        title="About NeonPlug"
-        description="Online Digital CPS — program your radio directly from your browser."
+        title={tr("About NeonPlug")}
+        description={tr("Online Digital CPS — program your radio directly from your browser.")}
       />
 
       <div className="space-y-6">
@@ -61,7 +63,7 @@ export const AboutTab: React.FC = () => {
         {LATEST_RELEASE && (
           <Card>
             <div className="flex items-baseline justify-between gap-3 flex-wrap">
-              <SectionTitle>What's New</SectionTitle>
+              <SectionTitle>{tr("What's New")}</SectionTitle>
               <span className="text-xs font-mono text-muted">
                 {VERSION_LABEL}
                 {LATEST_RELEASE.date && ` · ${LATEST_RELEASE.date}`}
@@ -69,7 +71,7 @@ export const AboutTab: React.FC = () => {
             </div>
             {!IS_RELEASE_BUILD && (
               <p className="text-xs text-muted mb-3">
-                You're on a development build, which is ahead of the notes below.
+                {tr("You're on a development build, which is ahead of the notes below.")}
               </p>
             )}
             <ul className="list-disc list-inside text-cool-gray text-sm space-y-1 ml-4">
@@ -79,7 +81,7 @@ export const AboutTab: React.FC = () => {
             </ul>
             {WHATS_NEW.length > 12 && (
               <p className="text-xs text-muted mt-2">
-                …and {WHATS_NEW.length - 12} more.
+                {tr("…and")} {WHATS_NEW.length - 12} more.
               </p>
             )}
             <p className="text-xs text-muted mt-3">
@@ -89,7 +91,7 @@ export const AboutTab: React.FC = () => {
                 rel="noopener noreferrer"
                 className="link-accent"
               >
-                Full release notes and previous versions
+                {tr("Full release notes and previous versions")}
               </a>
             </p>
           </Card>
@@ -97,16 +99,16 @@ export const AboutTab: React.FC = () => {
 
         {/* Offline Version */}
         <Card>
-          <SectionTitle>Offline Version</SectionTitle>
+          <SectionTitle>{tr("Offline Version")}</SectionTitle>
           <div className="space-y-4">
             <p className="text-cool-gray">
               Download a single-file version of NeonPlug that works completely offline. 
               This is a self-contained HTML file with all assets inlined - perfect for:
             </p>
             <ul className="list-disc list-inside text-cool-gray space-y-2 ml-4">
-              <li>Running without an internet connection</li>
-              <li>Portable use on any computer</li>
-              <li>Backup and archival purposes</li>
+              <li>{tr("Running without an internet connection")}</li>
+              <li>{tr("Portable use on any computer")}</li>
+              <li>{tr("Backup and archival purposes")}</li>
             </ul>
             
             <div className="flex flex-col gap-3">
@@ -122,24 +124,24 @@ export const AboutTab: React.FC = () => {
                 size="none"
                 className="inline-flex items-center justify-center px-6 py-3"
               >
-                📥 Download Offline Version (ZIP)
+                {tr("📥 Download Offline Version (ZIP)")}
               </Button>
               
               <p className="text-xs text-muted">
-                Downloads a ZIP containing neonplug.html. Unzip and open the HTML file in your browser.
+                {tr("Downloads a ZIP containing neonplug.html. Unzip and open the HTML file in your browser.")}
                 {typeof window !== 'undefined' && window.location.hostname === 'localhost' && (
-                  <> From the dev server the downloaded file is the dev build (not standalone). For a single-file offline build, use the live site or run <code className="text-neon-cyan">npm run build:single</code>.</>
+                  <> {tr("From the dev server the downloaded file is the dev build (not standalone). For a single-file offline build, use the live site or run")} <code className="text-neon-cyan">npm run build:single</code>.</>
                 )}
-                {' '}If the button doesn't work,{' '}
+                {' '}{tr("If the button doesn't work,")}{' '}
                 <a href={OFFLINE_RELEASE_URL} target="_blank" rel="noopener noreferrer" className="link-accent">download the latest release</a>{' '}
                 instead.
               </p>
             </div>
 
             <Card variant="subdued" className="mt-4 border-opacity-30">
-              <SectionTitle as="h4" size="sm">Building Locally</SectionTitle>
+              <SectionTitle as="h4" size="sm">{tr("Building Locally")}</SectionTitle>
               <p className="text-cool-gray text-sm mb-2">
-                To build your own offline version from source:
+                {tr("To build your own offline version from source:")}
               </p>
               <pre className="bg-black rounded p-3 text-xs text-neon-cyan overflow-x-auto">
                 {/* A string, not JSX text: JSX folds line breaks in text into
@@ -148,17 +150,17 @@ export const AboutTab: React.FC = () => {
                 <code>{'git clone https://github.com/infamy/NeonPlug.git\ncd NeonPlug\nnpm install\nnpm run build:single'}</code>
               </pre>
               <p className="text-cool-gray text-xs mt-2">
-                The single-file HTML will be in the <code className="text-neon-cyan">dist/index.html</code> file.
+                {tr("The single-file HTML will be in the")} <code className="text-neon-cyan">dist/index.html</code> file.
               </p>
             </Card>
 
             <Card variant="subdued" className="mt-4 border-opacity-30">
-              <SectionTitle as="h4" size="sm">Using the Offline Version</SectionTitle>
+              <SectionTitle as="h4" size="sm">{tr("Using the Offline Version")}</SectionTitle>
               <ul className="list-disc list-inside text-cool-gray text-sm space-y-1 ml-4">
-                <li>Simply open the downloaded <code className="text-neon-cyan">neonplug.html</code> file in any modern web browser</li>
-                <li>No server or internet connection required - everything is in one file</li>
-                <li>The Web Serial API will still work for connecting to your radio</li>
-                <li>All features work exactly the same as the online version</li>
+                <li>{tr("Simply open the downloaded")} <code className="text-neon-cyan">neonplug.html</code> file in any modern web browser</li>
+                <li>{tr("No server or internet connection required - everything is in one file")}</li>
+                <li>{tr("The Web Serial API will still work for connecting to your radio")}</li>
+                <li>{tr("All features work exactly the same as the online version")}</li>
               </ul>
             </Card>
           </div>
@@ -166,27 +168,27 @@ export const AboutTab: React.FC = () => {
 
         {/* Project Info */}
         <Card>
-          <SectionTitle>Project Information</SectionTitle>
+          <SectionTitle>{tr("Project Information")}</SectionTitle>
           <div className="space-y-3 text-cool-gray">
             <p>
-              <span className="text-neon-cyan font-semibold">NeonPlug</span> is a next-generation, web-based Channel Programming Software (CPS). Built with a cyberpunk neon-themed UI, it provides an intuitive interface for managing channels, zones, scan lists, contacts, and radio settings — all from your browser, with no drivers or software to install.
+              <span className="text-neon-cyan font-semibold">NeonPlug</span> {tr("is a next-generation, web-based Channel Programming Software (CPS). Built with a cyberpunk neon-themed UI, it provides an intuitive interface for managing channels, zones, scan lists, contacts, and radio settings — all from your browser, with no drivers or software to install.")}
             </p>
             <p>
-              Each radio's full protocol is implemented natively, enabling read and write operations via the Web Serial API and — where supported — Bluetooth Low Energy (BLE).
+              {tr("Each radio's full protocol is implemented natively, enabling read and write operations via the Web Serial API and — where supported — Bluetooth Low Energy (BLE).")}
             </p>
           </div>
         </Card>
 
         {/* Supported Radios */}
         <Card>
-          <SectionTitle>Supported Radios</SectionTitle>
+          <SectionTitle>{tr("Supported Radios")}</SectionTitle>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-neon-cyan border-opacity-30">
-                  <th className="text-left py-2 pr-4 text-neon-cyan font-semibold">Radio</th>
-                  <th className="text-left py-2 pr-4 text-neon-cyan font-semibold">Manufacturer</th>
-                  <th className="text-left py-2 text-neon-cyan font-semibold">Connection</th>
+                  <th className="text-left py-2 pr-4 text-neon-cyan font-semibold">{tr("Radio")}</th>
+                  <th className="text-left py-2 pr-4 text-neon-cyan font-semibold">{tr("Manufacturer")}</th>
+                  <th className="text-left py-2 text-neon-cyan font-semibold">{tr("Connection")}</th>
                 </tr>
               </thead>
               <tbody>
@@ -197,7 +199,7 @@ export const AboutTab: React.FC = () => {
                     </td>
                     <td className="py-2 pr-4 text-cool-gray">{d.group ?? '—'}</td>
                     <td className="py-2 text-cool-gray">
-                      {d.supportsBle ? 'USB or BLE' : 'USB'}
+                      {d.supportsBle ? tr("USB or BLE") : 'USB'}
                     </td>
                   </tr>
                 ))}
@@ -208,18 +210,18 @@ export const AboutTab: React.FC = () => {
 
         {/* Codeplug format */}
         <Card>
-          <SectionTitle>Codeplug format (.neonplug)</SectionTitle>
+          <SectionTitle>{tr("Codeplug format (.neonplug)")}</SectionTitle>
           <p className="text-cool-gray text-sm">
-            The codeplug file is a zipped JSON archive. You can unzip it to inspect the contents in a semi-human-readable way (e.g. <code className="text-neon-cyan">codeplug.json</code> inside the zip). Editing the JSON directly is not recommended—use NeonPlug’s import/export and in-app editing instead, to avoid invalid data or corruption.
+            {tr("The codeplug file is a zipped JSON archive. You can unzip it to inspect the contents in a semi-human-readable way (e.g.")} <code className="text-neon-cyan">codeplug.json</code> {tr("inside the zip). Editing the JSON directly is not recommended—use NeonPlug’s import/export and in-app editing instead, to avoid invalid data or corruption.")}
           </p>
         </Card>
 
         {/* Links */}
         <Card>
-          <SectionTitle>Links</SectionTitle>
+          <SectionTitle>{tr("Links")}</SectionTitle>
           <div className="space-y-3">
             <div>
-              <span className="text-cool-gray">NeonPlug Repository: </span>
+              <span className="text-cool-gray">{tr("NeonPlug Repository:")} </span>
               <a
                 href="https://github.com/infamy/NeonPlug"
                 target="_blank"
@@ -230,7 +232,7 @@ export const AboutTab: React.FC = () => {
               </a>
             </div>
             <div>
-              <span className="text-cool-gray">DM-32UV Protocol Specification: </span>
+              <span className="text-cool-gray">{tr("DM-32UV Protocol Specification:")} </span>
               <a
                 href="https://github.com/infamy/DM32-Protocol-Spec"
                 target="_blank"
@@ -245,10 +247,10 @@ export const AboutTab: React.FC = () => {
 
         {/* Credits */}
         <Card>
-          <SectionTitle>Credits</SectionTitle>
+          <SectionTitle>{tr("Credits")}</SectionTitle>
           <div className="space-y-3 text-cool-gray">
             <p>
-              <span className="text-neon-cyan font-semibold">Developer:</span>{' '}
+              <span className="text-neon-cyan font-semibold">{tr("Developer:")}</span>{' '}
               <a
                 href="https://github.com/infamy"
                 target="_blank"
@@ -259,17 +261,15 @@ export const AboutTab: React.FC = () => {
               </a>
             </p>
             <p>
-              Radio protocols were implemented through reverse engineering — serial port captures,
-              analysis of official CPS software, and reference to open-source projects including
-              CHIRP. The DM-32UV protocol specification is documented separately.
+              {tr("Radio protocols were implemented through reverse engineering — serial port captures, analysis of official CPS software, and reference to open-source projects including CHIRP. The DM-32UV protocol specification is documented separately.")}
             </p>
             <div className="mt-4 space-y-2">
               <p className="text-sm text-cool-gray">
-                Built with React, TypeScript, Vite, and Tailwind CSS
+                {tr("Built with React, TypeScript, Vite, and Tailwind CSS")}
               </p>
               <div className="text-xs text-cool-gray font-mono">
                 <div>
-                  <span className="text-cool-gray">Version: </span>
+                  <span className="text-cool-gray">{tr("Version:")} </span>
                   <span className="text-neon-cyan">{VERSION_LABEL}</span>
                   {!IS_RELEASE_BUILD && (
                     <span className="text-muted"> (development build)</span>
@@ -281,7 +281,7 @@ export const AboutTab: React.FC = () => {
                 </div>
                 {BUILD_TIME && (
                   <div className="mt-1">
-                    <span className="text-cool-gray">Built: </span>
+                    <span className="text-cool-gray">{tr("Built:")} </span>
                     <span className="text-neon-cyan">
                       {new Date(BUILD_TIME).toLocaleString()}
                     </span>
@@ -294,17 +294,17 @@ export const AboutTab: React.FC = () => {
 
         {/* Data Sources & Attribution */}
         <Card>
-          <SectionTitle>Data Sources & Attribution</SectionTitle>
+          <SectionTitle>{tr("Data Sources & Attribution")}</SectionTitle>
           <div className="space-y-4 text-cool-gray">
             <p className="text-sm">
-              NeonPlug uses data from the following sources. We are grateful to these organizations and projects for making their data available.
+              {tr("NeonPlug uses data from the following sources. We are grateful to these organizations and projects for making their data available.")}
             </p>
             
             <div className="space-y-3">
               <div>
                 <SectionTitle as="h4" size="sm" className="mb-1">RadioID.net</SectionTitle>
                 <p className="text-sm mb-2">
-                  DMR contact database and API for downloading contacts by country.
+                  {tr("DMR contact database and API for downloading contacts by country.")}
                 </p>
                 <a
                   href="https://radioid.net"
@@ -317,10 +317,9 @@ export const AboutTab: React.FC = () => {
               </div>
 
               <div>
-                <SectionTitle as="h4" size="sm" className="mb-1">TAFL Database</SectionTitle>
+                <SectionTitle as="h4" size="sm" className="mb-1">{tr("TAFL Database")}</SectionTitle>
                 <p className="text-sm mb-2">
-                  Canadian radio frequency license data from the Technical Acceptance and Frequency List (TAFL), 
-                  maintained by Innovation, Science and Economic Development Canada (ISED).
+                  {tr("Canadian radio frequency license data from the Technical Acceptance and Frequency List (TAFL), maintained by Innovation, Science and Economic Development Canada (ISED).")}
                 </p>
                 <a
                   href="https://ised-isde.canada.ca/site/spectrum-management-telecommunications/en"
@@ -333,10 +332,9 @@ export const AboutTab: React.FC = () => {
               </div>
 
               <div>
-                <SectionTitle as="h4" size="sm" className="mb-1">Airport Frequency Data</SectionTitle>
+                <SectionTitle as="h4" size="sm" className="mb-1">{tr("Airport Frequency Data")}</SectionTitle>
                 <p className="text-sm mb-2">
-                  Airport communication frequencies and location data from open aviation databases, 
-                  including ICAO-compliant frequency information.
+                  {tr("Airport communication frequencies and location data from open aviation databases, including ICAO-compliant frequency information.")}
                 </p>
                 <div className="space-y-1">
                   <a
@@ -361,8 +359,7 @@ export const AboutTab: React.FC = () => {
 
             <div className="mt-4 pt-3 border-t border-neon-cyan border-opacity-20">
               <p className="text-xs text-cool-gray italic">
-                Data accuracy and completeness may vary. Always verify critical frequency information 
-                with official sources before use.
+                {tr("Data accuracy and completeness may vary. Always verify critical frequency information with official sources before use.")}
               </p>
             </div>
           </div>
@@ -370,16 +367,15 @@ export const AboutTab: React.FC = () => {
 
         {/* License */}
         <Card>
-          <SectionTitle>License</SectionTitle>
+          <SectionTitle>{tr("License")}</SectionTitle>
           <p className="text-cool-gray text-sm">
-            This software is provided "as is" without warranty. Use at your own risk. 
-            Ensure compliance with local radio regulations and manufacturer warranties.
+            {tr("This software is provided \"as is\" without warranty. Use at your own risk. Ensure compliance with local radio regulations and manufacturer warranties.")}
           </p>
         </Card>
 
         {/* Debug Mode */}
         <div className="bg-deep-gray rounded-lg border border-yellow-600/30 p-6">
-          <h3 className="text-lg font-semibold text-yellow-400 mb-4">Debug Mode</h3>
+          <h3 className="text-lg font-semibold text-yellow-400 mb-4">{tr("Debug Mode")}</h3>
           <div className="space-y-3">
             <p className="text-cool-gray text-sm">
               Enable debug mode to access diagnostic tools for inspecting raw memory blocks and verifying field parsing.
@@ -393,11 +389,11 @@ export const AboutTab: React.FC = () => {
                   : 'bg-yellow-900/20 text-yellow-500 border border-yellow-600/20 hover:bg-yellow-900/30'
               }`}
             >
-              {debugMode ? '✓ Debug Mode Enabled' : 'Enable Debug Mode'}
+              {debugMode ? tr("✓ Debug Mode Enabled") : tr("Enable Debug Mode")}
             </button>
             {debugMode && (
               <p className="text-xs text-yellow-400">
-                Debug mode is enabled. The Diagnostics tab (🐛) is now visible in the navigation bar.
+                {tr("Debug mode is enabled. The Diagnostics tab (🐛) is now visible in the navigation bar.")}
               </p>
             )}
           </div>
@@ -407,17 +403,13 @@ export const AboutTab: React.FC = () => {
             switch is on, so it can always be turned off. DM-32 only for now. */}
         {caps?.supportsOutOfBandFrequencies && (debugMode || allowOutOfBandFrequencies) && (
           <div className="bg-deep-gray rounded-lg border-2 border-red-500 p-6">
-            <h3 className="text-2xl font-bold text-red-400 mb-3">⚠ Out-of-band frequencies</h3>
+            <h3 className="text-2xl font-bold text-red-400 mb-3">{tr("⚠ Out-of-band frequencies")}</h3>
             <div className="space-y-3">
               <p className="text-base font-semibold text-red-300">
-                For radios with modified firmware only. Writing frequencies outside a stock radio's bands
-                can make the write fail or leave the radio misbehaving, and transmitting outside the bands
-                a radio was built for can damage it and may be illegal.
+                {tr("For radios with modified firmware only. Writing frequencies outside a stock radio's bands can make the write fail or leave the radio misbehaving, and transmitting outside the bands a radio was built for can damage it and may be illegal.")}
               </p>
               <p className="text-cool-gray text-sm">
-                While this is on, NeonPlug stops checking channels against the radio's bands: the channel
-                editor shows no band errors, and a write keeps every channel below 1000 MHz as it is. It
-                stays on until you turn it off here.
+                {tr("While this is on, NeonPlug stops checking channels against the radio's bands: the channel editor shows no band errors, and a write keeps every channel below 1000 MHz as it is. It stays on until you turn it off here.")}
               </p>
               <button
                 type="button"
@@ -430,7 +422,7 @@ export const AboutTab: React.FC = () => {
                     : 'bg-red-900/20 text-red-400 border border-red-600/40 hover:bg-red-900/30'
                 }`}
               >
-                {allowOutOfBandFrequencies ? '⚠ Out-of-band frequencies ON: turn off' : 'Turn on out-of-band frequencies'}
+                {allowOutOfBandFrequencies ? tr("⚠ Out-of-band frequencies ON: turn off") : tr("Turn on out-of-band frequencies")}
               </button>
             </div>
           </div>
@@ -472,25 +464,24 @@ export const AboutTab: React.FC = () => {
       isOpen={offlineFallbackOpen}
       onClose={() => setOfflineFallbackOpen(false)}
       onConfirm={() => window.open(OFFLINE_RELEASE_URL, '_blank')}
-      title="Download offline version"
-      message={OFFLINE_FALLBACK_MESSAGE}
-      confirmLabel="Download"
-      cancelLabel="Close"
+      title={tr("Download offline version")}
+      message={offlineFallbackMessage()}
+      confirmLabel={tr("Download")}
+      cancelLabel={tr("Close")}
       variant="default"
     />
     <ConfirmModal
       isOpen={outOfBandConfirmOpen}
       onClose={() => setOutOfBandConfirmOpen(false)}
       onConfirm={() => setAllowOutOfBandFrequencies(true)}
-      title="Turn on out-of-band frequencies?"
+      title={tr("Turn on out-of-band frequencies?")}
       message={
-        'Only do this for a radio with modified firmware.\n\n' +
-        "NeonPlug will stop checking channels against the radio's bands, and will write them as they are. " +
-        'On a stock radio that can make the write fail or leave the radio misbehaving, and transmitting ' +
-        'outside its bands can damage it and may be illegal.\n\n' +
-        'It stays on until you turn it off in About.'
+        tr('Only do this for a radio with modified firmware.') + '\n\n' +
+        tr("NeonPlug will stop checking channels against the radio's bands, and will write them as they are.") + ' ' +
+        tr('On a stock radio that can make the write fail or leave the radio misbehaving, and transmitting outside its bands can damage it and may be illegal.') + '\n\n' +
+        tr('It stays on until you turn it off in About.')
       }
-      confirmLabel="Turn on"
+      confirmLabel={tr("Turn on")}
       variant="danger"
     />
     <ConfirmModal

@@ -6,6 +6,7 @@ import {
   D890_DMR_MODE,
 } from '../../radios/d890uv/constants';
 
+import { tr } from '../../utils/tr';  // NeonPlugJA: 日本語表示
 /**
  * Optional channel columns, declared once and rendered from this one list by
  * both the header row and the cell row.
@@ -411,9 +412,9 @@ export function extraColumnTitle(c: ExtraChannelColumn): string {
     c.provenance === 'hardware'
       ? ''
       : c.provenance === 'marshaller'
-        ? ' — offset from the vendor CPS; not yet confirmed against a radio'
-        : ' — offset from the vendor CPS; encoding inferred, not confirmed';
-  return `${c.label} (${c.offset})${caveat}${c.note ? `. ${c.note}` : ''}`;
+        ? ' ' + tr('— offset from the vendor CPS; not yet confirmed against a radio')
+        : ' ' + tr('— offset from the vendor CPS; encoding inferred, not confirmed');
+  return `${tr(c.label)} (${c.offset})${caveat}${c.note ? `. ${c.note}` : ''}`;
 }
 
 /** Marker appended to the header of anything not hardware-confirmed. */

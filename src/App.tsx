@@ -36,6 +36,8 @@ import { installDevStoreHandle } from './utils/devStoreHandle';
 import { useLogStore } from './store/logStore';
 import { isJapaneseNamesActive } from './utils/japaneseNames';
 import { readCsvText } from './utils/readCsvText';
+import { useUiLanguageStore, resolvePalette } from './store/uiLanguageStore';  // NeonPlugJA: 日本語表示と配色
+import { applyPalette } from './utils/jaThemes';
 
 function App() {
   const [activeTab, setActiveTab] = useState('channels');
@@ -48,6 +50,19 @@ function App() {
   const { setPreferredTransport, showPickRadioModal, setShowPickRadioModal } = useRadioStore();
   const { isConnecting, error: radioError } = useRadioConnection();
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // NeonPlugJA: 日本語表示のときの配色。自動は 1 時間ごとに見直す（季節・ハロウィンの切替）
+  const { language: uiLanguage, theme: uiTheme, user: uiUser } = useUiLanguageStore();
+  useEffect(() => {
+    const apply = () => {
+      const { palette, neon } = resolvePalette(uiLanguage, uiTheme, uiUser);
+      applyPalette(palette, neon);
+    };
+    apply();
+    document.documentElement.lang = uiLanguage;
+    const timer = window.setInterval(apply, 60 * 60 * 1000);
+    return () => window.clearInterval(timer);
+  }, [uiLanguage, uiTheme, uiUser]);
   
   // Initialize logger with log store
   const logStore = useLogStore();
@@ -284,7 +299,8 @@ function App() {
 
   return (
     <>
-      <MainLayout activeTab={activeTab} onTabChange={setActiveTab}>
+      {/* NeonPlugJA: 表示言語を変えたら作り直す（文言は描画のときに対応表を引くため） */}
+      <MainLayout key={uiLanguage} activeTab={activeTab} onTabChange={setActiveTab}>
         {renderTabContent()}
       </MainLayout>
       <StartupModal

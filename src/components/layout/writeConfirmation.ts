@@ -16,6 +16,7 @@ import type { D890IntegrityFinding } from '../../radios/d890uv/integrity';
 import type { CodeplugWriteWarning } from '../../services/validation/codeplugValidator';
 import { formatPlural } from '../../utils/formatPlural';
 
+import { tr } from '../../utils/tr';  // NeonPlugJA: 日本語表示
 export interface WriteConfirmInput {
   /** Null for radios that do not plan their writes this way. */
   preview: D890WritePreview | null;
@@ -110,12 +111,12 @@ function checkItems(w: CodeplugWriteWarning): string[] {
   }
   if (w.id === 'zones_reference_nonexistent_channels' && w.zoneRefs?.length) {
     return w.zoneRefs.map(
-      (z) => `Zone "${z.zoneName}": Ch ${z.invalidChannelNumbers.join(', ')} do not exist`
+      (z) => tr('Zone "{0}": Ch {1} do not exist', z.zoneName, z.invalidChannelNumbers.join(', '))
     );
   }
   if (w.id === 'channels_reference_deleted_dmr_radio_id' && w.channels?.length) {
     return w.channels.map(
-      (c) => `Ch ${c.number} – ${c.name || '(no name)'} (Radio ID index ${c.dmrRadioIdIndex ?? '?'})`
+      (c) => tr('Ch {0} – {1} (Radio ID index {2})', c.number, c.name || '(no name)', c.dmrRadioIdIndex ?? '?')
     );
   }
   return [];
@@ -131,26 +132,26 @@ function listCounts(summary: WriteSummaryInput): string {
     .filter(([count]) => (count as number) > 0)
     .map(([count, noun]) => `${(count as number).toLocaleString()} ${formatPlural(count as number, noun as string)}`);
   if (parts.length <= 1) return parts[0] ?? 'nothing';
-  return `${parts.slice(0, -1).join(', ')} and ${parts[parts.length - 1]}`;
+  return tr("{0} and {1}", parts.slice(0, -1).join(', '), parts[parts.length - 1]);
 }
 
 function buildHeadline(summary: WriteSummaryInput | undefined): string | null {
   if (!summary) return null;
-  const radio = summary.model ? `the ${summary.model}` : 'the radio';
-  if (summary.channels === 0) return `Writes no channels to ${radio}.`;
-  return `Writes ${listCounts(summary)} to ${radio}.`;
+  const radio = summary.model ? tr("the {0}", summary.model) : tr('the radio');
+  if (summary.channels === 0) return tr("Writes no channels to {0}.", radio);
+  return tr("Writes {0} to {1}.", listCounts(summary), radio);
 }
 
 function buildSettingsLine(summary: WriteSummaryInput | undefined): string | null {
   const settings = summary?.settings;
   if (!settings) return null;
-  if (settings.all) return 'Writes every setting in the imported codeplug.';
+  if (settings.all) return tr("Writes every setting in the imported codeplug.");
   const n = settings.labels.length;
   if (n === 0) return null;
   const limit = WRITE_CONFIRM_LIMITS.settings;
   const shown = settings.labels.slice(0, limit).join(', ');
-  const more = n > limit ? `, and ${n - limit} more` : '';
-  return `Changes ${n} ${formatPlural(n, 'setting')}: ${shown}${more}.`;
+  const more = n > limit ? tr(", and {0} more", n - limit) : '';
+  return tr("Changes {0} {1}: {2}{3}.", n, formatPlural(n, 'setting'), shown, more);
 }
 
 function buildLeftOut(summary: WriteSummaryInput | undefined): WriteConfirmation['leftOut'] {

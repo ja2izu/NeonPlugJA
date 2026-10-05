@@ -5,6 +5,7 @@ import type { D890AmZone } from '../../radios/d890uv/amZones';
 import type { D890BroadcastChannel } from '../../radios/d890uv/broadcastChannels';
 import { BUTTON, FIELD } from '../ui/controlStyles';
 
+import { tr } from '../../utils/tr';  // NeonPlugJA: 日本語表示
 /**
  * AM zones — a separate zone system over the airband table.
  *
@@ -100,14 +101,14 @@ export const AmZonesEditor: React.FC<{ channels: D890BroadcastChannel[] }> = ({ 
     <div className="mb-3 bg-neon-cyan bg-opacity-5 border border-neon-cyan border-opacity-30 rounded-lg p-3">
       <div className="flex items-center justify-between mb-2 gap-2">
         <h4 className="text-neon-cyan font-medium text-xs">
-          AM Zones ({zones.length}/{D890_AM_ZONES.SLOTS})
+          {tr("AM Zones (")}{zones.length}/{D890_AM_ZONES.SLOTS})
         </h4>
         <div className="flex items-center gap-2">
           <input
             value={newName}
             onChange={(e) => setNewName(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && addZone()}
-            placeholder="Zone name…"
+            placeholder={tr("Zone name…")}
             maxLength={16}
             className={`${FIELD} border rounded px-2 py-1 text-xs w-36`}
           />
@@ -116,13 +117,13 @@ export const AmZonesEditor: React.FC<{ channels: D890BroadcastChannel[] }> = ({ 
             disabled={zones.length >= D890_AM_ZONES.SLOTS}
             className={`${BUTTON.subtle} px-2 py-1 text-xs border rounded`}
           >
-            + Add
+            {tr("+ Add")}
           </button>
         </div>
       </div>
 
       {zones.length === 0 ? (
-        <p className="text-xs text-muted">No AM zones. Add one to group airband channels.</p>
+        <p className="text-xs text-muted">{tr("No AM zones. Add one to group airband channels.")}</p>
       ) : (
         <div className="flex flex-col gap-2">
           {zones.map((zone) => (
@@ -140,7 +141,7 @@ export const AmZonesEditor: React.FC<{ channels: D890BroadcastChannel[] }> = ({ 
                 <button
                   onClick={() => setTable('amZones', zones.filter((z) => z.index !== zone.index))}
                   className={`${BUTTON.danger} ml-auto px-1.5 py-0.5 border rounded text-xs`}
-                  title="Delete this AM zone"
+                  title={tr("Delete this AM zone")}
                 >
                   ×
                 </button>
@@ -155,7 +156,7 @@ export const AmZonesEditor: React.FC<{ channels: D890BroadcastChannel[] }> = ({ 
                   column here, unlike main zones. */}
               {zone.members.length > 0 && zone.aChannel !== undefined && (
                 <div className="flex items-center gap-2 mb-1">
-                  <span className="text-cool-gray text-xs">A Channel:</span>
+                  <span className="text-cool-gray text-xs">{tr("A Channel:")}</span>
                   <select
                     value={zone.aChannel}
                     onChange={(e) =>
@@ -173,9 +174,9 @@ export const AmZonesEditor: React.FC<{ channels: D890BroadcastChannel[] }> = ({ 
               {zone.members.length > 0 && (
                 <div className="text-cool-gray text-[11px] mb-1">
                   {zone.scan
-                    ? <>Channels in this zone — <span className="text-neon-cyan">ticked</span> ones
+                    ? <>{tr("Channels in this zone —")} <span className="text-neon-cyan">ticked</span> ones
                         are included when scanning it</>
-                    : 'Channels in this zone'}
+                    : tr("Channels in this zone")}
                 </div>
               )}
 
@@ -203,8 +204,8 @@ export const AmZonesEditor: React.FC<{ channels: D890BroadcastChannel[] }> = ({ 
                         onChange={() => toggleScan(zone, position)}
                         title={
                           zone.scan[position]
-                            ? `${label(member)} is scanned in ${zone.name}`
-                            : `${label(member)} is skipped when scanning ${zone.name}`
+                            ? tr("{0} is scanned in {1}", label(member), zone.name)
+                            : tr("{0} is skipped when scanning {1}", label(member), zone.name)
                         }
                         className="mr-1"
                       />
@@ -213,7 +214,7 @@ export const AmZonesEditor: React.FC<{ channels: D890BroadcastChannel[] }> = ({ 
                     <button
                       onClick={() => removeMember(zone, position)}
                       className={BUTTON.dangerQuiet}
-                      title="Remove from this zone"
+                      title={tr("Remove from this zone")}
                     >
                       ×
                     </button>
@@ -231,7 +232,7 @@ export const AmZonesEditor: React.FC<{ channels: D890BroadcastChannel[] }> = ({ 
                   }}
                   className={`${FIELD} border rounded px-1.5 py-0.5 text-cool-gray text-xs`}
                 >
-                  <option value="">+ add channel…</option>
+                  <option value="">{tr("+ add channel…")}</option>
                   {channels
                     .filter((c) => !zone.members.includes(c.index))
                     .map((c) => (

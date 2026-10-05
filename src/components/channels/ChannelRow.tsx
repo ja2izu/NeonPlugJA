@@ -26,6 +26,7 @@ import {
   type ChannelWriteRule,
 } from '../../services/validation/channelProblems';
 
+import { tr } from '../../utils/tr';  // NeonPlugJA: 日本語表示
 const NO_PROBLEMS: ChannelProblems = {};
 
 // Re-exported so existing importers keep working; the numbers now derive from
@@ -240,7 +241,7 @@ export const ChannelRow: React.FC<ChannelRowProps> = React.memo(({
             readOnly
             onClick={(e) => onToggleSelect(channel.number, e)}
             className="checkbox-theme"
-            aria-label={`Select channel ${channel.number}`}
+            aria-label={tr("Select channel {0}", channel.number)}
           />
         )}
       </td>
@@ -258,7 +259,7 @@ export const ChannelRow: React.FC<ChannelRowProps> = React.memo(({
           }`}
           title={problems.name}
           aria-invalid={problems.name ? true : undefined}
-          aria-label={`Channel ${channel.number} name`}
+          aria-label={tr("Channel {0} name", channel.number)}
           maxLength={writeRule.nameBytes ? undefined : writeRule.maxNameLength}
           placeholder={isVFOChannel(channel.number) ? `VFO ${getVFOIdentifier(channel.number)}` : ''}
         />
@@ -268,7 +269,7 @@ export const ChannelRow: React.FC<ChannelRowProps> = React.memo(({
           value={channel.rxFrequency}
           onChange={(val) => handleCellChange(channel.number, 'rxFrequency', val)}
           className="border rounded px-2 py-1 w-full text-xs"
-          aria-label={`Channel ${channel.number} RX frequency`}
+          aria-label={tr("Channel {0} RX frequency", channel.number)}
           problem={problems.rx}
         />
       </td>
@@ -283,8 +284,8 @@ export const ChannelRow: React.FC<ChannelRowProps> = React.memo(({
           }}
           disabled={isRxInNoTxBand(channel.rxFrequency) && isNoTxFrequency(channel.txFrequency)}
           className={`${BUTTON.outline} p-1 rounded border text-xs font-bold`}
-          title={isRxInNoTxBand(channel.rxFrequency) && isNoTxFrequency(channel.txFrequency) ? 'Receive-only (no TX)' : 'Copy RX to TX'}
-          aria-label="Copy RX to TX"
+          title={isRxInNoTxBand(channel.rxFrequency) && isNoTxFrequency(channel.txFrequency) ? tr("Receive-only (no TX)") : tr("Copy RX to TX")}
+          aria-label={tr("Copy RX to TX")}
         >
           →
         </button>
@@ -297,8 +298,8 @@ export const ChannelRow: React.FC<ChannelRowProps> = React.memo(({
             disabled
             value=""
             placeholder=""
-            title="Receive-only (no TX)"
-            aria-label="No transmit"
+            title={tr("Receive-only (no TX)")}
+            aria-label={tr("No transmit")}
             className={`${FIELD} w-full text-xs rounded px-2 py-1 border text-cool-gray opacity-60 cursor-not-allowed`}
           />
         ) : (
@@ -306,7 +307,7 @@ export const ChannelRow: React.FC<ChannelRowProps> = React.memo(({
             value={channel.txFrequency}
             onChange={(val) => handleCellChange(channel.number, 'txFrequency', val)}
             className="border rounded px-2 py-1 w-full text-xs"
-            aria-label={`Channel ${channel.number} TX frequency`}
+            aria-label={tr("Channel {0} TX frequency", channel.number)}
             problem={problems.tx}
           />
         )}
@@ -359,7 +360,7 @@ export const ChannelRow: React.FC<ChannelRowProps> = React.memo(({
               ? 'opacity-50 cursor-not-allowed'
               : 'hover:bg-opacity-80 hover:border-neon-cyan'
           }`}
-          title={isDigitalMode(channel.mode) ? 'Locked to Narrow (12.5kHz) for Digital' : (channel.bandwidth === '25kHz' ? 'Wide (25kHz)' : 'Narrow (12.5kHz)')}
+          title={isDigitalMode(channel.mode) ? tr("Locked to Narrow (12.5kHz) for Digital") : (channel.bandwidth === '25kHz' ? tr("Wide (25kHz)") : tr("Narrow (12.5kHz)"))}
         >
           {isDigitalMode(channel.mode) ? 'N' : (channel.bandwidth === '25kHz' ? 'W' : 'N')}
         </button>
@@ -393,7 +394,7 @@ export const ChannelRow: React.FC<ChannelRowProps> = React.memo(({
               }}
               className={`${FIELD} border rounded px-2 py-1 text-xs w-full`}
             >
-              <option value="None">None</option>
+              <option value="None">{tr("None")}</option>
               <option value="CTCSS">CTCSS</option>
               <option value="DCS">DCS</option>
             </select>
@@ -406,10 +407,10 @@ export const ChannelRow: React.FC<ChannelRowProps> = React.memo(({
                 })}
                 className={`${FIELD} border rounded px-2 py-1 w-full text-xs`}
               >
-                <option value="">Select...</option>
+                <option value="">{tr("Select...")}</option>
                 {channel.rxCtcssDcs.value && !CTCSS_FREQUENCIES.includes(channel.rxCtcssDcs.value) && (
                   <option value={channel.rxCtcssDcs.value}>
-                    {formatCTCSSFrequency(channel.rxCtcssDcs.value)} (Custom)
+                    {formatCTCSSFrequency(channel.rxCtcssDcs.value)} {tr("(Custom)")}
                   </option>
                 )}
                 {CTCSS_FREQUENCIES.map((freq) => (
@@ -429,10 +430,10 @@ export const ChannelRow: React.FC<ChannelRowProps> = React.memo(({
                   })}
                   className={`${FIELD} flex-1 border rounded px-2 py-1 text-xs`}
                 >
-                  <option value="">Select...</option>
+                  <option value="">{tr("Select...")}</option>
                   {channel.rxCtcssDcs.value && !DCS_CODES.includes(channel.rxCtcssDcs.value) && (
                     <option value={channel.rxCtcssDcs.value}>
-                      {formatDCSCode(channel.rxCtcssDcs.value, channel.rxCtcssDcs.polarity)} (Custom)
+                      {formatDCSCode(channel.rxCtcssDcs.value, channel.rxCtcssDcs.polarity)} {tr("(Custom)")}
                     </option>
                   )}
                   {DCS_CODES.map((code) => (
@@ -475,7 +476,7 @@ export const ChannelRow: React.FC<ChannelRowProps> = React.memo(({
               }}
               className={`${FIELD} border rounded px-2 py-1 text-xs w-full`}
             >
-              <option value="None">None</option>
+              <option value="None">{tr("None")}</option>
               <option value="CTCSS">CTCSS</option>
               <option value="DCS">DCS</option>
             </select>
@@ -488,10 +489,10 @@ export const ChannelRow: React.FC<ChannelRowProps> = React.memo(({
                 })}
                 className={`${FIELD} border rounded px-2 py-1 w-full text-xs`}
               >
-                <option value="">Select...</option>
+                <option value="">{tr("Select...")}</option>
                 {channel.txCtcssDcs.value && !CTCSS_FREQUENCIES.includes(channel.txCtcssDcs.value) && (
                   <option value={channel.txCtcssDcs.value}>
-                    {formatCTCSSFrequency(channel.txCtcssDcs.value)} (Custom)
+                    {formatCTCSSFrequency(channel.txCtcssDcs.value)} {tr("(Custom)")}
                   </option>
                 )}
                 {CTCSS_FREQUENCIES.map((freq) => (
@@ -511,10 +512,10 @@ export const ChannelRow: React.FC<ChannelRowProps> = React.memo(({
                   })}
                   className={`${FIELD} flex-1 border rounded px-2 py-1 text-xs`}
                 >
-                  <option value="">Select...</option>
+                  <option value="">{tr("Select...")}</option>
                   {channel.txCtcssDcs.value && !DCS_CODES.includes(channel.txCtcssDcs.value) && (
                     <option value={channel.txCtcssDcs.value}>
-                      {formatDCSCode(channel.txCtcssDcs.value, channel.txCtcssDcs.polarity)} (Custom)
+                      {formatDCSCode(channel.txCtcssDcs.value, channel.txCtcssDcs.polarity)} {tr("(Custom)")}
                     </option>
                   )}
                   {DCS_CODES.map((code) => (
@@ -541,13 +542,13 @@ export const ChannelRow: React.FC<ChannelRowProps> = React.memo(({
         )}
       </td>
       {hasColumn('loneWorker') && (
-        <td className="px-2 py-2 text-center" title="Lone Worker">
+        <td className="px-2 py-2 text-center" title={tr("Lone Worker")}>
           <input
             type="checkbox"
             checked={channel.loneWorker}
             onChange={(e) => handleCellChange(channel.number, 'loneWorker', e.target.checked)}
             className="checkbox-theme"
-            title="Lone Worker"
+            title={tr("Lone Worker")}
           />
         </td>
       )}
@@ -558,11 +559,11 @@ export const ChannelRow: React.FC<ChannelRowProps> = React.memo(({
           title={
             channel.scanListId > 0
               ? `${channel.scanListId}: ${scanListByReference(scanLists, channel.scanListId, scanListsBySlot)?.name ?? '(missing list)'}`
-              : 'No scan list'
+              : tr("No scan list")
           }
           className={`${FIELD} border rounded px-2 py-1 text-xs w-full min-w-[6rem] max-w-[120px]`}
         >
-          <option value={0}>None</option>
+          <option value={0}>{tr("None")}</option>
           {scanLists.map((scanList, index) => (
             // Keyed by position: several lists can share a name.
             <option key={index} value={scanListReference(scanList, index, scanListsBySlot)}>
@@ -651,46 +652,46 @@ export const ChannelRow: React.FC<ChannelRowProps> = React.memo(({
         </td>
       )}
       {hasColumn('audioProcessing') && (
-        <td className="px-2 py-2 text-center" title="Scramble">
+        <td className="px-2 py-2 text-center" title={tr("Scramble")}>
           <input
             type="checkbox"
             checked={channel.scramble}
             onChange={(e) => handleCellChange(channel.number, 'scramble', e.target.checked)}
             className="checkbox-theme"
-            title="Scramble"
+            title={tr("Scramble")}
           />
         </td>
       )}
       {hasColumn('audioProcessing') && (
-        <td className="px-2 py-2 text-center" title="Compander">
+        <td className="px-2 py-2 text-center" title={tr("Compander")}>
           <input
             type="checkbox"
             checked={channel.compander}
             onChange={(e) => handleCellChange(channel.number, 'compander', e.target.checked)}
             className="checkbox-theme"
-            title="Compander"
+            title={tr("Compander")}
           />
         </td>
       )}
       {hasColumn('audioProcessing') && (
-        <td className="px-2 py-2 text-center" title="Talkback">
+        <td className="px-2 py-2 text-center" title={tr("Talkback")}>
           <input
             type="checkbox"
             checked={channel.talkback}
             onChange={(e) => handleCellChange(channel.number, 'talkback', e.target.checked)}
             className="checkbox-theme"
-            title="Talkback"
+            title={tr("Talkback")}
           />
         </td>
       )}
       {hasColumn('audioProcessing') && (
-        <td className="px-2 py-2 text-center" title="Compander Dup">
+        <td className="px-2 py-2 text-center" title={tr("Compander Dup")}>
           <input
             type="checkbox"
             checked={channel.companderDup}
             onChange={(e) => handleCellChange(channel.number, 'companderDup', e.target.checked)}
             className="checkbox-theme"
-            title="Compander Dup"
+            title={tr("Compander Dup")}
           />
         </td>
       )}
@@ -792,7 +793,7 @@ export const ChannelRow: React.FC<ChannelRowProps> = React.memo(({
               onChange={(e) => handleCellChange(channel.number, 'signalingType', e.target.value)}
               className={`${FIELD} border rounded px-2 py-1 text-xs w-full`}
             >
-              <option value="None">None</option>
+              <option value="None">{tr("None")}</option>
               <option value="DTMF">DTMF</option>
               <option value="Two Tone">2Tone</option>
               <option value="Five Tone">5Tone</option>
@@ -808,10 +809,10 @@ export const ChannelRow: React.FC<ChannelRowProps> = React.memo(({
             onChange={(e) => handleCellChange(channel.number, 'pttIdType', e.target.value)}
             className={`${FIELD} border rounded px-2 py-1 text-xs w-full`}
           >
-            <option value="Off">Off</option>
+            <option value="Off">{tr("Off")}</option>
             <option value="BOT">BOT</option>
             <option value="EOT">EOT</option>
-            <option value="Both">Both</option>
+            <option value="Both">{tr("Both")}</option>
           </select>
         </td>
       )}
@@ -839,7 +840,7 @@ export const ChannelRow: React.FC<ChannelRowProps> = React.memo(({
                 onChange={(e) => handleCellChange(channel.number, 'rxGroupListId', parseInt(e.target.value) || 0)}
                 className={`${FIELD} border rounded px-2 py-1 text-xs w-full max-w-[140px]`}
               >
-                <option value={0}>None</option>
+                <option value={0}>{tr("None")}</option>
                 {rxGroups
                   .filter(group => group.index < 63) // RX Group List ID is 0-63, so valid indices are 0-62
                   .map((group) => (
@@ -863,7 +864,7 @@ export const ChannelRow: React.FC<ChannelRowProps> = React.memo(({
                   handleCellChange(channel.number, 'slotOperation', newSlot);
                 }}
                 className={`${BUTTON.field} w-8 h-7 border rounded text-xs font-medium`}
-                title={`Slot ${(channel.slotOperation ?? 0) === 0 ? 1 : 2}`}
+                title={tr("Slot {0}", (channel.slotOperation ?? 0) === 0 ? 1 : 2)}
               >
                 {(channel.slotOperation ?? 0) === 0 ? 1 : 2}
               </button>
@@ -879,7 +880,7 @@ export const ChannelRow: React.FC<ChannelRowProps> = React.memo(({
                   checked={channel.encryption ?? false}
                   onChange={(e) => handleCellChange(channel.number, 'encryption', e.target.checked)}
                   className="checkbox-theme"
-                  title="Encryption"
+                  title={tr("Encryption")}
                 />
               ) : (
                 <span className="text-cool-gray text-xs">-</span>
@@ -893,14 +894,14 @@ export const ChannelRow: React.FC<ChannelRowProps> = React.memo(({
                   value={channel.encryptionId ?? 0}
                   onChange={(e) => handleCellChange(channel.number, 'encryptionId', parseInt(e.target.value) || 0)}
                   className={`${FIELD} border rounded px-2 py-1 text-xs w-full max-w-[120px]`}
-                  title="Encryption Key"
+                  title={tr("Encryption Key")}
                 >
-                  <option value={0}>None</option>
+                  <option value={0}>{tr("None")}</option>
                   {encryptionKeys
                     .filter(key => key.id >= 1 && key.id <= 8 && key.name.trim() !== '')
                     .map((key) => (
                       <option key={key.entryNumber} value={key.id}>
-                        {key.name || `Key ${key.id}`}
+                        {key.name || tr("Key {0}", key.id)}
                       </option>
                     ))}
                 </select>
@@ -917,7 +918,7 @@ export const ChannelRow: React.FC<ChannelRowProps> = React.memo(({
                   checked={channel.tdmaDirectMode ?? false}
                   onChange={(e) => handleCellChange(channel.number, 'tdmaDirectMode', e.target.checked)}
                   className="checkbox-theme"
-                  title="TDMA Direct Mode"
+                  title={tr("TDMA Direct Mode")}
                 />
               ) : (
                 <span className="text-cool-gray text-xs">-</span>
@@ -932,7 +933,7 @@ export const ChannelRow: React.FC<ChannelRowProps> = React.memo(({
                   checked={channel.shortDataConfirm ?? false}
                   onChange={(e) => handleCellChange(channel.number, 'shortDataConfirm', e.target.checked)}
                   className="checkbox-theme"
-                  title="Short Data Confirm"
+                  title={tr("Short Data Confirm")}
                 />
               ) : (
                 <span className="text-cool-gray text-xs">-</span>
@@ -947,7 +948,7 @@ export const ChannelRow: React.FC<ChannelRowProps> = React.memo(({
                   checked={channel.privateConfirm ?? false}
                   onChange={(e) => handleCellChange(channel.number, 'privateConfirm', e.target.checked)}
                   className="checkbox-theme"
-                  title="Private Confirm"
+                  title={tr("Private Confirm")}
                 />
               ) : (
                 <span className="text-cool-gray text-xs">-</span>
@@ -964,9 +965,9 @@ export const ChannelRow: React.FC<ChannelRowProps> = React.memo(({
                   handleCellChange(channel.number, 'dmrRadioIdIndex', value);
                 }}
                 className={`${FIELD} border rounded px-2 py-1 text-xs w-full max-w-[150px]`}
-                title="DMR Radio ID Index for TX"
+                title={tr("DMR Radio ID Index for TX")}
               >
-                <option value="255">None</option>
+                <option value="255">{tr("None")}</option>
                 {dmrRadioIds.map((radioId) => {
                   // Use 0-based index directly (0=first entry, 1=second entry, etc.)
                   return (
@@ -978,7 +979,7 @@ export const ChannelRow: React.FC<ChannelRowProps> = React.memo(({
                 {/* Show current value even if it's not in the list (e.g., deleted radio ID) */}
                 {channel.dmrRadioIdIndex !== undefined && channel.dmrRadioIdIndex !== 255 && !dmrRadioIds.find(r => r.index === channel.dmrRadioIdIndex) && (
                   <option value={String(channel.dmrRadioIdIndex)} disabled>
-                    Index {channel.dmrRadioIdIndex} (not found)
+                    {tr("Index")} {channel.dmrRadioIdIndex} (not found)
                   </option>
                 )}
               </select>
@@ -1006,7 +1007,7 @@ export const ChannelRow: React.FC<ChannelRowProps> = React.memo(({
             onChange={(e) => handleCellChange(channel.number, 'contactId', parseInt(e.target.value) || 0)}
             className={`${FIELD} border rounded px-2 py-1 text-xs w-full max-w-[150px]`}
           >
-            <option value={0}>None</option>
+            <option value={0}>{tr("None")}</option>
             {talkGroups.map((tg) => {
               const callTypeLabel = tg.callType === 0x05 ? 'All' : tg.callType === 0x04 ? 'Grp' : tg.callType === 0x03 ? 'Prv' : '?';
               return (
@@ -1025,7 +1026,7 @@ export const ChannelRow: React.FC<ChannelRowProps> = React.memo(({
           <button
             onClick={() => onEdit(channel)}
             className={`${BUTTON.rowAction} px-1.5 py-0.5 text-xs border rounded opacity-60 hover:opacity-100`}
-            title={`Edit ${isVFOChannel(channel.number) ? `VFO ${getVFOIdentifier(channel.number)}` : `channel ${channel.number}`}`}
+            title={tr("Edit {0}", isVFOChannel(channel.number) ? `VFO ${getVFOIdentifier(channel.number)}` : tr('channel {0}', channel.number))}
           >
             ✎
           </button>
@@ -1033,7 +1034,7 @@ export const ChannelRow: React.FC<ChannelRowProps> = React.memo(({
             <button
               onClick={() => onClone(channel)}
               className={`${BUTTON.rowAction} px-1.5 py-0.5 text-xs border rounded opacity-60 hover:opacity-100`}
-              title={`Clone channel ${channel.number}`}
+              title={tr("Clone channel {0}", channel.number)}
             >
               ⧉
             </button>
@@ -1042,7 +1043,7 @@ export const ChannelRow: React.FC<ChannelRowProps> = React.memo(({
             <button
               onClick={() => onDelete(channel)}
               className={`${BUTTON.dangerQuiet} px-1.5 py-0.5 text-xs border rounded opacity-60 hover:opacity-100`}
-              title={`Delete channel ${channel.number}`}
+              title={tr("Delete channel {0}", channel.number)}
             >
               ×
             </button>

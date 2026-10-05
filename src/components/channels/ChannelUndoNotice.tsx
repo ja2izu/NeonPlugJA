@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import { dismissChannelNotice, undoChannelEdit, useChannelHistoryStore } from '../../services/channelHistory';
 import { BUTTON } from '../ui/controlStyles';
 
+import { tr } from '../../utils/tr';  // NeonPlugJA: 日本語表示
 /** How long the notice stays up. */
 const NOTICE_MS = 10_000;
 
@@ -35,13 +36,13 @@ export const ChannelUndoNotice: React.FC<{
         }}
         className={`${BUTTON.link} font-medium underline`}
       >
-        Undo
+        {tr("Undo")}
       </button>
       <button
         type="button"
         onClick={() => dismissChannelNotice(notice.id)}
         className={BUTTON.ghost}
-        aria-label="Dismiss"
+        aria-label={tr("Dismiss")}
       >
         ×
       </button>

@@ -48,6 +48,7 @@ const SortButton: React.FC<{ label: string; state: SortState; onClick: () => voi
 import { isDialogOpen, isInteractive, isTextEntry, MOD_KEY } from '../../utils/keyboardTargets';
 import { EmptyState } from '../ui/EmptyState';
 
+import { tr } from '../../utils/tr';  // NeonPlugJA: 日本語表示
 interface ChannelsTableProps {
   channels?: Channel[];
   scrollToChannel?: number | null;  // Channel number to scroll to
@@ -115,7 +116,7 @@ export const ChannelsTable: React.FC<ChannelsTableProps> = ({
     );
   const sortState = (key: ChannelSortKey): SortState =>
     sort?.key === key ? (sort.descending ? 'descending' : 'ascending') : 'none';
-  const sortTitle = (what: string) => `${what}. Click to sort the view; channel numbers don't change.`;
+  const sortTitle = (what: string) => tr("{0}. Click to sort the view; channel numbers don't change.", tr(what));
   const [editingChannel, setEditingChannel] = useState<Channel | null>(null);
   const [channelToDelete, setChannelToDelete] = useState<Channel | null>(null);
   const [clonedChannelNumber, setClonedChannelNumber] = useState<number | null>(null);
@@ -215,7 +216,7 @@ export const ChannelsTable: React.FC<ChannelsTableProps> = ({
 
     const settings = radioSettingsRef.current;
     recordChannelEdit(
-      `edit ${channelsLabel(targets)}`,
+      tr('edit {0}', channelsLabel(targets)),
       () => {
         for (const num of targets) {
           if (num === 4001 && settings?.vfoA) {
@@ -273,7 +274,7 @@ export const ChannelsTable: React.FC<ChannelsTableProps> = ({
         : channel.name + ' (C)',
     };
 
-    recordChannelEdit(`clone ${channelsLabel([channel.number])}`, () => addChannel(clonedChannel));
+    recordChannelEdit(tr('clone {0}', channelsLabel([channel.number])), () => addChannel(clonedChannel));
     setClonedChannelNumber(nextNumber);
   }, [addChannel]);
 
@@ -321,7 +322,7 @@ export const ChannelsTable: React.FC<ChannelsTableProps> = ({
   if (channels.length === 0) {
     return (
       <Card>
-        <EmptyState message="No channels loaded" secondary="Connect to a radio or import channels to get started" />
+        <EmptyState message={tr("No channels loaded")} secondary="Connect to a radio or import channels to get started" />
       </Card>
     );
   }
@@ -350,8 +351,8 @@ export const ChannelsTable: React.FC<ChannelsTableProps> = ({
                   setSelectedChannelNumbers(allSelectableSelected ? new Set() : new Set(selectableChannelNumbers))
                 }
                 className="checkbox-theme"
-                title={allSelectableSelected ? 'Clear selection' : `Select every channel shown (${MOD_KEY}+A)`}
-                aria-label={allSelectableSelected ? 'Clear selection' : 'Select every channel shown'}
+                title={allSelectableSelected ? tr("Clear selection") : tr("Select every channel shown ({0}+A)", MOD_KEY)}
+                aria-label={allSelectableSelected ? tr("Clear selection") : tr("Select every channel shown")}
               />
             </th>
             <th className="px-2 py-2 text-left text-neon-cyan font-bold sticky left-[28px] bg-dark-charcoal z-30 min-w-[40px]" aria-sort={sortState('number')}>
@@ -359,59 +360,59 @@ export const ChannelsTable: React.FC<ChannelsTableProps> = ({
             </th>
             {/* 日本語名 ON: 全角 8 字（16 バイト）が収まる幅。text-xs 12px × 8 = 96px ＋ 入力欄と列の余白 */}
             <th className={`px-2 py-2 text-left text-neon-cyan font-bold sticky left-[68px] bg-dark-charcoal z-30 ${japaneseNames ? 'min-w-[144px]' : 'min-w-[120px]'}`} aria-sort={sortState('name')}>
-              <SortButton label="Name" state={sortState('name')} onClick={() => toggleSort('name')} title={sortTitle('Channel name')} />
+              <SortButton label={tr("Name")} state={sortState('name')} onClick={() => toggleSort('name')} title={sortTitle('Channel name')} />
             </th>
             <th className="px-2 py-2 text-left text-neon-cyan font-bold min-w-[90px]" aria-sort={sortState('rxFrequency')}>
-              <SortButton label="RX Freq" state={sortState('rxFrequency')} onClick={() => toggleSort('rxFrequency')} title={sortTitle('Receive frequency (MHz)')} />
+              <SortButton label={tr("RX Freq")} state={sortState('rxFrequency')} onClick={() => toggleSort('rxFrequency')} title={sortTitle('Receive frequency (MHz)')} />
             </th>
-            <th className="px-2 py-2 text-center text-neon-cyan font-bold w-0 min-w-0" title="Copy RX to TX"><span className="sr-only">Copy</span></th>
+            <th className="px-2 py-2 text-center text-neon-cyan font-bold w-0 min-w-0" title={tr("Copy RX to TX")}><span className="sr-only">{tr("Copy")}</span></th>
             <th className="px-2 py-2 text-left text-neon-cyan font-bold min-w-[90px]" aria-sort={sortState('txFrequency')}>
-              <SortButton label="TX Freq" state={sortState('txFrequency')} onClick={() => toggleSort('txFrequency')} title={sortTitle('Transmit frequency (MHz)')} />
+              <SortButton label={tr("TX Freq")} state={sortState('txFrequency')} onClick={() => toggleSort('txFrequency')} title={sortTitle('Transmit frequency (MHz)')} />
             </th>
             {!analogOnly && (
               <th className="px-2 py-2 text-center text-neon-cyan font-bold min-w-[50px]" aria-sort={sortState('mode')}>
-                <SortButton label="Mode" state={sortState('mode')} onClick={() => toggleSort('mode')} title={sortTitle('Channel mode (Analog/Digital)')} />
+                <SortButton label={tr("Mode")} state={sortState('mode')} onClick={() => toggleSort('mode')} title={sortTitle('Channel mode (Analog/Digital)')} />
               </th>
             )}
-            <th className="px-2 py-2 text-center text-neon-cyan font-bold min-w-[40px]" title="Power level">PWR</th>
-            <th className="px-2 py-2 text-center text-neon-cyan font-bold min-w-[40px]" title="Bandwidth (12.5 kHz / 25 kHz)">BW</th>
+            <th className="px-2 py-2 text-center text-neon-cyan font-bold min-w-[40px]" title={tr("Power level")}>PWR</th>
+            <th className="px-2 py-2 text-center text-neon-cyan font-bold min-w-[40px]" title={tr("Bandwidth (12.5 kHz / 25 kHz)")}>BW</th>
             {/* Common fields - work for both analog and digital */}
-            <th className="px-2 py-2 text-center text-neon-cyan font-bold min-w-[35px]" title="Forbid transmit">Forbid TX</th>
-            <th className="px-2 py-2 text-left text-neon-cyan font-bold min-w-[75px]" title="Receive tone (CTCSS/DCS)">RX Tone</th>
-            <th className="px-2 py-2 text-left text-neon-cyan font-bold min-w-[75px]" title="Transmit tone (CTCSS/DCS)">TX Tone</th>
-            {hasColumn('loneWorker') && (<th className="px-2 py-2 text-center text-neon-cyan font-bold min-w-[30px]" title="Lone Worker">LW</th>)}
-            <th className="px-2 py-2 text-left text-neon-cyan font-bold min-w-[100px]" title="Scan list assignment">Scan List</th>
-            {hasColumn('freeToAir') && (<th className="px-2 py-2 text-center text-neon-cyan font-bold min-w-[35px]" title="Forbid Talkaround">FTA</th>)}
-            {hasColumn('emergency') && (<th className="px-2 py-2 text-center text-neon-cyan font-bold min-w-[35px]" title="Emergency">Emerg</th>)}
-            {hasColumn('emergency') && (<th className="px-2 py-2 text-center text-neon-cyan font-bold min-w-[35px]" title="Emergency acknowledge">Emerg Ack</th>)}
-            {hasColumn('emergency') && (<th className="px-2 py-2 text-left text-neon-cyan font-bold min-w-[52px]" title="Emergency ID">Emerg ID</th>)}
-            {hasColumn('aprs') && (<th className="px-2 py-2 text-center text-neon-cyan font-bold min-w-[35px]" title="APRS receive">APRS RX</th>)}
-            {hasColumn('aprs') && (<th className="px-2 py-2 text-center text-neon-cyan font-bold min-w-[35px]" title="APRS transmit">APRS TX</th>)}
-            {hasColumn('vox') && (<th className="px-2 py-2 text-center text-neon-cyan font-bold min-w-[35px]" title="Voice operated transmit">VOX</th>)}
-            {hasColumn('audioProcessing') && (<th className="px-2 py-2 text-center text-neon-cyan font-bold min-w-[30px]" title="Scramble">SCR</th>)}
-            {hasColumn('audioProcessing') && (<th className="px-2 py-2 text-center text-neon-cyan font-bold min-w-[30px]" title="Compander">CMP</th>)}
-            {hasColumn('audioProcessing') && (<th className="px-2 py-2 text-center text-neon-cyan font-bold min-w-[30px]" title="Talkback">TB</th>)}
-            {hasColumn('audioProcessing') && (<th className="px-2 py-2 text-center text-neon-cyan font-bold min-w-[30px]" title="Compander Dup">CMP DUP</th>)}
-            {hasColumn('squelch') && (<th className="px-2 py-2 text-left text-neon-cyan font-bold min-w-[52px]" title="Squelch">SQL</th>)}
-            {hasColumn('pttId') && (<th className="px-2 py-2 text-center text-neon-cyan font-bold min-w-[35px]" title="PTT ID display">PTT ID Display</th>)}
+            <th className="px-2 py-2 text-center text-neon-cyan font-bold min-w-[35px]" title={tr("Forbid transmit")}>{tr("Forbid TX")}</th>
+            <th className="px-2 py-2 text-left text-neon-cyan font-bold min-w-[75px]" title={tr("Receive tone (CTCSS/DCS)")}>{tr("RX Tone")}</th>
+            <th className="px-2 py-2 text-left text-neon-cyan font-bold min-w-[75px]" title={tr("Transmit tone (CTCSS/DCS)")}>{tr("TX Tone")}</th>
+            {hasColumn('loneWorker') && (<th className="px-2 py-2 text-center text-neon-cyan font-bold min-w-[30px]" title={tr("Lone Worker")}>LW</th>)}
+            <th className="px-2 py-2 text-left text-neon-cyan font-bold min-w-[100px]" title={tr("Scan list assignment")}>{tr("Scan List")}</th>
+            {hasColumn('freeToAir') && (<th className="px-2 py-2 text-center text-neon-cyan font-bold min-w-[35px]" title={tr("Forbid Talkaround")}>FTA</th>)}
+            {hasColumn('emergency') && (<th className="px-2 py-2 text-center text-neon-cyan font-bold min-w-[35px]" title={tr("Emergency")}>{tr("Emerg")}</th>)}
+            {hasColumn('emergency') && (<th className="px-2 py-2 text-center text-neon-cyan font-bold min-w-[35px]" title={tr("Emergency acknowledge")}>{tr("Emerg Ack")}</th>)}
+            {hasColumn('emergency') && (<th className="px-2 py-2 text-left text-neon-cyan font-bold min-w-[52px]" title={tr("Emergency ID")}>{tr("Emerg ID")}</th>)}
+            {hasColumn('aprs') && (<th className="px-2 py-2 text-center text-neon-cyan font-bold min-w-[35px]" title={tr("APRS receive")}>APRS RX</th>)}
+            {hasColumn('aprs') && (<th className="px-2 py-2 text-center text-neon-cyan font-bold min-w-[35px]" title={tr("APRS transmit")}>APRS TX</th>)}
+            {hasColumn('vox') && (<th className="px-2 py-2 text-center text-neon-cyan font-bold min-w-[35px]" title={tr("Voice operated transmit")}>VOX</th>)}
+            {hasColumn('audioProcessing') && (<th className="px-2 py-2 text-center text-neon-cyan font-bold min-w-[30px]" title={tr("Scramble")}>SCR</th>)}
+            {hasColumn('audioProcessing') && (<th className="px-2 py-2 text-center text-neon-cyan font-bold min-w-[30px]" title={tr("Compander")}>CMP</th>)}
+            {hasColumn('audioProcessing') && (<th className="px-2 py-2 text-center text-neon-cyan font-bold min-w-[30px]" title={tr("Talkback")}>TB</th>)}
+            {hasColumn('audioProcessing') && (<th className="px-2 py-2 text-center text-neon-cyan font-bold min-w-[30px]" title={tr("Compander Dup")}>CMP DUP</th>)}
+            {hasColumn('squelch') && (<th className="px-2 py-2 text-left text-neon-cyan font-bold min-w-[52px]" title={tr("Squelch")}>SQL</th>)}
+            {hasColumn('pttId') && (<th className="px-2 py-2 text-center text-neon-cyan font-bold min-w-[35px]" title={tr("PTT ID display")}>{tr("PTT ID Display")}</th>)}
             {hasColumn('pttId') && (<th className="px-2 py-2 text-left text-neon-cyan font-bold min-w-[48px]" title="PTT ID">PTT ID</th>)}
-            {hasColumn('vox') && (<th className="px-2 py-2 text-center text-neon-cyan font-bold min-w-[35px]" title="VOX related">VOX Related</th>)}
-            {hasColumn('squelch') && (<th className="px-2 py-2 text-left text-neon-cyan font-bold min-w-[100px]" title="Receive squelch mode">RX Squelch Mode</th>)}
-            {hasColumn('stepFrequency') && (<th className="px-2 py-2 text-left text-neon-cyan font-bold min-w-[70px]" title="Step frequency">Step Freq</th>)}
-            {hasColumn('signalType') && (<th className="px-2 py-2 text-left text-neon-cyan font-bold min-w-[65px]" title="Signal type">Sig Type</th>)}
-            {hasColumn('pttId') && (<th className="px-2 py-2 text-left text-neon-cyan font-bold min-w-[65px]" title="PTT ID type">PTT ID Type</th>)}
+            {hasColumn('vox') && (<th className="px-2 py-2 text-center text-neon-cyan font-bold min-w-[35px]" title={tr("VOX related")}>{tr("VOX Related")}</th>)}
+            {hasColumn('squelch') && (<th className="px-2 py-2 text-left text-neon-cyan font-bold min-w-[100px]" title={tr("Receive squelch mode")}>{tr("RX Squelch Mode")}</th>)}
+            {hasColumn('stepFrequency') && (<th className="px-2 py-2 text-left text-neon-cyan font-bold min-w-[70px]" title={tr("Step frequency")}>{tr("Step Freq")}</th>)}
+            {hasColumn('signalType') && (<th className="px-2 py-2 text-left text-neon-cyan font-bold min-w-[65px]" title={tr("Signal type")}>{tr("Sig Type")}</th>)}
+            {hasColumn('pttId') && (<th className="px-2 py-2 text-left text-neon-cyan font-bold min-w-[65px]" title={tr("PTT ID type")}>{tr("PTT ID Type")}</th>)}
             {/* Digital-only fields - hidden for analog-only radios */}
             {!analogOnly && (
               <>
-                <th className="px-2 py-2 text-left text-neon-cyan font-bold min-w-[48px]" title="DMR color code">Color Code</th>
-                <th className="px-2 py-2 text-left text-neon-cyan font-bold min-w-[80px]" title="RX Group List">RX Group</th>
-                <th className="px-2 py-2 text-left text-neon-cyan font-bold min-w-[60px]" title="Slot Operation">Slot</th>
-                {hasColumn('encryption') && (<th className="px-2 py-2 text-center text-neon-cyan font-bold min-w-[35px]" title="Encryption">Enc</th>)}
-                {hasColumn('encryption') && (<th className="px-2 py-2 text-left text-neon-cyan font-bold min-w-[60px]" title="Encryption ID">Enc ID</th>)}
-                {hasColumn('tdma') && (<th className="px-2 py-2 text-center text-neon-cyan font-bold min-w-[35px]" title="TDMA Direct Mode">TDMA</th>)}
-                {hasColumn('confirmations') && (<th className="px-2 py-2 text-center text-neon-cyan font-bold min-w-[35px]" title="Short Data Confirm">SDC</th>)}
-                {hasColumn('confirmations') && (<th className="px-2 py-2 text-center text-neon-cyan font-bold min-w-[35px]" title="Private Confirm">Priv</th>)}
-                <th className="px-2 py-2 text-left text-neon-cyan font-bold min-w-[100px]" title="DMR Radio ID Index for TX (0=None, 1-255=Index into DMR Radio IDs list)">TX DMR ID</th>
+                <th className="px-2 py-2 text-left text-neon-cyan font-bold min-w-[48px]" title={tr("DMR color code")}>{tr("Color Code")}</th>
+                <th className="px-2 py-2 text-left text-neon-cyan font-bold min-w-[80px]" title={tr("RX Group List")}>{tr("RX Group")}</th>
+                <th className="px-2 py-2 text-left text-neon-cyan font-bold min-w-[60px]" title={tr("Slot Operation")}>{tr("Slot")}</th>
+                {hasColumn('encryption') && (<th className="px-2 py-2 text-center text-neon-cyan font-bold min-w-[35px]" title={tr("Encryption")}>Enc</th>)}
+                {hasColumn('encryption') && (<th className="px-2 py-2 text-left text-neon-cyan font-bold min-w-[60px]" title={tr("Encryption ID")}>Enc ID</th>)}
+                {hasColumn('tdma') && (<th className="px-2 py-2 text-center text-neon-cyan font-bold min-w-[35px]" title={tr("TDMA Direct Mode")}>TDMA</th>)}
+                {hasColumn('confirmations') && (<th className="px-2 py-2 text-center text-neon-cyan font-bold min-w-[35px]" title={tr("Short Data Confirm")}>SDC</th>)}
+                {hasColumn('confirmations') && (<th className="px-2 py-2 text-center text-neon-cyan font-bold min-w-[35px]" title={tr("Private Confirm")}>Priv</th>)}
+                <th className="px-2 py-2 text-left text-neon-cyan font-bold min-w-[100px]" title={tr("DMR Radio ID Index for TX (0=None, 1-255=Index into DMR Radio IDs list)")}>{tr("TX DMR ID")}</th>
               </>
             )}
             {/* Radio-specific extras, rendered from EXTRA_CHANNEL_COLUMNS so the
@@ -431,8 +432,8 @@ export const ChannelsTable: React.FC<ChannelsTableProps> = ({
               </th>
             ))}
             {/* Common fields - work for both */}
-            <th className="px-2 py-2 text-left text-neon-cyan font-bold min-w-[100px]" title="TX Contact (Group/Private/All Call - index into Contacts list)">TG</th>
-            <th className="px-2 py-2 text-center text-neon-cyan font-bold min-w-[60px] sticky right-0 bg-dark-charcoal z-30">Actions</th>
+            <th className="px-2 py-2 text-left text-neon-cyan font-bold min-w-[100px]" title={tr("TX Contact (Group/Private/All Call - index into Contacts list)")}>TG</th>
+            <th className="px-2 py-2 text-center text-neon-cyan font-bold min-w-[60px] sticky right-0 bg-dark-charcoal z-30">{tr("Actions")}</th>
           </tr>
         </thead>
         <tbody>
@@ -483,7 +484,7 @@ export const ChannelsTable: React.FC<ChannelsTableProps> = ({
           onClose={() => setEditingChannel(null)}
           channel={editingChannel}
           onSave={(updatedChannel) => {
-            recordChannelEdit(`edit ${channelsLabel([updatedChannel.number])}`, () =>
+            recordChannelEdit(tr('edit {0}', channelsLabel([updatedChannel.number])), () =>
               updateChannel(updatedChannel.number, updatedChannel)
             );
             setEditingChannel(null);
@@ -504,26 +505,26 @@ export const ChannelsTable: React.FC<ChannelsTableProps> = ({
         onConfirm={() => {
           if (channelToDelete) {
             const label = channelsLabel([channelToDelete.number]);
-            recordChannelEdit(`delete ${label}`, () => deleteChannel(channelToDelete.number, deleteRules), {
-              announce: `Deleted ${label}${channelToDelete.name ? ` (${channelToDelete.name})` : ''}.`,
+            recordChannelEdit(tr('delete {0}', label), () => deleteChannel(channelToDelete.number, deleteRules), {
+              announce: tr('Deleted {0}{1}.', label, channelToDelete.name ? ` (${channelToDelete.name})` : ''),
             });
             // Later channels were renumbered, so a selection by number would now name other channels.
             setSelectedChannelNumbers(new Set());
             setChannelToDelete(null);
           }
         }}
-        title="Delete channel"
+        title={tr("Delete channel")}
         message={
           channelToDelete
             ? [
-                `Delete channel ${channelToDelete.number}: "${channelToDelete.name}"?`,
+                tr('Delete channel {0}: "{1}"?', channelToDelete.number, channelToDelete.name),
                 describeChannelDelete(channelsFromStore, [channelToDelete.number], 0, deleteRules),
               ]
                 .filter(Boolean)
                 .join('\n\n')
             : ''
         }
-        confirmLabel="Delete"
+        confirmLabel={tr("Delete")}
         variant="danger"
       />
     </Card>

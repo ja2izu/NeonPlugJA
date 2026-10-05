@@ -14,11 +14,12 @@ import {
   type WriteConfirmInput,
 } from './writeConfirmation';
 
+import { tr } from '../../utils/tr';  // NeonPlugJA: 日本語表示
 const n = (value: number) => value.toLocaleString();
 const bytes = (value: number) => `${n(value)} ${formatPlural(value, 'byte')}`;
 
 const More: React.FC<{ more: number; noun?: string }> = ({ more, noun = 'more' }) =>
-  more > 0 ? <span className="text-muted"> …and {n(more)} {noun}</span> : null;
+  more > 0 ? <span className="text-muted"> {tr("…and")} {n(more)} {noun}</span> : null;
 
 const Stat: React.FC<{ label: string; value: string; sub?: string }> = ({ label, value, sub }) => (
   <div className="rounded bg-dark-charcoal px-3 py-2 min-w-0">
@@ -43,7 +44,7 @@ const Regions: React.FC<{ regions: Capped<RegionRow> }> = ({ regions }) => (
       {regions.more > 0 && (
         <tr className="border-t border-neon-cyan border-opacity-20">
           <td colSpan={3} className="py-1 text-muted">
-            …and {n(regions.more)} more {formatPlural(regions.more, 'region')}
+            {tr("…and")} {n(regions.more)} more {formatPlural(regions.more, 'region')}
           </td>
         </tr>
       )}
@@ -61,8 +62,8 @@ export const WriteConfirmBody: React.FC<WriteConfirmInput> = (input) => {
       {c.settingsLine && <p className="text-cool-gray -mt-3">{c.settingsLine}</p>}
 
       {c.erasesChannels && (
-        <Callout tone="danger" title="Erases every channel on the radio">
-          This write sends no channels, so the radio is left with none. Cancel unless that is what you want.
+        <Callout tone="danger" title={tr("Erases every channel on the radio")}>
+          {tr("This write sends no channels, so the radio is left with none. Cancel unless that is what you want.")}
         </Callout>
       )}
 
@@ -71,10 +72,10 @@ export const WriteConfirmBody: React.FC<WriteConfirmInput> = (input) => {
         <Callout
           key={r.unit}
           tone="danger"
-          title={`Removes ${n(r.count)} ${formatPlural(r.count, r.unit)} from the radio`}
+          title={tr("Removes {0} {1} from the radio", n(r.count), formatPlural(r.count, r.unit))}
         >
           <span className="font-mono">
-            {r.unit === 'zone' ? 'Slots ' : ''}
+            {r.unit === 'zone' ? tr('Slots') + ' ' : ''}
             {r.list.items.join(', ')}
           </span>
           <More more={r.list.more} />
@@ -82,12 +83,11 @@ export const WriteConfirmBody: React.FC<WriteConfirmInput> = (input) => {
       ))}
 
       {c.leftOut && (
-        <Callout tone="caution" title="Left out of this write">
+        <Callout tone="caution" title={tr("Left out of this write")}>
           <div className="space-y-1">
             {c.leftOut.channels.count > 0 && (
               <p>
-                {n(c.leftOut.channels.count)} {formatPlural(c.leftOut.channels.count, 'channel')} outside this
-                radio&apos;s bands: {c.leftOut.channels.list.items.join(', ')}
+                {n(c.leftOut.channels.count)} {formatPlural(c.leftOut.channels.count, 'channel')} {tr("outside this radio's bands:")} {c.leftOut.channels.list.items.join(', ')}
                 <More more={c.leftOut.channels.list.more} />
               </p>
             )}
@@ -110,7 +110,7 @@ export const WriteConfirmBody: React.FC<WriteConfirmInput> = (input) => {
       )}
 
       {c.checks.length > 0 && (
-        <Callout tone="caution" title="Codeplug check">
+        <Callout tone="caution" title={tr("Codeplug check")}>
           <div className="space-y-2">
             {c.checks.map((check, i) => (
               <div key={i}>
@@ -120,7 +120,7 @@ export const WriteConfirmBody: React.FC<WriteConfirmInput> = (input) => {
                     {check.list.items.map((item) => (
                       <li key={item}>{item}</li>
                     ))}
-                    {check.list.more > 0 && <li className="text-muted list-none -ml-4">…and {n(check.list.more)} more</li>}
+                    {check.list.more > 0 && <li className="text-muted list-none -ml-4">{tr("…and")} {n(check.list.more)} more</li>}
                   </ul>
                 )}
               </div>
@@ -130,7 +130,7 @@ export const WriteConfirmBody: React.FC<WriteConfirmInput> = (input) => {
       )}
 
       {c.readWarnings.length > 0 && (
-        <Callout tone="caution" title="This read had warnings">
+        <Callout tone="caution" title={tr("This read had warnings")}>
           <ul className="space-y-1.5">
             {c.readWarnings.map((w, i) => (
               <li key={i}>
@@ -144,41 +144,40 @@ export const WriteConfirmBody: React.FC<WriteConfirmInput> = (input) => {
 
       {plan && (
         <section>
-          <DialogHeading>What this write sends</DialogHeading>
+          <DialogHeading>{tr("What this write sends")}</DialogHeading>
           <div className="grid grid-cols-3 gap-2">
             <Stat
-              label="Scope"
-              value={plan.wholeCodeplug ? 'Whole codeplug' : 'Channels only'}
+              label={tr("Scope")}
+              value={plan.wholeCodeplug ? tr('Whole codeplug') : tr('Channels only')}
             />
             <Stat
-              label="Frames"
+              label={tr("Frames")}
               value={n(plan.frames.total)}
-              sub={`${n(plan.frames.channel)} channel · ${n(plan.frames.other)} other`}
+              sub={tr('{0} channel · {1} other', n(plan.frames.channel), n(plan.frames.other))}
             />
             <Stat
-              label="On the wire"
+              label={tr("On the wire")}
               value={bytes(plan.wireBytes)}
-              sub={plan.seconds < 1 ? 'under a second' : `about ${plan.seconds.toFixed(1)} s`}
+              sub={plan.seconds < 1 ? tr('under a second') : tr('about {0} s', plan.seconds.toFixed(1))}
             />
           </div>
           <p className="mt-2 text-xs text-muted">
             {plan.wholeCodeplug
-              ? 'Every region that was read goes back, not only what changed.'
-              : 'No read log staged, so regions other than channels are left alone.'}
+              ? tr("Every region that was read goes back, not only what changed.")
+              : tr("No read log staged, so regions other than channels are left alone.")}
           </p>
 
           <div className="mt-3 space-y-3">
             {plan.writeBack && (
               <p className="rounded bg-dark-charcoal px-3 py-2 text-cool-gray">
-                <span className="text-white font-medium">Nothing changes.</span> Every byte matches what
-                was read, so a failure mid-write would put the radio&apos;s own bytes back over themselves.
+                <span className="text-white font-medium">{tr("Nothing changes.")}</span> {tr("Every byte matches what was read, so a failure mid-write would put the radio's own bytes back over themselves.")}
               </p>
             )}
 
             {plan.changed && (
               <div>
                 <p className="text-white">
-                  Changes <span className="font-mono text-neon-cyan">{bytes(plan.changed.bytes)}</span>
+                  {tr("Changes")} <span className="font-mono text-neon-cyan">{bytes(plan.changed.bytes)}</span>
                 </p>
                 <Regions regions={plan.changed.regions} />
               </div>
@@ -187,8 +186,8 @@ export const WriteConfirmBody: React.FC<WriteConfirmInput> = (input) => {
             {plan.added && (
               <div>
                 <p className="text-white">
-                  New <span className="font-mono text-neon-cyan">{bytes(plan.added.bytes)}</span>
-                  <span className="text-muted text-xs"> — the radio has nothing here yet</span>
+                  {tr("New")} <span className="font-mono text-neon-cyan">{bytes(plan.added.bytes)}</span>
+                  <span className="text-muted text-xs"> {tr("— the radio has nothing here yet")}</span>
                 </p>
                 <Regions regions={plan.added.regions} />
               </div>
@@ -196,14 +195,14 @@ export const WriteConfirmBody: React.FC<WriteConfirmInput> = (input) => {
 
             {plan.channelsWritten && (
               <p className="text-cool-gray">
-                Channels written: <span className="font-mono">{plan.channelsWritten.items.join(', ')}</span>
+                {tr("Channels written:")} <span className="font-mono">{plan.channelsWritten.items.join(', ')}</span>
                 <More more={plan.channelsWritten.more} />
               </p>
             )}
 
             {plan.skipped && (
               <div className="text-xs text-muted">
-                <p>Not written ({n(plan.skipped.items.length + plan.skipped.more)}):</p>
+                <p>{tr("Not written (")}{n(plan.skipped.items.length + plan.skipped.more)}):</p>
                 <ul className="ml-4 list-disc">
                   {plan.skipped.items.map((s) => (
                     <li key={s}>{s}</li>
@@ -217,18 +216,17 @@ export const WriteConfirmBody: React.FC<WriteConfirmInput> = (input) => {
       )}
 
       <section className="border-t border-neon-cyan border-opacity-20 pt-4">
-        <DialogHeading>Before you write</DialogHeading>
+        <DialogHeading>{tr("Before you write")}</DialogHeading>
         <p className="text-cool-gray">
-          Writing to the radio is <span className="text-yellow-300">experimental</span> and used at your own
-          risk. Make sure:
+          {tr("Writing to the radio is")} <span className="text-yellow-300">experimental</span> {tr("and used at your own risk. Make sure:")}
         </p>
         {/* "Baofeng CPS" was named here on a dialog every radio shows, including
             the BTECH/Anytone DA-7X2, whose owners have no Baofeng software. */}
         <ul className="mt-2 ml-4 list-disc space-y-1 text-cool-gray">
-          <li>You have read the radio with its own CPS and saved that as a backup</li>
-          <li>You have a backup of your current codeplug</li>
-          <li>Allow Reset is enabled, if your radio&apos;s own CPS offers that setting</li>
-          <li>You understand this operation modifies your radio&apos;s memory</li>
+          <li>{tr("You have read the radio with its own CPS and saved that as a backup")}</li>
+          <li>{tr("You have a backup of your current codeplug")}</li>
+          <li>{tr("Allow Reset is enabled, if your radio's own CPS offers that setting")}</li>
+          <li>{tr("You understand this operation modifies your radio's memory")}</li>
         </ul>
       </section>
     </div>

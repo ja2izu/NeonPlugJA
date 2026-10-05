@@ -506,4 +506,9 @@ export const JA_DICT: Readonly<Record<string, string>> = {
   "ARC4 code": "ARC4 コード",
   "— offset from the vendor CPS; not yet confirmed against a radio": "— 位置は純正 CPS から。実機では未確認",
   "— offset from the vendor CPS; encoding inferred, not confirmed": "— 位置は純正 CPS から。符号化は推定で未確認",
+  // ---- 第3版に無く、組み込みで足したもの（分割された文をまとめた所など。次の一覧で確認） ----
+  "under a second": "1 秒未満",
+  "the radio": "無線機",
+  "On a stock radio that can make the write fail or leave the radio misbehaving, and transmitting outside its bands can damage it and may be illegal.": "純正の無線機では、書込が失敗したり動作がおかしくなったりします。また、バンド外で送信すると無線機を傷めることがあり、違法になる場合もあります。",
+  "Words match the name, a channel number exactly, or the start of a frequency. Narrow further with mode:dig, bw:n, power:low, band:uhf, zone:none, zone:<name> or tone:123. #12 scrolls to channel 12.": "語は名前、チャンネル番号（完全一致）、周波数の先頭に一致します。mode:dig、bw:n、power:low、band:uhf、zone:none、zone:<名前>、tone:123 でさらに絞れます。#12 でチャンネル 12 へ移動します。",
 };

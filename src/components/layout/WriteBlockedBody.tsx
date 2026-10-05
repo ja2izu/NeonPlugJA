@@ -9,15 +9,16 @@ import React from 'react';
 import type { D890IntegrityFinding } from '../../radios/d890uv/integrity';
 import { Callout, DialogHeading } from '../ui/DialogParts';
 
+import { tr } from '../../utils/tr';  // NeonPlugJA: 日本語表示
 const sentence = (text: string) => text.charAt(0).toUpperCase() + text.slice(1);
 
 export const WriteBlockedBody: React.FC<{ findings: readonly D890IntegrityFinding[] }> = ({ findings }) => (
   <div className="space-y-4 text-sm pb-1">
     <Callout tone="danger" title="This codeplug did not read cleanly, so writing is blocked">
-      Nothing was sent to the radio.
+      {tr("Nothing was sent to the radio.")}
     </Callout>
     <section>
-      <DialogHeading>What the read found</DialogHeading>
+      <DialogHeading>{tr("What the read found")}</DialogHeading>
       <ul className="space-y-1.5">
         {findings.map((f, i) => (
           <li key={i}>
@@ -31,10 +32,9 @@ export const WriteBlockedBody: React.FC<{ findings: readonly D890IntegrityFindin
       </ul>
     </section>
     <section className="border-t border-neon-cyan border-opacity-20 pt-4">
-      <DialogHeading>What to do</DialogHeading>
+      <DialogHeading>{tr("What to do")}</DialogHeading>
       <p className="text-cool-gray">
-        Read the radio again. If it reads the same way, the codeplug on the radio is damaged — restore it
-        from a backup before writing.
+        {tr("Read the radio again. If it reads the same way, the codeplug on the radio is damaged — restore it from a backup before writing.")}
       </p>
     </section>
   </div>

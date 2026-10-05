@@ -2,6 +2,7 @@ import React, { useMemo, useEffect } from 'react';
 import { useDebugStore } from '../../store/debugStore';
 import { useRadioCapabilities } from '../../hooks/useRadioCapabilities';
 
+import { tr } from '../../utils/tr';  // NeonPlugJA: 日本語表示
 interface TabNavigationProps {
   activeTab: string;
   onTabChange: (tab: string) => void;
@@ -48,14 +49,14 @@ export const TabNavigation: React.FC<TabNavigationProps> = ({
     <div className="border-b border-deep-gray bg-deep-gray">
       {/* Wraps onto a second row rather than running off the edge of a narrow
           window, and each label stays on one line. */}
-      <div className="flex flex-wrap gap-x-1 px-4" role="tablist" aria-label="Codeplug sections">
+      <div className="flex flex-wrap gap-x-1 px-4" role="tablist" aria-label={tr("Codeplug sections")}>
         {tabs.map((tab) => (
             <button
               key={tab.id}
               type="button"
               role="tab"
               aria-selected={activeTab === tab.id}
-              aria-label={tab.title}
+              aria-label={tab.title && tr(tab.title)}
               onClick={() => onTabChange(tab.id)}
               // Every tab carries its 2px bottom border ALL the time — transparent
               // when inactive — and only colours and the glow animate. The border
@@ -70,9 +71,9 @@ export const TabNavigation: React.FC<TabNavigationProps> = ({
                     : 'text-cool-gray border-transparent hover:text-white'
                 }
               `}
-              title={tab.title}
+              title={tab.title && tr(tab.title)}
             >
-              {tab.label}
+              {tr(tab.label)}
             </button>
         ))}
       </div>

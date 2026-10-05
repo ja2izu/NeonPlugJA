@@ -6,6 +6,7 @@ import React from 'react';
 import type { CodeplugData } from '../../services/codeplugExport';
 import { summarizeCodeplug } from './codeplugSummary';
 
+import { tr } from '../../utils/tr';  // NeonPlugJA: 日本語表示
 const ROW = 'border-t border-neon-cyan border-opacity-20 first:border-t-0';
 
 export const CodeplugSummaryBody: React.FC<{ data: CodeplugData; lead: string; fileName?: string }> = ({
@@ -21,7 +22,7 @@ export const CodeplugSummaryBody: React.FC<{ data: CodeplugData; lead: string; f
         {fileName && <p className="text-xs text-muted font-mono truncate">{fileName}</p>}
       </div>
       {rows.length === 0 && !radioSettings ? (
-        <p className="text-cool-gray">The codeplug is empty.</p>
+        <p className="text-cool-gray">{tr("The codeplug is empty.")}</p>
       ) : (
         <table className="w-full text-xs">
           <tbody>
@@ -33,8 +34,8 @@ export const CodeplugSummaryBody: React.FC<{ data: CodeplugData; lead: string; f
             ))}
             {radioSettings && (
               <tr className={ROW}>
-                <td className="py-1 pr-3 text-cool-gray">Radio settings</td>
-                <td className="py-1 text-right text-white">Included</td>
+                <td className="py-1 pr-3 text-cool-gray">{tr("Radio settings")}</td>
+                <td className="py-1 text-right text-white">{tr("Included")}</td>
               </tr>
             )}
           </tbody>

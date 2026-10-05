@@ -57,7 +57,8 @@ describe('channel column gating', () => {
     // has moved into a declarable group.
     const table = read('ChannelsTable.tsx');
     for (const t of ['Encryption', 'TDMA Direct Mode', 'Short Data Confirm', 'Private Confirm']) {
-      const line = table.split('\n').find((l) => l.includes(`title="${t}"`))!;
+      // NeonPlugJA: 見出しは tr() で包んでいる（title={tr("…")}）
+      const line = table.split('\n').find((l) => l.includes(`title="${t}"`) || l.includes(`title={tr("${t}")}`))!;
       expect(line, `${t} is not gated`).toContain('hasColumn(');
     }
   });

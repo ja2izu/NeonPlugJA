@@ -11,6 +11,8 @@
  *   bg = dark-charcoal, panel = deep-gray, text = cool-gray,
  *   accent = neon-cyan, accentBright = neon-cyan-bright,
  *   primary = neon-magenta, primaryBright = neon-magenta-bright, highlight = neon-yellow
+ * 日本語表示では、主ボタンの色を文字に使う所（text-neon-magenta）は primaryBright で描く
+ * （primary は白文字のボタン用の濃い色なので、暗い背景の上の文字には暗すぎるため）。
  * 警告・エラーの色（Tailwind の amber / red）は配色に関係なく固定。
  */
 export interface Palette {
@@ -50,15 +52,15 @@ export const NEON: Palette = {
 /** 内蔵の配色（伝統色の名前は「それらしい色」）。見本: NeonPlugJA_配色見本_2610050755.html */
 export const BUILTIN = {
   spring: { name: '春「桜」', bg: '#2A1E2C', panel: '#3A2B3D', text: '#E8DCE0', accent: '#F4A7B9',
-    accentBright: '#F8C3CF', primary: '#B4436C', primaryBright: '#C65A80', highlight: '#C7DC68' },
+    accentBright: '#F8C3CF', primary: '#B4436C', primaryBright: '#CB7594', highlight: '#C7DC68' },
   summer: { name: '夏「藍」', bg: '#0F2350', panel: '#1B2D5A', text: '#DCDDDD', accent: '#5BC8D8',
-    accentBright: '#8ADBE6', primary: '#2F5D8C', primaryBright: '#3E70A3', highlight: '#F8E58C' },
+    accentBright: '#8ADBE6', primary: '#2F5D8C', primaryBright: '#5F93C9', highlight: '#F8E58C' },
   autumn: { name: '秋「紅葉」', bg: '#2B1A12', panel: '#3B261B', text: '#E6DCCF', accent: '#F8B500',
-    accentBright: '#FFCB45', primary: '#B7282E', primaryBright: '#C9403F', highlight: '#E9A368' },
+    accentBright: '#FFCB45', primary: '#B7282E', primaryBright: '#DF6C70', highlight: '#E9A368' },
   winter: { name: '冬「雪」', bg: '#17184B', panel: '#24265A', text: '#DCDDDD', accent: '#C1E4E9',
-    accentBright: '#E2F3F5', primary: '#C9171E', primaryBright: '#D93A3F', highlight: '#F5B1AA' },
+    accentBright: '#E2F3F5', primary: '#C9171E', primaryBright: '#ED6166', highlight: '#F5B1AA' },
   special: { name: 'ハロウィン', bg: '#1A1020', panel: '#2A1B33', text: '#E6DDE8', accent: '#F08A24',
-    accentBright: '#F7A85A', primary: '#7A3B9E', primaryBright: '#8E4FB3', highlight: '#B5D334' },
+    accentBright: '#F7A85A', primary: '#7A3B9E', primaryBright: '#AF7BCE', highlight: '#B5D334' },
 } satisfies Record<string, Palette>;
 
 export type BuiltinTheme = keyof typeof BUILTIN;

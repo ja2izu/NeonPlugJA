@@ -7,6 +7,7 @@ import type { D890BroadcastChannel } from '../../radios/d890uv/broadcastChannels
 import { AmZonesEditor } from './AmZonesEditor';
 import { BUTTON, FIELD_INLINE } from '../ui/controlStyles';
 
+import { tr } from '../../utils/tr';  // NeonPlugJA: 日本語表示
 /**
  * AM airband / FM broadcast memories.
  *
@@ -152,8 +153,7 @@ export const BroadcastChannelsTable: React.FC<{
       />
       <span className="text-muted text-xs">MHz</span>
       <span className="text-muted text-xs ml-auto">
-        What the receiver is tuned to — not a stored memory, so it has no number
-        and cannot be deleted.
+        {tr("What the receiver is tuned to — not a stored memory, so it has no number and cannot be deleted.")}
       </span>
     </div>
   ) : null;
@@ -165,18 +165,18 @@ export const BroadcastChannelsTable: React.FC<{
         disabled={!broadcast || full}
         className={`${BUTTON.outline} px-3 py-1.5 rounded border text-sm`}
       >
-        + Add {band.toUpperCase()} memory
+        {tr("+ Add")} {band.toUpperCase()} memory
       </button>
       <span className="text-muted text-xs">
         {all.length} of {maxChannels}
-        {full && ' — the radio has no more slots for this band'}
+        {full && ' ' + tr('— the radio has no more slots for this band')}
       </span>
       {selected.size > 0 && (
         <button
           onClick={() => deleteChannels(selected)}
           className={`${BUTTON.danger} px-3 py-1.5 rounded border text-sm`}
         >
-          Delete {selected.size} selected
+          {tr("Delete")} {selected.size} selected
         </button>
       )}
     </div>
@@ -213,23 +213,23 @@ export const BroadcastChannelsTable: React.FC<{
                 onChange={(e) =>
                   setSelected(e.target.checked ? new Set(selectableHere) : new Set())
                 }
-                title={allHereSelected ? 'Clear selection' : 'Select all shown'}
+                title={allHereSelected ? tr("Clear selection") : tr("Select all shown")}
               />
             </th>
             <th className="px-3 py-2 text-left text-neon-cyan font-bold w-16">#</th>
-            <th className="px-3 py-2 text-left text-neon-cyan font-bold">Name</th>
-            <th className="px-3 py-2 text-left text-neon-cyan font-bold">Frequency</th>
+            <th className="px-3 py-2 text-left text-neon-cyan font-bold">{tr("Name")}</th>
+            <th className="px-3 py-2 text-left text-neon-cyan font-bold">{tr("Frequency")}</th>
             {/* Only FM carries a flat scan mask; AM's lives per-zone in a table
                 we do not read, so the column is omitted rather than shown empty. */}
             {showScan && (
               <th
                 className="px-3 py-2 text-left text-neon-cyan font-bold w-20"
-                title="Tick to include this memory when scanning this band"
+                title={tr("Tick to include this memory when scanning this band")}
               >
-                Scan
+                {tr("Scan")}
               </th>
             )}
-            <th className="px-3 py-2 text-right text-neon-cyan font-bold w-20">Actions</th>
+            <th className="px-3 py-2 text-right text-neon-cyan font-bold w-20">{tr("Actions")}</th>
           </tr>
         </thead>
         <tbody>
@@ -283,14 +283,14 @@ export const BroadcastChannelsTable: React.FC<{
                     type="checkbox"
                     checked={ch.scanAdd === true}
                     onChange={() => patch(ch.index, { scanAdd: !ch.scanAdd })}
-                    title={ch.scanAdd ? `${ch.name || '#' + (ch.index + 1)} is scanned` : `${ch.name || '#' + (ch.index + 1)} is skipped when scanning`}
+                    title={ch.scanAdd ? tr("{0} is scanned", ch.name || '#' + (ch.index + 1)) : tr("{0} is skipped when scanning", ch.name || '#' + (ch.index + 1))}
                   />
                 </td>
               )}
               <td className="px-3 py-2 text-right">
                   <button
                     onClick={() => deleteChannels(new Set([ch.index]))}
-                    title={`Delete ${band.toUpperCase()} memory ${ch.index + 1}`}
+                    title={tr("Delete {0} memory {1}", band.toUpperCase(), ch.index + 1)}
                     className={`${BUTTON.dangerQuiet} px-2`}
                   >
                     ✕

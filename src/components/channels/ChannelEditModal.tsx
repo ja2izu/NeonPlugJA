@@ -23,6 +23,7 @@ import { FrequencyInput } from './FrequencyInput';
 import { useJapaneseNamesActive } from '../../hooks/useJapaneseNamesActive';
 import { fitNameBytes, nameByteLength, unwritableChars } from '../../utils/japaneseNames';
 
+import { tr } from '../../utils/tr';  // NeonPlugJA: 日本語表示
 interface ChannelEditModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -124,20 +125,20 @@ export const ChannelEditModal: React.FC<ChannelEditModalProps> = ({
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title={`Edit ${isVFOChannel(channel.number) ? `VFO ${getVFOIdentifier(channel.number)}` : `Channel ${channel.number}`}`}
+      title={tr("Edit {0}", isVFOChannel(channel.number) ? `VFO ${getVFOIdentifier(channel.number)}` : tr("Channel {0}", channel.number))}
       footer={
         <div className="flex justify-end gap-2">
           <button
             onClick={onClose}
             className={`${BUTTON.neutral} px-3 py-1.5 text-sm border rounded`}
           >
-            Cancel
+            {tr("Cancel")}
           </button>
           <button
             onClick={handleSave}
             className={`${BUTTON.primary} px-3 py-1.5 text-sm font-medium rounded`}
           >
-            Save Changes
+            {tr("Save Changes")}
           </button>
         </div>
       }
@@ -145,7 +146,7 @@ export const ChannelEditModal: React.FC<ChannelEditModalProps> = ({
       <div className="pr-2">
           {validationErrors.length > 0 && (
             <div className="mb-4 p-3 bg-red-900/30 border border-red-500/50 rounded text-red-300 text-sm">
-              <p className="font-semibold mb-1">Please fix the following:</p>
+              <p className="font-semibold mb-1">{tr("Please fix the following:")}</p>
               <ul className="list-disc list-inside space-y-0.5">
                 {validationErrors.map((e, i) => (
                   <li key={i}>{e.field}: {e.message}</li>
@@ -156,11 +157,11 @@ export const ChannelEditModal: React.FC<ChannelEditModalProps> = ({
           <div className="space-y-4">
           {/* Basic Information */}
           <section>
-            <h3 className="text-neon-cyan font-bold mb-2 text-sm">Basic Information</h3>
+            <h3 className="text-neon-cyan font-bold mb-2 text-sm">{tr("Basic Information")}</h3>
             <div className="space-y-2">
               <div>
                 <label className="block text-xs font-medium text-cool-gray mb-1">
-                  Channel Name
+                  {tr("Channel Name")}
                 </label>
                 {vfoName ? (
                   <input
@@ -205,7 +206,7 @@ export const ChannelEditModal: React.FC<ChannelEditModalProps> = ({
               <div className="flex gap-2 items-end">
                 <div className="flex-1 min-w-0">
                   <label className="block text-xs font-medium text-cool-gray mb-1">
-                    Receive Frequency (MHz)
+                    {tr("Receive Frequency (MHz)")}
                   </label>
                   <FrequencyInput
                     value={editedChannel.rxFrequency}
@@ -213,9 +214,9 @@ export const ChannelEditModal: React.FC<ChannelEditModalProps> = ({
                     onValidityChange={(error) => setFrequencyTyping((t) => ({ ...t, rx: error }))}
                     showMessage
                     className="w-full border rounded px-2 py-1 text-sm"
-                    aria-label="Receive frequency (MHz)"
+                    aria-label={tr("Receive frequency (MHz)")}
                   />
-                  <p className="text-xs text-cool-gray mt-0.5">Frequency the radio receives on</p>
+                  <p className="text-xs text-cool-gray mt-0.5">{tr("Frequency the radio receives on")}</p>
                 </div>
                 <div className="flex flex-col gap-0.5 pb-5">
                   <button
@@ -227,15 +228,15 @@ export const ChannelEditModal: React.FC<ChannelEditModalProps> = ({
                     }}
                     disabled={isRxInNoTxBand(editedChannel.rxFrequency) && isNoTxFrequency(editedChannel.txFrequency)}
                     className={`${BUTTON.outline} p-1.5 rounded border`}
-                    title={isRxInNoTxBand(editedChannel.rxFrequency) && isNoTxFrequency(editedChannel.txFrequency) ? 'Receive-only (no TX)' : 'Copy RX to TX'}
-                    aria-label="Copy RX to TX"
+                    title={isRxInNoTxBand(editedChannel.rxFrequency) && isNoTxFrequency(editedChannel.txFrequency) ? tr("Receive-only (no TX)") : tr("Copy RX to TX")}
+                    aria-label={tr("Copy RX to TX")}
                   >
                     <span className="text-sm font-bold">→</span>
                   </button>
                 </div>
                 <div className="flex-1 min-w-0">
                   <label className="block text-xs font-medium text-cool-gray mb-1">
-                    Transmit Frequency (MHz)
+                    {tr("Transmit Frequency (MHz)")}
                   </label>
                   {hasBlankTx(editedChannel, caps?.blankTxAnyBand) ? (
                     <>
@@ -244,14 +245,14 @@ export const ChannelEditModal: React.FC<ChannelEditModalProps> = ({
                         readOnly
                         disabled
                         value=""
-                        title="Receive-only (no TX)"
-                        aria-label="No transmit"
+                        title={tr("Receive-only (no TX)")}
+                        aria-label={tr("No transmit")}
                         className={`${FIELD} w-full border rounded px-2 py-1 text-sm text-cool-gray opacity-60 cursor-not-allowed`}
                       />
                       <p className="text-xs text-cool-gray mt-0.5">
                         {isRxInNoTxBand(editedChannel.rxFrequency)
-                          ? 'Receive-only (87–136 MHz); TX disabled'
-                          : 'No TX frequency. → copies RX to TX.'}
+                          ? tr("Receive-only (87–136 MHz); TX disabled")
+                          : tr("No TX frequency. → copies RX to TX.")}
                       </p>
                     </>
                   ) : (
@@ -262,9 +263,9 @@ export const ChannelEditModal: React.FC<ChannelEditModalProps> = ({
                         onValidityChange={(error) => setFrequencyTyping((t) => ({ ...t, tx: error }))}
                         showMessage
                         className="w-full border rounded px-2 py-1 text-sm"
-                        aria-label="Transmit frequency (MHz)"
+                        aria-label={tr("Transmit frequency (MHz)")}
                       />
-                      <p className="text-xs text-cool-gray mt-0.5">Frequency the radio transmits on</p>
+                      <p className="text-xs text-cool-gray mt-0.5">{tr("Frequency the radio transmits on")}</p>
                     </>
                   )}
                 </div>
@@ -273,39 +274,39 @@ export const ChannelEditModal: React.FC<ChannelEditModalProps> = ({
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-medium text-cool-gray mb-1">
-                    Channel Mode
+                    {tr("Channel Mode")}
                   </label>
                   <select
                     value={editedChannel.mode}
                     onChange={(e) => handleChange('mode', e.target.value)}
                     className={`${FIELD} w-full border rounded px-2 py-1 text-sm`}
                   >
-                    <option value="Analog">Analog</option>
-                    {!analogOnly && <option value="Digital">Digital</option>}
-                    <option value="Fixed Analog">Fixed Analog</option>
-                    {!analogOnly && <option value="Fixed Digital">Fixed Digital</option>}
+                    <option value="Analog">{tr("Analog")}</option>
+                    {!analogOnly && <option value="Digital">{tr("Digital")}</option>}
+                    <option value="Fixed Analog">{tr("Fixed Analog")}</option>
+                    {!analogOnly && <option value="Fixed Digital">{tr("Fixed Digital")}</option>}
                   </select>
-                  <p className="text-xs text-cool-gray mt-0.5">Communication mode for this channel</p>
+                  <p className="text-xs text-cool-gray mt-0.5">{tr("Communication mode for this channel")}</p>
                 </div>
                 <div>
                   <label className="block text-xs font-medium text-cool-gray mb-1">
-                    Bandwidth
+                    {tr("Bandwidth")}
                   </label>
                   <select
                     value={editedChannel.bandwidth}
                     onChange={(e) => handleChange('bandwidth', e.target.value)}
                     className={`${FIELD} w-full border rounded px-2 py-1 text-sm`}
                   >
-                    <option value="25kHz">25kHz (Wide)</option>
-                    <option value="12.5kHz">12.5kHz (Narrow)</option>
+                    <option value="25kHz">{tr("25kHz (Wide)")}</option>
+                    <option value="12.5kHz">{tr("12.5kHz (Narrow)")}</option>
                   </select>
-                  <p className="text-xs text-cool-gray mt-0.5">Channel bandwidth</p>
+                  <p className="text-xs text-cool-gray mt-0.5">{tr("Channel bandwidth")}</p>
                 </div>
               </div>
 
               <div>
                 <label className="block text-xs font-medium text-cool-gray mb-1">
-                  Power Level
+                  {tr("Power Level")}
                 </label>
                 <select
                   value={editedChannel.power}
@@ -318,18 +319,18 @@ export const ChannelEditModal: React.FC<ChannelEditModalProps> = ({
                     </option>
                   ))}
                 </select>
-                <p className="text-xs text-cool-gray mt-0.5">Transmit power level</p>
+                <p className="text-xs text-cool-gray mt-0.5">{tr("Transmit power level")}</p>
               </div>
             </div>
           </section>
 
           {/* CTCSS/DCS Settings */}
           <section>
-            <h3 className="text-neon-cyan font-bold mb-2 text-sm">CTCSS/DCS Settings</h3>
+            <h3 className="text-neon-cyan font-bold mb-2 text-sm">{tr("CTCSS/DCS Settings")}</h3>
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className="block text-xs font-medium text-cool-gray mb-1">
-                  Receive CTCSS/DCS
+                  {tr("Receive CTCSS/DCS")}
                 </label>
                 <select
                   value={editedChannel.rxCtcssDcs.type}
@@ -343,7 +344,7 @@ export const ChannelEditModal: React.FC<ChannelEditModalProps> = ({
                   }}
                   className={`${FIELD} w-full border rounded px-2 py-1 text-sm mb-1`}
                 >
-                  <option value="None">None</option>
+                  <option value="None">{tr("None")}</option>
                   <option value="CTCSS">CTCSS</option>
                   <option value="DCS">DCS</option>
                 </select>
@@ -356,10 +357,10 @@ export const ChannelEditModal: React.FC<ChannelEditModalProps> = ({
                     })}
                     className={`${FIELD} w-full border rounded px-2 py-1 text-sm mb-1`}
                   >
-                    <option value="">Select CTCSS...</option>
+                    <option value="">{tr("Select CTCSS...")}</option>
                     {editedChannel.rxCtcssDcs.value && !CTCSS_FREQUENCIES.includes(editedChannel.rxCtcssDcs.value) && (
                       <option value={editedChannel.rxCtcssDcs.value}>
-                        {formatCTCSSFrequency(editedChannel.rxCtcssDcs.value)} (Custom)
+                        {formatCTCSSFrequency(editedChannel.rxCtcssDcs.value)} {tr("(Custom)")}
                       </option>
                     )}
                     {CTCSS_FREQUENCIES.map((freq) => (
@@ -379,10 +380,10 @@ export const ChannelEditModal: React.FC<ChannelEditModalProps> = ({
                       })}
                       className={`${FIELD} flex-1 border rounded px-2 py-1 text-sm mb-1`}
                     >
-                      <option value="">Select DCS...</option>
+                      <option value="">{tr("Select DCS...")}</option>
                       {editedChannel.rxCtcssDcs.value && !DCS_CODES.includes(editedChannel.rxCtcssDcs.value) && (
                         <option value={editedChannel.rxCtcssDcs.value}>
-                          {formatDCSCode(editedChannel.rxCtcssDcs.value, editedChannel.rxCtcssDcs.polarity)} (Custom)
+                          {formatDCSCode(editedChannel.rxCtcssDcs.value, editedChannel.rxCtcssDcs.polarity)} {tr("(Custom)")}
                         </option>
                       )}
                       {DCS_CODES.map((code) => (
@@ -405,11 +406,11 @@ export const ChannelEditModal: React.FC<ChannelEditModalProps> = ({
                     </select>
                   </div>
                 )}
-                <p className="text-xs text-cool-gray">Tone/code required to open receiver</p>
+                <p className="text-xs text-cool-gray">{tr("Tone/code required to open receiver")}</p>
               </div>
               <div>
                 <label className="block text-xs font-medium text-cool-gray mb-1">
-                  Transmit CTCSS/DCS
+                  {tr("Transmit CTCSS/DCS")}
                 </label>
                 <select
                   value={editedChannel.txCtcssDcs.type}
@@ -423,7 +424,7 @@ export const ChannelEditModal: React.FC<ChannelEditModalProps> = ({
                   }}
                   className={`${FIELD} w-full border rounded px-2 py-1 text-sm mb-1`}
                 >
-                  <option value="None">None</option>
+                  <option value="None">{tr("None")}</option>
                   <option value="CTCSS">CTCSS</option>
                   <option value="DCS">DCS</option>
                 </select>
@@ -436,10 +437,10 @@ export const ChannelEditModal: React.FC<ChannelEditModalProps> = ({
                     })}
                     className={`${FIELD} w-full border rounded px-2 py-1 text-sm mb-1`}
                   >
-                    <option value="">Select CTCSS...</option>
+                    <option value="">{tr("Select CTCSS...")}</option>
                     {editedChannel.txCtcssDcs.value && !CTCSS_FREQUENCIES.includes(editedChannel.txCtcssDcs.value) && (
                       <option value={editedChannel.txCtcssDcs.value}>
-                        {formatCTCSSFrequency(editedChannel.txCtcssDcs.value)} (Custom)
+                        {formatCTCSSFrequency(editedChannel.txCtcssDcs.value)} {tr("(Custom)")}
                       </option>
                     )}
                     {CTCSS_FREQUENCIES.map((freq) => (
@@ -459,10 +460,10 @@ export const ChannelEditModal: React.FC<ChannelEditModalProps> = ({
                       })}
                       className={`${FIELD} flex-1 border rounded px-2 py-1 text-sm mb-1`}
                     >
-                      <option value="">Select DCS...</option>
+                      <option value="">{tr("Select DCS...")}</option>
                       {editedChannel.txCtcssDcs.value && !DCS_CODES.includes(editedChannel.txCtcssDcs.value) && (
                         <option value={editedChannel.txCtcssDcs.value}>
-                          {formatDCSCode(editedChannel.txCtcssDcs.value, editedChannel.txCtcssDcs.polarity)} (Custom)
+                          {formatDCSCode(editedChannel.txCtcssDcs.value, editedChannel.txCtcssDcs.polarity)} {tr("(Custom)")}
                         </option>
                       )}
                       {DCS_CODES.map((code) => (
@@ -485,7 +486,7 @@ export const ChannelEditModal: React.FC<ChannelEditModalProps> = ({
                     </select>
                   </div>
                 )}
-                <p className="text-xs text-cool-gray">Tone/code transmitted with signal</p>
+                <p className="text-xs text-cool-gray">{tr("Tone/code transmitted with signal")}</p>
               </div>
             </div>
           </section>
@@ -493,12 +494,12 @@ export const ChannelEditModal: React.FC<ChannelEditModalProps> = ({
           {/* Digital Settings */}
           {isDigitalMode(editedChannel.mode) && (
             <section>
-              <h3 className="text-neon-cyan font-bold mb-2 text-sm">Digital Settings</h3>
+              <h3 className="text-neon-cyan font-bold mb-2 text-sm">{tr("Digital Settings")}</h3>
               <div className="space-y-4">
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <label className="block text-xs font-medium text-cool-gray mb-1">
-                      Color Code
+                      {tr("Color Code")}
                     </label>
                     <input
                       type="number"
@@ -508,18 +509,18 @@ export const ChannelEditModal: React.FC<ChannelEditModalProps> = ({
                       onChange={(e) => handleChange('colorCode', parseInt(e.target.value) || 0)}
                       className={`${FIELD} w-full border rounded px-2 py-1 text-sm`}
                     />
-                    <p className="text-xs text-cool-gray mt-0.5">DMR color code (0-15)</p>
+                    <p className="text-xs text-cool-gray mt-0.5">{tr("DMR color code (0-15)")}</p>
                   </div>
                   <div>
                     <label className="block text-xs font-medium text-cool-gray mb-1">
-                      TX Contact
+                      {tr("TX Contact")}
                     </label>
                     <select
                       value={editedChannel.contactId}
                       onChange={(e) => handleChange('contactId', parseInt(e.target.value) || 0)}
                       className={`${FIELD} w-full border rounded px-2 py-1 text-sm`}
                     >
-                      <option value={0}>None</option>
+                      <option value={0}>{tr("None")}</option>
                       {talkGroups.map((tg) => {
                         const callTypeLabel = tg.callType === 0x05 ? 'All Call' : tg.callType === 0x04 ? 'Group' : tg.callType === 0x03 ? 'Private' : 'Unknown';
                         return (
@@ -529,21 +530,21 @@ export const ChannelEditModal: React.FC<ChannelEditModalProps> = ({
                         );
                       })}
                     </select>
-                    <p className="text-xs text-cool-gray mt-0.5">TX Contact for this channel (Group/Private/All Call)</p>
+                    <p className="text-xs text-cool-gray mt-0.5">{tr("TX Contact for this channel (Group/Private/All Call)")}</p>
                   </div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <label className="block text-xs font-medium text-cool-gray mb-1">
-                      RX Group List
+                      {tr("RX Group List")}
                     </label>
                     <select
                       value={editedChannel.rxGroupListId ?? 0}
                       onChange={(e) => handleChange('rxGroupListId', parseInt(e.target.value) || 0)}
                       className={`${FIELD} w-full border rounded px-2 py-1 text-sm`}
                     >
-                      <option value={0}>None</option>
+                      <option value={0}>{tr("None")}</option>
                       {rxGroups
                         .filter(group => group.index < 63)
                         .map((group) => (
@@ -552,11 +553,11 @@ export const ChannelEditModal: React.FC<ChannelEditModalProps> = ({
                           </option>
                         ))}
                     </select>
-                    <p className="text-xs text-cool-gray mt-0.5">RX Group List ID (0-63)</p>
+                    <p className="text-xs text-cool-gray mt-0.5">{tr("RX Group List ID (0-63)")}</p>
                   </div>
                   <div>
                     <label className="block text-xs font-medium text-cool-gray mb-1">
-                      Slot Operation
+                      {tr("Slot Operation")}
                     </label>
                     <select
                       value={(editedChannel.slotOperation ?? 0) === 0 ? 1 : 2}
@@ -569,8 +570,8 @@ export const ChannelEditModal: React.FC<ChannelEditModalProps> = ({
                       }}
                       className={`${FIELD} w-full border rounded px-2 py-1 text-sm`}
                     >
-                      <option value={1}>Slot 1 (TS1)</option>
-                      <option value={2}>Slot 2 (TS2)</option>
+                      <option value={1}>{tr("Slot 1 (TS1)")}</option>
+                      <option value={2}>{tr("Slot 2 (TS2)")}</option>
                     </select>
                     <p className="text-xs text-cool-gray mt-0.5">Storage: 0 = TS1, 1 = TS2 (0x1D bit 4)</p>
                   </div>
@@ -580,23 +581,23 @@ export const ChannelEditModal: React.FC<ChannelEditModalProps> = ({
                   <div className="grid grid-cols-2 gap-3">
                     <div>
                       <label className="block text-xs font-medium text-cool-gray mb-1">
-                        Encryption ID
+                        {tr("Encryption ID")}
                       </label>
                       <select
                         value={editedChannel.encryptionId ?? 0}
                         onChange={(e) => handleChange('encryptionId', parseInt(e.target.value) || 0)}
                         className={`${FIELD} w-full border rounded px-2 py-1 text-sm`}
                       >
-                        <option value={0}>None</option>
+                        <option value={0}>{tr("None")}</option>
                         {encryptionKeys
                           .filter(key => key.id >= 1 && key.id <= 8 && key.name.trim() !== '')
                           .map((key) => (
                             <option key={key.entryNumber} value={key.id}>
-                              {key.name || `Key ${key.id}`}
+                              {key.name || tr("Key {0}", key.id)}
                             </option>
                           ))}
                       </select>
-                      <p className="text-xs text-cool-gray mt-0.5">Encryption key (0-8)</p>
+                      <p className="text-xs text-cool-gray mt-0.5">{tr("Encryption key (0-8)")}</p>
                     </div>
                   </div>
                 )}
@@ -611,8 +612,8 @@ export const ChannelEditModal: React.FC<ChannelEditModalProps> = ({
                         className="w-4 h-4 accent-neon-cyan flex-shrink-0"
                       />
                       <div>
-                        <span className="text-sm text-white font-medium">Encryption</span>
-                        <p className="text-xs text-cool-gray">Enable encryption</p>
+                        <span className="text-sm text-white font-medium">{tr("Encryption")}</span>
+                        <p className="text-xs text-cool-gray">{tr("Enable encryption")}</p>
                       </div>
                     </label>
                   )}
@@ -626,8 +627,8 @@ export const ChannelEditModal: React.FC<ChannelEditModalProps> = ({
                         className="w-4 h-4 accent-neon-cyan flex-shrink-0"
                       />
                       <div>
-                        <span className="text-sm text-white font-medium">TDMA Direct Mode</span>
-                        <p className="text-xs text-cool-gray">Enable TDMA direct mode</p>
+                        <span className="text-sm text-white font-medium">{tr("TDMA Direct Mode")}</span>
+                        <p className="text-xs text-cool-gray">{tr("Enable TDMA direct mode")}</p>
                       </div>
                     </label>
                   )}
@@ -641,8 +642,8 @@ export const ChannelEditModal: React.FC<ChannelEditModalProps> = ({
                         className="w-4 h-4 accent-neon-cyan flex-shrink-0"
                       />
                       <div>
-                        <span className="text-sm text-white font-medium">Short Data Confirm</span>
-                        <p className="text-xs text-cool-gray">Enable short data confirmation</p>
+                        <span className="text-sm text-white font-medium">{tr("Short Data Confirm")}</span>
+                        <p className="text-xs text-cool-gray">{tr("Enable short data confirmation")}</p>
                       </div>
                     </label>
                   )}
@@ -656,8 +657,8 @@ export const ChannelEditModal: React.FC<ChannelEditModalProps> = ({
                         className="w-4 h-4 accent-neon-cyan flex-shrink-0"
                       />
                       <div>
-                        <span className="text-sm text-white font-medium">Private Confirm</span>
-                        <p className="text-xs text-cool-gray">Enable private confirmation</p>
+                        <span className="text-sm text-white font-medium">{tr("Private Confirm")}</span>
+                        <p className="text-xs text-cool-gray">{tr("Enable private confirmation")}</p>
                       </div>
                     </label>
                   )}
@@ -668,7 +669,7 @@ export const ChannelEditModal: React.FC<ChannelEditModalProps> = ({
 
           {/* Channel Features */}
           <section>
-            <h3 className="text-neon-cyan font-bold mb-2 text-sm">Channel Features</h3>
+            <h3 className="text-neon-cyan font-bold mb-2 text-sm">{tr("Channel Features")}</h3>
             <div className="space-y-2">
               <label className="flex items-center gap-2">
                 <input
@@ -682,14 +683,14 @@ export const ChannelEditModal: React.FC<ChannelEditModalProps> = ({
                   className="w-4 h-4 accent-neon-cyan flex-shrink-0"
                 />
                 <div>
-                  <span className="text-sm text-white font-medium">Forbid Transmit</span>
-                  <p className="text-xs text-cool-gray">Prevents transmitting on this channel</p>
+                  <span className="text-sm text-white font-medium">{tr("Forbid Transmit")}</span>
+                  <p className="text-xs text-cool-gray">{tr("Prevents transmitting on this channel")}</p>
                 </div>
               </label>
 
               <div>
                 <label className="block text-xs font-medium text-cool-gray mb-1">
-                  Scan List ID
+                  {tr("Scan List ID")}
                 </label>
                 <input
                   type="number"
@@ -699,7 +700,7 @@ export const ChannelEditModal: React.FC<ChannelEditModalProps> = ({
                   onChange={(e) => handleChange('scanListId', parseInt(e.target.value) || 0)}
                   className={`${FIELD} w-full border rounded px-2 py-1 text-sm`}
                 />
-                <p className="text-xs text-cool-gray mt-0.5">Scan list this channel references (0 = None, 1-{caps?.maxScanLists ?? 32})</p>
+                <p className="text-xs text-cool-gray mt-0.5">{tr("Scan list this channel references (0 = None, 1-")}{caps?.maxScanLists ?? 32})</p>
               </div>
 
               {hasColumn('loneWorker') && (
@@ -711,8 +712,8 @@ export const ChannelEditModal: React.FC<ChannelEditModalProps> = ({
                     className="w-4 h-4 accent-neon-cyan flex-shrink-0"
                   />
                   <div>
-                    <span className="text-sm text-white font-medium">Lone Worker</span>
-                    <p className="text-xs text-cool-gray">Enable lone worker monitoring</p>
+                    <span className="text-sm text-white font-medium">{tr("Lone Worker")}</span>
+                    <p className="text-xs text-cool-gray">{tr("Enable lone worker monitoring")}</p>
                   </div>
                 </label>
               )}
@@ -726,8 +727,8 @@ export const ChannelEditModal: React.FC<ChannelEditModalProps> = ({
                     className="w-4 h-4 accent-neon-cyan flex-shrink-0"
                   />
                   <div>
-                    <span className="text-sm text-white font-medium">Forbid Talkaround</span>
-                    <p className="text-xs text-cool-gray">Prevent direct communication without repeater</p>
+                    <span className="text-sm text-white font-medium">{tr("Forbid Talkaround")}</span>
+                    <p className="text-xs text-cool-gray">{tr("Prevent direct communication without repeater")}</p>
                   </div>
                 </label>
               )}
@@ -738,7 +739,7 @@ export const ChannelEditModal: React.FC<ChannelEditModalProps> = ({
           {!isDigitalMode(editedChannel.mode) &&
             (hasColumn('vox') || hasColumn('audioProcessing') || hasColumn('squelch')) && (
             <section>
-              <h3 className="text-neon-cyan font-bold mb-2 text-sm">Analog Features</h3>
+              <h3 className="text-neon-cyan font-bold mb-2 text-sm">{tr("Analog Features")}</h3>
               <div className="space-y-2">
                 {hasColumn('vox') && (
                   <label className="flex items-center gap-2">
@@ -749,8 +750,8 @@ export const ChannelEditModal: React.FC<ChannelEditModalProps> = ({
                       className="w-4 h-4 accent-neon-cyan flex-shrink-0"
                     />
                     <div>
-                      <span className="text-sm text-white font-medium">VOX Function</span>
-                      <p className="text-xs text-cool-gray">Voice-operated transmit</p>
+                      <span className="text-sm text-white font-medium">{tr("VOX Function")}</span>
+                      <p className="text-xs text-cool-gray">{tr("Voice-operated transmit")}</p>
                     </div>
                   </label>
                 )}
@@ -764,8 +765,8 @@ export const ChannelEditModal: React.FC<ChannelEditModalProps> = ({
                       className="w-4 h-4 accent-neon-cyan flex-shrink-0"
                     />
                     <div>
-                      <span className="text-sm text-white font-medium">Scramble</span>
-                      <p className="text-xs text-cool-gray">Enable voice scrambling</p>
+                      <span className="text-sm text-white font-medium">{tr("Scramble")}</span>
+                      <p className="text-xs text-cool-gray">{tr("Enable voice scrambling")}</p>
                     </div>
                   </label>
                 )}
@@ -779,8 +780,8 @@ export const ChannelEditModal: React.FC<ChannelEditModalProps> = ({
                       className="w-4 h-4 accent-neon-cyan flex-shrink-0"
                     />
                     <div>
-                      <span className="text-sm text-white font-medium">Compander</span>
-                      <p className="text-xs text-cool-gray">Enable compander for better audio</p>
+                      <span className="text-sm text-white font-medium">{tr("Compander")}</span>
+                      <p className="text-xs text-cool-gray">{tr("Enable compander for better audio")}</p>
                     </div>
                   </label>
                 )}
@@ -794,8 +795,8 @@ export const ChannelEditModal: React.FC<ChannelEditModalProps> = ({
                       className="w-4 h-4 accent-neon-cyan flex-shrink-0"
                     />
                     <div>
-                      <span className="text-sm text-white font-medium">Talkback</span>
-                      <p className="text-xs text-cool-gray">Monitor own transmission</p>
+                      <span className="text-sm text-white font-medium">{tr("Talkback")}</span>
+                      <p className="text-xs text-cool-gray">{tr("Monitor own transmission")}</p>
                     </div>
                   </label>
                 )}
@@ -809,8 +810,8 @@ export const ChannelEditModal: React.FC<ChannelEditModalProps> = ({
                       className="w-4 h-4 accent-neon-cyan flex-shrink-0"
                     />
                     <div>
-                      <span className="text-sm text-white font-medium">Compander Dup</span>
-                      <p className="text-xs text-cool-gray">Enable compander on duplex</p>
+                      <span className="text-sm text-white font-medium">{tr("Compander Dup")}</span>
+                      <p className="text-xs text-cool-gray">{tr("Enable compander on duplex")}</p>
                     </div>
                   </label>
                 )}
@@ -824,8 +825,8 @@ export const ChannelEditModal: React.FC<ChannelEditModalProps> = ({
                       className="w-4 h-4 accent-neon-cyan flex-shrink-0"
                     />
                     <div>
-                      <span className="text-sm text-white font-medium">VOX Related</span>
-                      <p className="text-xs text-cool-gray">VOX-related function</p>
+                      <span className="text-sm text-white font-medium">{tr("VOX Related")}</span>
+                      <p className="text-xs text-cool-gray">{tr("VOX-related function")}</p>
                     </div>
                   </label>
                 )}
@@ -833,7 +834,7 @@ export const ChannelEditModal: React.FC<ChannelEditModalProps> = ({
                 {hasColumn('squelch') && (
                   <div>
                     <label className="block text-xs font-medium text-cool-gray mb-1">
-                      Squelch Level
+                      {tr("Squelch Level")}
                     </label>
                     <input
                       type="number"
@@ -843,14 +844,14 @@ export const ChannelEditModal: React.FC<ChannelEditModalProps> = ({
                       onChange={(e) => handleChange('squelchLevel', parseInt(e.target.value) || 0)}
                       className={`${FIELD} w-full border rounded px-2 py-1 text-sm`}
                     />
-                    <p className="text-xs text-cool-gray mt-0.5">Squelch threshold (0-255)</p>
+                    <p className="text-xs text-cool-gray mt-0.5">{tr("Squelch threshold (0-255)")}</p>
                   </div>
                 )}
 
                 {hasColumn('squelch') && (
                   <div>
                     <label className="block text-xs font-medium text-cool-gray mb-1">
-                      Receive Squelch Mode
+                      {tr("Receive Squelch Mode")}
                     </label>
                     <select
                       value={editedChannel.rxSquelchMode}
@@ -867,7 +868,7 @@ export const ChannelEditModal: React.FC<ChannelEditModalProps> = ({
                       <option value="CTC&Opt">CTC&Opt</option>
                       <option value="CTC|Opt">CTC|Opt</option>
                     </select>
-                    <p className="text-xs text-cool-gray mt-0.5">Squelch opening method</p>
+                    <p className="text-xs text-cool-gray mt-0.5">{tr("Squelch opening method")}</p>
                   </div>
                 )}
               </div>
@@ -878,12 +879,12 @@ export const ChannelEditModal: React.FC<ChannelEditModalProps> = ({
               would otherwise render alone on a radio that declares none. */}
           {(hasColumn('stepFrequency') || hasColumn('signalType') || hasColumn('pttId')) && (
           <section>
-            <h3 className="text-neon-cyan font-bold mb-2 text-sm">Advanced Settings</h3>
+            <h3 className="text-neon-cyan font-bold mb-2 text-sm">{tr("Advanced Settings")}</h3>
             <div className="space-y-2">
               {hasColumn('stepFrequency') && (
                 <div>
                   <label className="block text-xs font-medium text-cool-gray mb-1">
-                    Step Frequency
+                    {tr("Step Frequency")}
                   </label>
                   <select
                     value={editedChannel.stepFrequency}
@@ -899,46 +900,46 @@ export const ChannelEditModal: React.FC<ChannelEditModalProps> = ({
                     <option value={6}>50K</option>
                     <option value={7}>100K</option>
                   </select>
-                  <p className="text-xs text-cool-gray mt-0.5">Frequency step size</p>
+                  <p className="text-xs text-cool-gray mt-0.5">{tr("Frequency step size")}</p>
                 </div>
               )}
 
               {hasColumn('signalType') && (
                 <div>
                   <label className="block text-xs font-medium text-cool-gray mb-1">
-                    Signaling Type
+                    {tr("Signaling Type")}
                   </label>
                   <select
                     value={editedChannel.signalingType}
                     onChange={(e) => handleChange('signalingType', e.target.value)}
                     className={`${FIELD} w-full border rounded px-2 py-1 text-sm`}
                   >
-                    <option value="None">None</option>
+                    <option value="None">{tr("None")}</option>
                     <option value="DTMF">DTMF</option>
                     <option value="Two Tone">2Tone</option>
                     <option value="Five Tone">5Tone</option>
                     <option value="MDC1200">MDC</option>
                   </select>
-                  <p className="text-xs text-cool-gray mt-0.5">Signaling system type</p>
+                  <p className="text-xs text-cool-gray mt-0.5">{tr("Signaling system type")}</p>
                 </div>
               )}
 
               {hasColumn('pttId') && (
                 <div>
                   <label className="block text-xs font-medium text-cool-gray mb-1">
-                    PTT ID Type
+                    {tr("PTT ID Type")}
                   </label>
                   <select
                     value={editedChannel.pttIdType}
                     onChange={(e) => handleChange('pttIdType', e.target.value)}
                     className={`${FIELD} w-full border rounded px-2 py-1 text-sm`}
                   >
-                    <option value="Off">Off</option>
+                    <option value="Off">{tr("Off")}</option>
                     <option value="BOT">BOT</option>
                     <option value="EOT">EOT</option>
-                    <option value="Both">Both</option>
+                    <option value="Both">{tr("Both")}</option>
                   </select>
-                  <p className="text-xs text-cool-gray mt-0.5">When to send PTT ID</p>
+                  <p className="text-xs text-cool-gray mt-0.5">{tr("When to send PTT ID")}</p>
                 </div>
               )}
 
@@ -955,7 +956,7 @@ export const ChannelEditModal: React.FC<ChannelEditModalProps> = ({
                     onChange={(e) => handleChange('pttId', parseInt(e.target.value) || 0)}
                     className={`${FIELD} w-full border rounded px-2 py-1 text-sm`}
                   />
-                  <p className="text-xs text-cool-gray mt-0.5">PTT ID number (0-63)</p>
+                  <p className="text-xs text-cool-gray mt-0.5">{tr("PTT ID number (0-63)")}</p>
                 </div>
               )}
 
@@ -968,8 +969,8 @@ export const ChannelEditModal: React.FC<ChannelEditModalProps> = ({
                     className="w-4 h-4 accent-neon-cyan flex-shrink-0"
                   />
                   <div>
-                    <span className="text-sm text-white font-medium">PTT ID Display</span>
-                    <p className="text-xs text-cool-gray">Show PTT ID on display</p>
+                    <span className="text-sm text-white font-medium">{tr("PTT ID Display")}</span>
+                    <p className="text-xs text-cool-gray">{tr("Show PTT ID on display")}</p>
                   </div>
                 </label>
               )}
@@ -981,7 +982,7 @@ export const ChannelEditModal: React.FC<ChannelEditModalProps> = ({
               has no equivalent, so it does not declare this group. */}
           {hasColumn('emergency') && (
           <section>
-            <h3 className="text-neon-cyan font-bold mb-2 text-sm">Emergency Settings</h3>
+            <h3 className="text-neon-cyan font-bold mb-2 text-sm">{tr("Emergency Settings")}</h3>
             <div className="space-y-2">
               <label className="flex items-center gap-2">
                 <input
@@ -991,8 +992,8 @@ export const ChannelEditModal: React.FC<ChannelEditModalProps> = ({
                   className="w-4 h-4 accent-neon-cyan flex-shrink-0"
                 />
                 <div>
-                  <span className="text-sm text-white font-medium">Emergency Indicator</span>
-                  <p className="text-xs text-cool-gray">Mark channel as emergency channel</p>
+                  <span className="text-sm text-white font-medium">{tr("Emergency Indicator")}</span>
+                  <p className="text-xs text-cool-gray">{tr("Mark channel as emergency channel")}</p>
                 </div>
               </label>
 
@@ -1004,21 +1005,21 @@ export const ChannelEditModal: React.FC<ChannelEditModalProps> = ({
                   className="w-4 h-4 accent-neon-cyan flex-shrink-0"
                 />
                 <div>
-                  <span className="text-sm text-white font-medium">Emergency Acknowledge</span>
-                  <p className="text-xs text-cool-gray">Require emergency acknowledgment</p>
+                  <span className="text-sm text-white font-medium">{tr("Emergency Acknowledge")}</span>
+                  <p className="text-xs text-cool-gray">{tr("Require emergency acknowledgment")}</p>
                 </div>
               </label>
 
               <div>
                 <label className="block text-xs font-medium text-cool-gray mb-1">
-                  Emergency System
+                  {tr("Emergency System")}
                 </label>
                 <select
                   value={editedChannel.emergencySystemId}
                   onChange={(e) => handleChange('emergencySystemId', parseInt(e.target.value))}
                   className={`${FIELD} w-full border rounded px-2 py-1 text-sm`}
                 >
-                  <option value={0}>None</option>
+                  <option value={0}>{tr("None")}</option>
                   {analogEmergencySystems.map((sys, idx) => (
                     <option key={idx} value={idx + 1}>{idx + 1}: {sys.name}</option>
                   ))}
@@ -1031,7 +1032,7 @@ export const ChannelEditModal: React.FC<ChannelEditModalProps> = ({
           {/* APRS Settings */}
           {hasColumn('aprs') && (
           <section>
-            <h3 className="text-neon-cyan font-bold mb-2 text-sm">APRS Settings</h3>
+            <h3 className="text-neon-cyan font-bold mb-2 text-sm">{tr("APRS Settings")}</h3>
             <div className="space-y-2">
               <label className="flex items-center gap-2">
                 <input
@@ -1041,25 +1042,25 @@ export const ChannelEditModal: React.FC<ChannelEditModalProps> = ({
                   className="w-4 h-4 accent-neon-cyan flex-shrink-0"
                 />
                 <div>
-                  <span className="text-sm text-white font-medium">APRS Receive</span>
-                  <p className="text-xs text-cool-gray">Enable APRS reception</p>
+                  <span className="text-sm text-white font-medium">{tr("APRS Receive")}</span>
+                  <p className="text-xs text-cool-gray">{tr("Enable APRS reception")}</p>
                 </div>
               </label>
 
               <div>
                 <label className="block text-xs font-medium text-cool-gray mb-1">
-                  APRS Report Mode
+                  {tr("APRS Report Mode")}
                 </label>
                 <select
                   value={editedChannel.aprsReportMode}
                   onChange={(e) => handleChange('aprsReportMode', e.target.value)}
                   className={`${FIELD} w-full border rounded px-2 py-1 text-sm`}
                 >
-                  <option value="Off">Off</option>
-                  <option value="Digital">Digital</option>
-                  <option value="Analog">Analog</option>
+                  <option value="Off">{tr("Off")}</option>
+                  <option value="Digital">{tr("Digital")}</option>
+                  <option value="Analog">{tr("Analog")}</option>
                 </select>
-                <p className="text-xs text-cool-gray mt-0.5">APRS reporting method</p>
+                <p className="text-xs text-cool-gray mt-0.5">{tr("APRS reporting method")}</p>
               </div>
             </div>
           </section>
@@ -1071,7 +1072,7 @@ export const ChannelEditModal: React.FC<ChannelEditModalProps> = ({
               confirmed against a radio — see DA7X2-NEEDS-CONFIRMING.md. */}
           {extraColumns.length > 0 && (
             <section>
-              <h3 className="text-neon-cyan font-bold mb-2 text-sm">Radio-specific</h3>
+              <h3 className="text-neon-cyan font-bold mb-2 text-sm">{tr("Radio-specific")}</h3>
               <div className="space-y-2">
                 {extraColumns.map((c) => {
                   const disabled =
@@ -1091,7 +1092,7 @@ export const ChannelEditModal: React.FC<ChannelEditModalProps> = ({
                         />
                         <div>
                           <span className="text-sm text-white font-medium">
-                            {c.label}
+                            {tr(c.label)}
                             {extraColumnMarker(c)}
                           </span>
                           <p className="text-xs text-cool-gray">{c.offset}</p>
@@ -1102,7 +1103,7 @@ export const ChannelEditModal: React.FC<ChannelEditModalProps> = ({
                   return (
                     <div key={c.field} title={title}>
                       <label className="block text-xs font-medium text-cool-gray mb-1">
-                        {c.label}
+                        {tr(c.label)}
                         {extraColumnMarker(c)}
                       </label>
                       {c.editor.kind === 'select' ? (

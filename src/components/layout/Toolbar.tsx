@@ -50,6 +50,7 @@ import { isWebSerialSupported } from '../../utils/browserSupport';
 import { classifyRadioError, type RadioErrorKind } from '../../utils/radioErrors';
 import { BUTTON, FIELD } from '../ui/controlStyles';
 
+import { tr } from '../../utils/tr';  // NeonPlugJA: 日本語表示
 export const Toolbar: React.FC = () => {
   const { channels, setChannels } = useChannelsStore();
   const { zones, setZones } = useZonesStore();
@@ -108,9 +109,9 @@ export const Toolbar: React.FC = () => {
     const diffHours = Math.floor(diffMs / 3600000);
     const diffDays = Math.floor(diffMs / 86400000);
     if (diffMins < 1) return 'just now';
-    if (diffMins < 60) return `${diffMins} min ago`;
-    if (diffHours < 24) return `${diffHours} hr ago`;
-    if (diffDays < 7) return `${diffDays} days ago`;
+    if (diffMins < 60) return tr("{0} min ago", diffMins);
+    if (diffHours < 24) return tr("{0} hr ago", diffHours);
+    if (diffDays < 7) return tr("{0} days ago", diffDays);
     return d.toLocaleDateString();
   };
 
@@ -147,7 +148,7 @@ export const Toolbar: React.FC = () => {
 
   const handleConvertReplace = async () => {
     const targetLabel = getRadioPickerOptions().find((o) => o.modelId === convertTargetModel)?.label ?? convertTargetModel;
-    await backupUnsavedEdits(`converting for ${targetLabel}`);
+    await backupUnsavedEdits(tr('converting for {0}', targetLabel));
     const data = buildCodeplugData();
     const { migrated, loss } = migrateCodeplug(data, convertTargetModel);
     setChannels(migrated.channels);
@@ -168,10 +169,10 @@ export const Toolbar: React.FC = () => {
     setConvertModalOpen(false);
     showAlertBody(
       <div className="space-y-3 text-sm pb-1">
-        <p className="text-white">Converted for {targetLabel}.</p>
+        <p className="text-white">{tr("Converted for")} {targetLabel}.</p>
         <ConvertLossList loss={loss} />
       </div>,
-      'Convert'
+      tr("Convert")
     );
   };
 
@@ -201,18 +202,18 @@ export const Toolbar: React.FC = () => {
       // null = user declined the newer-format warning; not an error.
       if (!codeplugData) return;
 
-      await backupUnsavedEdits(`opening ${file.name}`);
+      await backupUnsavedEdits(tr('opening {0}', file.name));
       // An import marks the radio settings changed so a write sends them
       // (issue #2); applyCodeplugToStores is the one place that decides it.
       applyCodeplugToStores(codeplugData, 'import');
 
       showAlertBody(
         <CodeplugSummaryBody data={codeplugData} lead="Codeplug imported" fileName={file.name} />,
-        'Import'
+        tr("Import")
       );
       await saveSnapshot(codeplugData, { eventType: 'import', fileName: file.name });
     } catch (error) {
-      showAlert(error instanceof Error ? error.message : 'Failed to import codeplug', 'Import');
+      showAlert(error instanceof Error ? error.message : tr("Failed to import codeplug"), tr("Import"));
     }
 
     // Reset file input
@@ -242,7 +243,7 @@ export const Toolbar: React.FC = () => {
    * answer, not an error to explain.
    */
   const showOperationError = (err: unknown, progressLabel: string) => {
-    const message = err instanceof Error ? err.message : 'Unknown error';
+    const message = err instanceof Error ? err.message : tr("Unknown error");
     const kind = classifyRadioError(message, err instanceof Error ? err.name : undefined);
     if (kind === 'cancelled') {
       handleCloseModal();
@@ -260,7 +261,7 @@ export const Toolbar: React.FC = () => {
       setConnectionError(null);
       setLastOperationMode('read');
       setProgress(0);
-      setProgressMessage('Selecting port...');
+      setProgressMessage(tr('Selecting port...'));
       setCurrentStep('Selecting port');
 
       // A read clears the codeplug before it connects, so unsaved edits are
@@ -288,7 +289,7 @@ export const Toolbar: React.FC = () => {
         setCurrentStep('');
       }, 2000);
     } catch (err) {
-      showOperationError(err, 'Connection failed');
+      showOperationError(err, tr("Connection failed"));
     }
   };
 
@@ -311,7 +312,7 @@ export const Toolbar: React.FC = () => {
     try {
       setConnectionError(null);
       setProgress(0);
-      setProgressMessage('Selecting port...');
+      setProgressMessage(tr('Selecting port...'));
       setCurrentStep('Selecting port');
 
       await writeChannelsToRadio(channels, zones, scanLists, (progress, message, step) => {
@@ -337,14 +338,14 @@ export const Toolbar: React.FC = () => {
         setCurrentStep('');
       }, 2000);
     } catch (err) {
-      showOperationError(err, 'Write failed');
+      showOperationError(err, tr("Write failed"));
       setIsWriting(false);
     }
   };
 
   const handleWrite = () => {
     if (channels.length === 0 && zones.length === 0 && scanLists.length === 0) {
-      showAlert('No data to write (channels, zones, or scan lists)');
+      showAlert(tr("No data to write (channels, zones, or scan lists)"));
       return;
     }
     // Run radio-specific validations only when model is known; combine with experimental warning in one modal
@@ -387,7 +388,7 @@ export const Toolbar: React.FC = () => {
     // A refusal is the answer, not an error: nothing can be sent, and the
     // reason is the useful part.
     if (preview?.refusal) {
-      showAlertBody(<WriteRefusalBody refusal={preview.refusal} />, 'Write refused', 'lg');
+      showAlertBody(<WriteRefusalBody refusal={preview.refusal} />, tr("Write refused"), 'lg');
       return;
     }
     // Handed over as data, not assembled into a string. What it says and in
@@ -437,7 +438,7 @@ export const Toolbar: React.FC = () => {
       // Previously getSnapshotData swallowed everything and Restore just did
       // nothing; a format reject now says why.
       showAlert(
-        `Cannot restore snapshot: ${error instanceof Error ? error.message : 'Unknown error'}`
+        tr("Cannot restore snapshot: {0}", error instanceof Error ? error.message : 'Unknown error')
       );
       return;
     }
@@ -445,7 +446,7 @@ export const Toolbar: React.FC = () => {
     await backupUnsavedEdits('restoring a snapshot');
     applyCodeplugToStores(data, 'restore');
     setSnapshotsModalOpen(false);
-    showAlertBody(<CodeplugSummaryBody data={data} lead="Codeplug restored" />, 'Restore');
+    showAlertBody(<CodeplugSummaryBody data={data} lead="Codeplug restored" />, tr("Restore"));
   };
 
   const handleClearSnapshots = () => {
@@ -468,35 +469,35 @@ export const Toolbar: React.FC = () => {
           <button
             onClick={handleOpenSnapshots}
             className={`${BUTTON.outline} px-4 py-2 font-semibold rounded border`}
-            title="View and restore recent codeplug snapshots"
+            title={tr("View and restore recent codeplug snapshots")}
           >
-            Snapshots{(() => { const n = getSnapshots().length; return n > 0 ? ` (${n})` : ''; })()}
+            {tr("Snapshots")}{(() => { const n = getSnapshots().length; return n > 0 ? ` (${n})` : ''; })()}
           </button>
           <div className="flex-1" />
           <div className="flex items-center gap-2">
             <span className="text-xs text-neon-cyan font-semibold px-2 py-1 bg-neon-cyan bg-opacity-10 rounded border border-neon-cyan border-opacity-30">
-              CODEPLUG
+              {tr("CODEPLUG")}
             </span>
             <button
               onClick={handleImport}
               className={`${BUTTON.secondary} px-4 py-2 font-semibold rounded border`}
-              title="Import codeplug from file (.neonplug)"
+              title={tr("Import codeplug from file (.neonplug)")}
             >
-              Import
+              {tr("Import")}
             </button>
             <button
               onClick={handleExport}
               className={`${BUTTON.primary} px-4 py-2 font-semibold rounded border`}
-              title="Export codeplug to file (.neonplug)"
+              title={tr("Export codeplug to file (.neonplug)")}
             >
-              Export
+              {tr("Export")}
             </button>
             <button
               onClick={() => setConvertModalOpen(true)}
               className={`${BUTTON.outline} px-4 py-2 font-semibold rounded border`}
-              title="Convert codeplug for another radio"
+              title={tr("Convert codeplug for another radio")}
             >
-              Convert
+              {tr("Convert")}
             </button>
           </div>
           <div className="w-px h-6 bg-neon-cyan bg-opacity-30" />
@@ -508,15 +509,15 @@ export const Toolbar: React.FC = () => {
                 onClick={() => handleRead()}
                 disabled={isConnecting || radioBusy || !webSerialSupported}
                 className={`rounded-r-none border-r border-r-white/20 ${!webSerialSupported ? 'opacity-50 cursor-not-allowed' : ''}`}
-                title={!webSerialSupported ? 'Web Serial API not supported. Please use Chrome, Edge, Opera, or Brave.' : 'Read codeplug from current radio type'}
+                title={!webSerialSupported ? tr("Web Serial API not supported. Please use Chrome, Edge, Opera, or Brave.") : tr("Read codeplug from current radio type")}
               >
-                {isConnecting ? 'Reading...' : 'Read from Radio'}
+                {isConnecting ? 'Reading...' : tr("Read from Radio")}
               </Button>
               <button
                 type="button"
                 onClick={(e) => { e.stopPropagation(); setReadDropdownOpen((v) => !v); }}
                 disabled={isConnecting || isWriting || radioBusy}
-                title="Switch to a different radio type"
+                title={tr("Switch to a different radio type")}
                 className={`${BUTTON.primary} px-2 py-2 border-l border-l-white/20 disabled:pointer-events-none`}
                 aria-expanded={readDropdownOpen}
                 aria-haspopup="true"
@@ -533,7 +534,7 @@ export const Toolbar: React.FC = () => {
                   onClick={() => { setShowPickRadioModal(true); setReadDropdownOpen(false); }}
                   className={`${BUTTON.menuItem} w-full text-left px-4 py-2 text-sm`}
                 >
-                  Change radio type…
+                  {tr("Change radio type…")}
                 </button>
               </div>
             )}
@@ -547,20 +548,20 @@ export const Toolbar: React.FC = () => {
               className={!webSerialSupported ? 'opacity-50 cursor-not-allowed' : ''}
               title={
                 !webSerialSupported
-                  ? 'Web Serial API not supported. Please use Chrome, Edge, Opera, or Brave.'
+                  ? tr("Web Serial API not supported. Please use Chrome, Edge, Opera, or Brave.")
                   : hasUnsavedEdits
-                    ? 'Write codeplug to connected radio (unsaved changes)'
-                    : 'Write codeplug to connected radio'
+                    ? tr("Write codeplug to connected radio (unsaved changes)")
+                    : tr("Write codeplug to connected radio")
               }
               glow={webSerialSupported}
             >
-              {isWriting ? 'Writing...' : 'Write to Radio'}
+              {isWriting ? 'Writing...' : tr("Write to Radio")}
             </Button>
             {hasUnsavedEdits && (
               <span
                 role="img"
-                aria-label="Unsaved changes"
-                title="Unsaved changes: edits since the last read, write or import. Exporting a file keeps a copy; the dot stays until they are written to the radio."
+                aria-label={tr("Unsaved changes")}
+                title={tr("Unsaved changes: edits since the last read, write or import. Exporting a file keeps a copy; the dot stays until they are written to the radio.")}
                 className="absolute -top-1 -right-1 h-3 w-3 rounded-full bg-neon-magenta shadow-glow-magenta ring-2 ring-deep-gray"
               />
             )}
@@ -589,11 +590,11 @@ export const Toolbar: React.FC = () => {
         isOpen={writeWarningOpen}
         onClose={() => setWriteWarningOpen(false)}
         onConfirm={handleWriteWarningConfirm}
-        title={writeModel ? `Write to ${writeModel}` : 'Write to radio'}
+        title={writeModel ? tr("Write to {0}", writeModel) : tr("Write to radio")}
         body={writeConfirm ? <WriteConfirmBody {...writeConfirm} /> : undefined}
         size="lg"
-        confirmLabel={writeModel ? `Write to ${writeModel}` : 'Write to radio'}
-        cancelLabel="Cancel"
+        confirmLabel={writeModel ? tr("Write to {0}", writeModel) : tr("Write to radio")}
+        cancelLabel={tr("Cancel")}
         variant="default"
       />
       <ConfirmModal
@@ -612,8 +613,8 @@ export const Toolbar: React.FC = () => {
         return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-80">
           <div className="bg-deep-gray rounded-lg p-6 border border-neon-cyan shadow-glow-cyan max-w-md w-full mx-4 max-h-[90vh] overflow-y-auto">
-            <h3 className="text-lg font-semibold text-neon-cyan mb-4">Convert for another radio</h3>
-            <label className="block text-sm text-cool-gray mb-2">Target radio</label>
+            <h3 className="text-lg font-semibold text-neon-cyan mb-4">{tr("Convert for another radio")}</h3>
+            <label className="block text-sm text-cool-gray mb-2">{tr("Target radio")}</label>
             <select
               value={convertTargetModel}
               onChange={(e) => setConvertTargetModel(e.target.value)}
@@ -624,11 +625,11 @@ export const Toolbar: React.FC = () => {
                   {/* A plain <option> cannot carry the badge the picker shows,
                       so the word rides in the text — converting a codeplug TO
                       an alpha driver is exactly when it should be said. */}
-                  {opt.status === 'alpha' ? `${opt.label} (Alpha)` : opt.label}
+                  {opt.status === 'alpha' ? tr("{0} (Alpha)", opt.label) : opt.label}
                 </option>
               ))}
             </select>
-            <p className="text-sm text-amber-400 mb-2">What will be removed or cleared:</p>
+            <p className="text-sm text-amber-400 mb-2">{tr("What will be removed or cleared:")}</p>
             <div className="mb-4">
               <ConvertLossList loss={loss} />
             </div>
@@ -637,20 +638,20 @@ export const Toolbar: React.FC = () => {
                 onClick={handleConvertReplace}
                 className={`${BUTTON.primary} flex-1 px-4 py-2 font-semibold rounded`}
               >
-                Replace current
+                {tr("Replace current")}
               </button>
               <button
                 onClick={handleConvertDownload}
                 className={`${BUTTON.outline} flex-1 px-4 py-2 border rounded`}
               >
-                Download only
+                {tr("Download only")}
               </button>
             </div>
             <button
               onClick={() => setConvertModalOpen(false)}
               className={`${BUTTON.ghost} w-full mt-3 text-sm`}
             >
-              Cancel
+              {tr("Cancel")}
             </button>
           </div>
         </div>
@@ -659,11 +660,11 @@ export const Toolbar: React.FC = () => {
       {snapshotsModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-80">
           <div className="bg-deep-gray rounded-lg p-6 border border-neon-cyan shadow-glow-cyan max-w-md w-full mx-4 max-h-[90vh] overflow-hidden flex flex-col">
-            <h3 className="text-lg font-semibold text-neon-cyan mb-4">Recent codeplugs</h3>
+            <h3 className="text-lg font-semibold text-neon-cyan mb-4">{tr("Recent codeplugs")}</h3>
             <div className="flex-1 overflow-y-auto min-h-0 mb-4">
               {snapshotsList.length === 0 ? (
                 <p className="text-cool-gray text-sm">
-                  No snapshots yet. Import a codeplug, read from radio, or write to radio to create snapshots.
+                  {tr("No snapshots yet. Import a codeplug, read from radio, or write to radio to create snapshots.")}
                 </p>
               ) : (
                 <div className="space-y-2">
@@ -695,7 +696,7 @@ export const Toolbar: React.FC = () => {
                         onClick={() => handleRestoreSnapshot(s.id)}
                         className={`${BUTTON.outline} flex-shrink-0 px-3 py-1.5 text-xs font-semibold border rounded`}
                       >
-                        Restore
+                        {tr("Restore")}
                       </button>
                     </div>
                   ))}
@@ -708,14 +709,14 @@ export const Toolbar: React.FC = () => {
                   onClick={() => setSnapshotsClearConfirmOpen(true)}
                   className={`${BUTTON.dangerQuiet} text-xs`}
                 >
-                  Clear all
+                  {tr("Clear all")}
                 </button>
               )}
               <button
                 onClick={() => setSnapshotsModalOpen(false)}
                 className={`${BUTTON.neutral} ml-auto px-4 py-2 border rounded`}
               >
-                Close
+                {tr("Close")}
               </button>
             </div>
           </div>
@@ -725,9 +726,9 @@ export const Toolbar: React.FC = () => {
         isOpen={snapshotsClearConfirmOpen}
         onClose={() => setSnapshotsClearConfirmOpen(false)}
         onConfirm={handleClearSnapshots}
-        title="Clear all snapshots"
-        message="Remove all recent codeplug snapshots from local storage? This cannot be undone."
-        confirmLabel="Clear all"
+        title={tr("Clear all snapshots")}
+        message={tr("Remove all recent codeplug snapshots from local storage? This cannot be undone.")}
+        confirmLabel={tr("Clear all")}
         variant="danger"
       />
       <ConfirmModal {...confirmProps} />
