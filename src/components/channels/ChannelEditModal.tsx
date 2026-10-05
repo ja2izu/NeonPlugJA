@@ -24,6 +24,8 @@ import { useJapaneseNamesActive } from '../../hooks/useJapaneseNamesActive';
 import { fitNameBytes, fitUtf8NameBytes, nameByteLength, unwritableChars, utf8NameByteLength } from '../../utils/japaneseNames';
 
 import { tr } from '../../utils/tr';  // NeonPlugJA: 日本語表示
+import { useScanListsStore } from '../../store/scanListsStore';
+import { scanListByReference, scanListReference } from '../../utils/scanListReference';
 interface ChannelEditModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -64,6 +66,7 @@ export const ChannelEditModal: React.FC<ChannelEditModalProps> = ({
   const nameBytes = useJapaneseNamesActive();
   // UV-K1: the limit is in UTF-8 bytes; the field cuts the name there while typing.
   const nameUtf8 = caps?.channelNameUtf8Bytes === true;
+  const scanListsForSelect = useScanListsStore((s) => s.scanLists);
   // What is wrong with text typed into a frequency field that isn't a frequency
   // yet. Save refuses while there is any, rather than save the old value.
   const [frequencyTyping, setFrequencyTyping] = React.useState<{ rx?: string | null; tx?: string | null }>({});
@@ -695,6 +698,55 @@ export const ChannelEditModal: React.FC<ChannelEditModalProps> = ({
                 </div>
               </label>
 
+              {caps?.scanListAllValue !== undefined ? (
+              <div>
+                <label className="block text-xs font-medium text-cool-gray mb-1">
+                  {tr("Scan List")}
+                </label>
+                <select
+                  value={editedChannel.scanListId}
+                  onChange={(e) => {
+                    const id = parseInt(e.target.value) || 0;
+                    setEditedChannel((prev) => ({
+                      ...prev,
+                      scanListId: id,
+                      // "None" also clears the scan flag and the exclude mark that go with a list.
+                      ...(id === 0 ? { scanAdd: false, scanExcluded: false } : {}),
+                    }));
+                    if (validationErrors.length > 0) setValidationErrors([]);
+                  }}
+                  className={`${FIELD} w-full border rounded px-2 py-1 text-sm`}
+                >
+                  <option value={0}>{tr("None")}</option>
+                  {scanListsForSelect.map((scanList, index) => (
+                    <option key={index} value={scanListReference(scanList, index, true)}>
+                      {scanListReference(scanList, index, true)}: {scanList.name}
+                    </option>
+                  ))}
+                  <option value={caps.scanListAllValue}>ALL</option>
+                  {editedChannel.scanListId > 0 && editedChannel.scanListId !== caps.scanListAllValue
+                    && !scanListByReference(scanListsForSelect, editedChannel.scanListId, true) && (
+                    <option value={editedChannel.scanListId}>{editedChannel.scanListId}: {tr("(no name)")}</option>
+                  )}
+                </select>
+                {caps.scanExcludeEditable && (
+                  <label className="flex items-center gap-2 mt-1">
+                    <input
+                      type="checkbox"
+                      checked={editedChannel.scanExcluded === true && editedChannel.scanListId > 0}
+                      disabled={editedChannel.scanListId === 0}
+                      onChange={(e) => {
+                        const excluded = e.target.checked;
+                        setEditedChannel((prev) => ({ ...prev, scanExcluded: excluded, scanAdd: !excluded }));
+                      }}
+                      className="w-4 h-4 accent-neon-cyan flex-shrink-0"
+                    />
+                    <span className="text-sm text-white font-medium">{tr("Excluded")}</span>
+                  </label>
+                )}
+                <p className="text-xs text-cool-gray mt-0.5">{tr("Excluded from scanning: the channel keeps its list number but is skipped (the radio sets this with MENU long press during a scan).")}</p>
+              </div>
+              ) : (
               <div>
                 <label className="block text-xs font-medium text-cool-gray mb-1">
                   {tr("Scan List ID")}
@@ -709,6 +761,7 @@ export const ChannelEditModal: React.FC<ChannelEditModalProps> = ({
                 />
                 <p className="text-xs text-cool-gray mt-0.5">{tr("Scan list this channel references (0 = None, 1-")}{caps?.maxScanLists ?? 32})</p>
               </div>
+              )}
 
               {hasColumn('loneWorker') && (
                 <label className="flex items-center gap-2">

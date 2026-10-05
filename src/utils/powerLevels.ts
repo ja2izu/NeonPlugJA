@@ -19,6 +19,11 @@ export const DEFAULT_POWER_LEVELS: readonly PowerLevel[] = ['Low', 'Medium', 'Hi
 /** Single-letter labels for the compact channel grid. */
 export const POWER_ABBREV: Readonly<Record<string, string>> = {
   Low: 'L',
+  Low1: 'L1',
+  Low2: 'L2',
+  Low3: 'L3',
+  Low4: 'L4',
+  Low5: 'L5',
   Medium: 'M',
   High: 'H',
   Turbo: 'T',
@@ -80,4 +85,4 @@ export function clampPowerLevel(
 }
 
 /** Weakest to strongest, across every radio. Used only for ranking. */
-const DEFAULT_ORDER: readonly PowerLevel[] = ['Low', 'Medium', 'High', 'Turbo'];
+const DEFAULT_ORDER: readonly PowerLevel[] = ['Low', 'Low1', 'Low2', 'Low3', 'Low4', 'Low5', 'Medium', 'High', 'Turbo'];

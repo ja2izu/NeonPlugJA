@@ -408,6 +408,10 @@ export interface RadioCapabilities {
    * The channel table offers it as "ALL" after the registered lists.
    */
   scanListAllValue?: number;
+  /** UV-K1: the channel's "excluded from scanning" mark can be set in the editor (a checkbox beside the list). */
+  scanExcludeEditable?: boolean;
+  /** The channel table has no TG (TX contact) column: the radio has no talk groups. */
+  noTxContactColumn?: boolean;
   /**
    * UV-K1: the radio holds no list names the app can use (4 bytes, not written) and no list
    * membership of its own: a list is just a number on each channel. So the names live in the

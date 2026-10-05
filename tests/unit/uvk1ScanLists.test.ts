@@ -169,3 +169,47 @@ describe('UV-K1 スキャンリストの CSV', () => {
     expect(exportScanListsToCSV([list('A')]).split('\n')[0]).toBe('Name,Channels,CTC Scan Mode,Scan TX Mode,Hang Time,Priority 1 Type,Priority 2 Type,Priority Channel 1,Priority Channel 2,Designated TX Channel,Slot');
   });
 });
+
+import { decodeUvk1Power, applyUvk1Power } from '../../src/radios/uvk1/structures';
+import { powerLevelsFor, powerAbbrev, clampPowerLevel } from '../../src/utils/powerLevels';
+
+describe('UV-K1 送信電力（Low1〜Low5・Medium・High）', () => {
+  const rec = (bits: number) => { const r = new Uint8Array(16); r[12] = 0b1010_0011 | (bits << 2); return r; };
+  it('能力：7 段、TG の列なし、除外を編集できる', () => {
+    expect(UVK1_CAPS.powerLevels).toEqual(['Low1', 'Low2', 'Low3', 'Low4', 'Low5', 'Medium', 'High']);
+    expect(UVK1_CAPS.noTxContactColumn).toBe(true);
+    expect(UVK1_CAPS.scanExcludeEditable).toBe(true);
+    expect(powerLevelsFor(UVK1_CAPS)).toHaveLength(7);
+    expect(powerAbbrev('Low3')).toBe('L3');
+  });
+  it('読込：1〜5 は Low1〜Low5、6 は Medium、7 は High、0 は Low1', () => {
+    expect([1, 2, 3, 4, 5, 6, 7, 0].map((b) => decodeUvk1Power(rec(b)))).toEqual(['Low1', 'Low2', 'Low3', 'Low4', 'Low5', 'Medium', 'High', 'Low1']);
+  });
+  it('書込：Low1〜Low5 は電力ビットだけを変え、他のビットは保つ', () => {
+    const r = rec(7);
+    applyUvk1Power(r, 'Low4');
+    expect(r[12]).toBe(0b1010_0011 | (4 << 2));
+    applyUvk1Power(r, 'High'); // High / Medium は共通の書き手が決める：ここでは触らない
+    expect(r[12]).toBe(0b1010_0011 | (4 << 2));
+  });
+  it('他機種へ移すと、Low1〜Low5 は Low に下げる（上げない）', () => {
+    expect(clampPowerLevel('Low3', ['Low', 'Medium', 'High'])).toBe('Low');
+    expect(clampPowerLevel('Low', UVK1_CAPS.powerLevels!)).toBe('Low1');
+    expect(clampPowerLevel('Turbo', UVK1_CAPS.powerLevels!)).toBe('High');
+  });
+  it('書込の往復：Low3 の CH は読み戻しても Low3、Medium は Medium', () => {
+    const img = new Uint8Array(UVK1_IMAGE_SIZE).fill(0xff);
+    [3, 6].forEach((bits, slot) => {
+      const r = record(145_000_000 + slot * 12_500); r[12] = bits << 2;
+      img.set(r, UVK1_ADDR.CHANNELS + slot * 16);
+      img.set(name16('X'), UVK1_ADDR.CHANNEL_NAMES + slot * 16);
+      img[UVK1_ADDR.CHANNEL_ATTR + slot * 2] = 0x02; img[UVK1_ADDR.CHANNEL_ATTR + slot * 2 + 1] = 0;
+    });
+    const chs = channelsFromImage(img);
+    expect(chs.map((c) => c.power)).toEqual(['Low3', 'Medium']);
+    const changed = chs.map((c) => (c.number === 2 ? { ...c, power: 'Low5' as const } : c));
+    const t = buildTarget(img, changed);
+    expect((t.image[UVK1_ADDR.CHANNELS + 16 + 12] >> 2) & 7).toBe(5);
+    expect((t.image[UVK1_ADDR.CHANNELS + 12] >> 2) & 7).toBe(3);
+  });
+});

@@ -69,9 +69,13 @@ export const UVK1_CAPS: RadioCapabilities = {
   scanListsBySlot: true,
   scanListAllValue: UVK1_SCAN_LISTS + 1,
   scanListNamesAppSideOnly: true,
+  scanExcludeEditable: true,
   scanListFields: [],
   supportsContacts: false,
   analogOnly: true,
+  noTxContactColumn: true,
+  // Seven steps (Dondji OUTPUT_POWER_LOW1..HIGH; the channel stores 1-7).
+  powerLevels: ['Low1', 'Low2', 'Low3', 'Low4', 'Low5', 'Medium', 'High'],
   supportsBle: false,
   preferredTransport: 'serial',
   supportsBulkRead: false,

@@ -117,7 +117,7 @@ function tone(side: 'RX' | 'TX'): ChannelCsvColumn<CTCSSDCS> {
 
 const MODES = ['Analog', 'Digital', 'Fixed Analog', 'Fixed Digital'] as const;
 const BANDWIDTHS = ['12.5kHz', '25kHz'] as const;
-const POWERS = ['Low', 'Medium', 'High', 'Turbo'] as const;
+const POWERS = ['Low', 'Low1', 'Low2', 'Low3', 'Low4', 'Low5', 'Medium', 'High', 'Turbo'] as const;
 const APRS_REPORT_MODES = ['Off', 'Digital', 'Analog'] as const;
 const SQUELCH_MODES = ['Carrier/CTC', 'CTCSS/DCS', 'Optional', 'CTC&Opt', 'CTC|Opt'] as const;
 const SIGNALING_TYPES = ['None', 'DTMF', 'Two Tone', 'Five Tone', 'MDC1200'] as const;

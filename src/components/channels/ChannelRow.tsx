@@ -336,6 +336,21 @@ export const ChannelRow: React.FC<ChannelRowProps> = React.memo(({
         </td>
       )}
       <td className="px-2 py-2 text-center">
+        {powerOrder.length > 4 ? (
+          // More steps than a click cycle serves well (UV-K1: Low1-Low5, Medium, High): pick from a list.
+          <select
+            value={channel.power}
+            onChange={(e) => handleCellChange(channel.number, 'power', e.target.value as Channel['power'])}
+            className={`${FIELD} border rounded px-1 py-1 text-xs w-[4.2rem]`}
+            title={channel.power}
+            aria-label={tr("Power Level")}
+          >
+            {!powerOrder.includes(channel.power) && <option value={channel.power}>{channel.power}</option>}
+            {powerOrder.map((level) => (
+              <option key={level} value={level}>{level}</option>
+            ))}
+          </select>
+        ) : (
         <button
           onClick={() => {
             // Driven by the radio's declared levels, not a fixed list. With a
@@ -348,6 +363,7 @@ export const ChannelRow: React.FC<ChannelRowProps> = React.memo(({
         >
           {powerAbbrev(channel.power)}
         </button>
+        )}
       </td>
       <td className="px-2 py-2 text-center">
         <button
@@ -590,13 +606,25 @@ export const ChannelRow: React.FC<ChannelRowProps> = React.memo(({
             </option>
           )}
         </select>
-        {channel.scanExcluded === true && channel.scanListId > 0 && (
-          <span
-            className="block text-[10px] leading-tight text-yellow-300 mt-0.5"
-            title={tr("Excluded from scanning on the radio (MENU long press during a scan). Kept as it is on a write; clear it on the radio with MENU while scanning is standing by.")}
+        {caps?.scanExcludeEditable && (
+          <label
+            className={`flex items-center gap-1 mt-0.5 text-[10px] leading-tight ${channel.scanListId > 0 ? (channel.scanExcluded ? 'text-yellow-300' : 'text-cool-gray') : 'text-cool-gray opacity-50'}`}
+            title={tr("Excluded from scanning: the channel keeps its list number but is skipped (the radio sets this with MENU long press during a scan).")}
           >
+            <input
+              type="checkbox"
+              className="checkbox-theme"
+              checked={channel.scanExcluded === true && channel.scanListId > 0}
+              disabled={channel.scanListId === 0}
+              onChange={(e) => {
+                handleCellChange(channel.number, 'scanExcluded', e.target.checked);
+                // Keep the scan flag in step: a channel that is excluded is not scanned.
+                handleCellChange(channel.number, 'scanAdd', !e.target.checked);
+              }}
+              aria-label={tr("Excluded")}
+            />
             {tr("Excluded")}
-          </span>
+          </label>
         )}
       </td>
       {hasColumn('freeToAir') && (
@@ -1024,6 +1052,7 @@ export const ChannelRow: React.FC<ChannelRowProps> = React.memo(({
         />
       ))}
       {/* Common fields - work for both */}
+      {!caps?.noTxContactColumn && (
       <td className="px-2 py-2">
         {showColorCode ? (
           <select
@@ -1045,6 +1074,7 @@ export const ChannelRow: React.FC<ChannelRowProps> = React.memo(({
           <span className="text-cool-gray text-xs text-center block">-</span>
         )}
       </td>
+      )}
       <td className={`px-2 py-2 text-center sticky right-0 z-10 ${isSelected ? 'bg-neon-cyan bg-opacity-20' : 'bg-deep-gray'}`}>
         <div className="flex items-center justify-center gap-1">
           <button

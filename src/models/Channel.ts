@@ -5,11 +5,14 @@ export type Bandwidth = '12.5kHz' | '25kHz';
  * the D890UV family exposes all four in its menu and encodes them in a 2-bit
  * field (0=Low, 1=Mid, 2=High, 3=Turbo), confirmed on hardware 2026-08-25.
  *
+ * The UV-K1 (Dondji / 25Ja) has seven steps, Low1-Low5, Medium and High; plain 'Low' is the
+ * three-level radios' value and stays valid for them.
+ *
  * Radios with only three levels clamp Turbo to High when encoding — see each
  * radio's structures.ts. Decoding never produces 'Turbo' on those radios, so
  * nothing changes for them.
  */
-export type PowerLevel = 'Low' | 'Medium' | 'High' | 'Turbo';
+export type PowerLevel = 'Low' | 'Low1' | 'Low2' | 'Low3' | 'Low4' | 'Low5' | 'Medium' | 'High' | 'Turbo';
 
 export interface CTCSSDCS {
   type: 'CTCSS' | 'DCS' | 'None';

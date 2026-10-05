@@ -30,7 +30,7 @@ import {
   UVK1_FREQ_MAX_MHZ, UVK1_FREQ_MIN_MHZ, UVK1_IMAGE_EXT_BASE, UVK1_MAX_CHANNELS, UVK1_MAX_NAME_BYTES,
   UVK1_MAX_NAME_BYTES_LONG, UVK1_NAME_EXT_SPI, UVK1_NAME_SIZE, UVK1_SCAN_LISTS, UVK1_SPI_WRITE_MAX, type UVK1FontId,
 } from './constants';
-import { decodeAttribute, isUnusedAttribute } from './structures';
+import { applyUvk1Power, decodeAttribute, isUnusedAttribute } from './structures';
 import { FONT_25JA_CHARS } from './font25ja';
 
 /**
@@ -218,6 +218,7 @@ export function buildTarget(current: Uint8Array, channels: Channel[], longNames 
       ? { record: current.subarray(recAt, recAt + UVK1_CHANNEL_SIZE), attribute: 0, nameField: new Uint8Array(16) }
       : undefined;
     const record = encodeChannel(ch, previous).record;
+    applyUvk1Power(record, ch.power, previous?.record);
     const attr = encodeAttribute(ch, usedOnRadio ? prevRaw : null);
 
     image.set(record, recAt);

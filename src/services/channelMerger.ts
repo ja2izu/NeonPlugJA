@@ -30,7 +30,7 @@ function mergeChannels(ch1: Channel, ch2: Channel): Channel {
   
   // Use higher power (Turbo > High > Medium > Low)
   const powerOrder: Record<Channel['power'], number> = {
-    'Low': 0, 'Medium': 1, 'High': 2, 'Turbo': 3,
+    'Low': 0, 'Low1': 0.1, 'Low2': 0.2, 'Low3': 0.3, 'Low4': 0.4, 'Low5': 0.5, 'Medium': 1, 'High': 2, 'Turbo': 3,
   };
   const power = powerOrder[ch1.power] >= powerOrder[ch2.power] ? ch1.power : ch2.power;
   

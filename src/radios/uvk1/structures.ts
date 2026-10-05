@@ -24,9 +24,25 @@
  * channel gets band 7 (SETTINGS_UpdateChannel). This driver follows the same
  * rule, and also treats a record with no receive frequency as unused.
  */
-import type { Channel } from '../../models';
+import type { Channel, PowerLevel } from '../../models';
 import { parseChannel as parseK5Record, isEmptyChannelRecord } from '../uvk5/structures';
 import { UVK1_BAND_EMPTY, UVK1_CHANNEL_SIZE, UVK1_MAX_NAME_BYTES, UVK1_SCAN_LISTS } from './constants';
+
+/** Power as the channel record stores it (byte 12 bits 4-2): 1-5 Low1-Low5, 6 Medium, 7 High; anything else the radio reads as Low1. */
+export function decodeUvk1Power(record: Uint8Array): PowerLevel {
+  const bits = (record[12] >> 2) & 0x07;
+  if (bits === 7) return 'High';
+  if (bits === 6) return 'Medium';
+  return (bits >= 1 && bits <= 5 ? `Low${bits}` : 'Low1') as PowerLevel;
+}
+
+/** Put Low1-Low5 into a record's power bits. Other levels are already encoded by the shared K5 record writer. */
+export function applyUvk1Power(record: Uint8Array, power: PowerLevel, previousRecord?: Uint8Array): void {
+  // A channel whose power did not change keeps its bits as they are (a stored 0 reads as Low1 and stays 0).
+  if (previousRecord && decodeUvk1Power(previousRecord) === power) return;
+  const m = /^Low([1-5])$/.exec(power);
+  if (m) record[12] = (record[12] & ~(0x07 << 2)) | (Number(m[1]) << 2);
+}
 
 export interface UVK1Attribute {
   band: number;
@@ -112,6 +128,7 @@ export function parseChannel({ number, record, attrLo, attrHi, nameField, maxNam
     ...base,
     name: decodeChannelName(nameField, maxNameBytes ?? UVK1_MAX_NAME_BYTES),
     scanAdd: attr.scanList !== 0 && !attr.exclude,
+    power: decodeUvk1Power(record),
     scanListId: attr.scanList,
     scanExcluded: attr.exclude && attr.scanList !== 0,
   };
