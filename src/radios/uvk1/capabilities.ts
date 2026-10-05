@@ -62,10 +62,11 @@ export const UVK1_CAPS: RadioCapabilities = {
   channelDeleteKeepsNumbers: true,
   supportsZones: false,
   // Scan lists: 24 slots, a channel holds a number (0 none, 1-24, 25 all). The radio's
-  // own 4-byte list names are not used: names live in the app only and are never written.
+  // 25ja holds list names (UTF-8, 12 bytes at SPI 0x8880): written and read back.
   supportsScanLists: true,
   maxScanLists: UVK1_SCAN_LISTS,
-  maxScanListNameLength: 16,
+  maxScanListNameLength: 12,
+  scanListNameUtf8Bytes: true,
   scanListsBySlot: true,
   scanListAllValue: UVK1_SCAN_LISTS + 1,
   scanListNamesAppSideOnly: true,

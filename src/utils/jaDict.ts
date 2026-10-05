@@ -384,7 +384,7 @@ export const JA_DICT: Readonly<Record<string, string>> = {
   "(no name)": "（名前なし）",
   "Excluded": "除外",
   "Excluded from scanning: the channel keeps its list number but is skipped (the radio sets this with MENU long press during a scan).": "スキャンから除外：リスト番号は残ったまま、スキャンされません（本体ではスキャン中の MENU 長押しで付きます）。",
-  "The name is kept in this app only (.neonplug and CSV). It is not written to the radio. Choose the list for each channel in the Scan List column of the channel table.": "名前はこのアプリの中だけで持ちます（.neonplug と CSV）。無線機には書きません。各チャンネルのリストは、チャンネル表の「スキャンリスト」の列で選びます。",
+  "The name is written to the radio (25ja: up to 12 bytes, 4 kanji) and read back. It is also kept in this app (.neonplug and CSV). Choose the list for each channel in the Scan List column of the channel table.": "名前は無線機に書き込まれ（25ja：12バイトまで・漢字4文字）、読み込みでも取り込まれます。このアプリ（.neonplug と CSV）にも保持されます。各チャンネルのリストは、チャンネル表の「スキャンリスト」の列で選びます。",
   "Channels in list {0}": "リスト {0} のチャンネル",
   "No channel uses this list.": "このリストを使うチャンネルはありません。",
   "Slot {0}": "スロット {0}",

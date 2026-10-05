@@ -10,6 +10,7 @@
 import type { Channel, Contact, Zone, ScanList, RXGroup, DMRRadioID, QuickContact } from '../../models';
 import type { RadioCapabilities } from '../../types/radioCapabilities';
 import { formatPlural } from '../../utils/formatPlural';
+import { fitUtf8NameBytes, utf8NameByteLength } from '../../utils/japaneseNames';
 
 export interface LimitCheck<T> {
   /** One sentence per problem. Empty when the list fits. */
@@ -63,6 +64,13 @@ export function checkScanListLimits(scanLists: ScanList[], caps: Caps): LimitChe
       });
   const trimmed = capCount(reachable, caps?.maxScanLists, 'scan list', issues).map((list) => {
     let next = list;
+    // UV-K1 (25ja): the radio holds 12 UTF-8 bytes of name.
+    if (caps?.scanListNameUtf8Bytes && caps.maxScanListNameLength !== undefined &&
+        utf8NameByteLength(next.name) > caps.maxScanListNameLength) {
+      const fitted = fitUtf8NameBytes(next.name, caps.maxScanListNameLength);
+      issues.push(`Scan list "${list.name}": name is ${utf8NameByteLength(list.name)} bytes, the radio holds ${caps.maxScanListNameLength}. Trimming to "${fitted}".`);
+      next = { ...next, name: fitted };
+    }
     if (perList !== undefined && next.channels.length > perList) {
       issues.push(
         `Scan list "${list.name}" has ${list.channels.length} channels, but a scan list holds ${perList}. ` +

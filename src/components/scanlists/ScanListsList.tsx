@@ -20,7 +20,7 @@ import { ConfirmModal } from '../ui/ConfirmModal';
 import { BUTTON, FIELD, FIELD_INVALID } from '../ui/controlStyles';
 import { useJapaneseNamesActive } from '../../hooks/useJapaneseNamesActive';
 import { tr } from '../../utils/tr';
-import { fitNameBytes } from '../../utils/japaneseNames';
+import { fitNameBytes, fitUtf8NameBytes, utf8NameByteLength } from '../../utils/japaneseNames';
 
 export const ScanListsList: React.FC = () => {
   const { caps } = useRadioCapabilities();
@@ -30,7 +30,11 @@ export const ScanListsList: React.FC = () => {
   // The DM-32 stores 11 characters, the D890UV family 16.
   const maxNameLength = caps?.maxScanListNameLength ?? 16;
   // 日本語名 ON: maxNameLength をバイト数として数える（DM-32 は 11 バイト）
-  const ja = useJapaneseNamesActive();
+  const jaSetting = useJapaneseNamesActive();
+  // UV-K1 (25ja): the name is UTF-8 bytes (kanji 3), always counted, whatever the setting.
+  const utf8 = caps?.scanListNameUtf8Bytes === true;
+  const ja = jaSetting || utf8;
+  const fitName = (v: string) => (utf8 ? fitUtf8NameBytes(v, maxNameLength) : fitNameBytes(v, maxNameLength));
   // The number a channel stores for each list, shown beside its name.
   const scanListsBySlot = caps?.scanListsBySlot === true;
   const { scanLists, selectedScanList, setSelectedScanList, addScanList, deleteScanList, renameScanList } = useScanListsStore();
@@ -74,7 +78,7 @@ export const ScanListsList: React.FC = () => {
       return;
     }
     const scanListName = ja
-      ? fitNameBytes(newScanListName.trim(), maxNameLength)
+      ? fitName(newScanListName.trim())
       : newScanListName.trim().slice(0, maxNameLength);
     // The LOWEST FREE slot, not the list length. `slot` is a hardware slot and
     // the table can have holes: deleting a list clears its presence bit and
@@ -133,7 +137,7 @@ export const ScanListsList: React.FC = () => {
       setEditScanListName('');
     } else {
       showAlert(ja
-        ? `スキャンリスト名が不正か、同じ名前があります。名前は 1〜${maxNameLength} バイト（英数字 1、漢字・かな 2）で、重複できません。`
+        ? `スキャンリスト名が不正か、同じ名前があります。名前は 1〜${maxNameLength} バイト（${utf8 ? '英数字 1、漢字・かな 3' : '英数字 1、漢字・かな 2'}）で、重複できません。`
         : `Invalid scan list name or name already exists. Scan list names must be 1-${maxNameLength} characters and unique.`);
     }
   };
@@ -170,7 +174,7 @@ export const ScanListsList: React.FC = () => {
                   <input
                     type="text"
                     value={editScanListName}
-                    onChange={(e) => setEditScanListName(ja ? fitNameBytes(e.target.value, maxNameLength) : e.target.value)}
+                    onChange={(e) => setEditScanListName(ja ? fitName(e.target.value) : e.target.value)}
                     onKeyPress={(e) => {
                       if (e.key === 'Enter') {
                         handleSaveEdit(index);
@@ -281,7 +285,7 @@ export const ScanListsList: React.FC = () => {
         listSubtitle={`${scanLists.length}/${maxScanLists} scan lists`}
         addInputPlaceholder="Scan list name..."
         addInputValue={newScanListName}
-        onAddInputChange={ja ? (v: string) => setNewScanListName(fitNameBytes(v, maxNameLength)) : setNewScanListName}
+        onAddInputChange={ja ? (v: string) => setNewScanListName(fitName(v)) : setNewScanListName}
         onAdd={handleAddScanList}
         addDisabled={scanLists.length >= maxScanLists}
         addInputMaxLength={ja ? undefined : maxNameLength}
@@ -486,7 +490,10 @@ const SearchableChannelSelect: React.FC<SearchableChannelSelectProps> = ({
  */
 const ScanListNameField: React.FC<{ index: number; name: string; maxLength: number }> = ({ index, name, maxLength }) => {
   const { scanLists, renameScanList } = useScanListsStore();
-  const ja = useJapaneseNamesActive();
+  const { caps } = useRadioCapabilities();
+  const utf8 = caps?.scanListNameUtf8Bytes === true;
+  const ja = useJapaneseNamesActive() || utf8;
+  const fit = (v: string) => (utf8 ? fitUtf8NameBytes(v, maxLength) : fitNameBytes(v, maxLength));
   const id = useId();
   // What is being typed; null while the field shows the saved name.
   const [draft, setDraft] = useState<string | null>(null);
@@ -507,7 +514,7 @@ const ScanListNameField: React.FC<{ index: number; name: string; maxLength: numb
       setDraft(null);
       setError(null);
     } else {
-      setError(ja ? `名前は 1〜${maxLength} バイトです（英数字 1、漢字・かな 2）。` : `Names are 1 to ${maxLength} characters.`);
+      setError(ja ? `名前は 1〜${maxLength} バイトです（${utf8 ? '英数字 1、漢字・かな 3' : '英数字 1、漢字・かな 2'}）。` : `Names are 1 to ${maxLength} characters.`);
     }
   };
 
@@ -522,7 +529,7 @@ const ScanListNameField: React.FC<{ index: number; name: string; maxLength: numb
         value={shown}
         maxLength={ja ? undefined : maxLength}
         onChange={(e) => {
-          setDraft(ja ? fitNameBytes(e.target.value, maxLength) : e.target.value);
+          setDraft(ja ? fit(e.target.value) : e.target.value);
           setError(null);
         }}
         onBlur={commit}
@@ -537,7 +544,7 @@ const ScanListNameField: React.FC<{ index: number; name: string; maxLength: numb
         className={`${error ? FIELD_INVALID : FIELD} w-full border rounded px-2 py-1.5 text-sm`}
       />
       <p className={`text-xs mt-0.5 ${error ? 'text-red-300' : 'text-cool-gray'}`}>
-        {error ?? `${shown.length}/${maxLength} characters`}
+        {error ?? (utf8 ? `${utf8NameByteLength(shown)}/${maxLength} bytes` : `${shown.length}/${maxLength} characters`)}
       </p>
     </div>
   );
@@ -560,7 +567,7 @@ const AppSideScanListDetail: React.FC<{
     <div className="h-full overflow-y-auto p-4 space-y-4">
       <ScanListNameField key={index} index={index} name={scanList.name} maxLength={maxLength} />
       <p className="text-xs text-cool-gray">
-        {tr("The name is kept in this app only (.neonplug and CSV). It is not written to the radio. Choose the list for each channel in the Scan List column of the channel table.")}
+        {tr("The name is written to the radio (25ja: up to 12 bytes, 4 kanji) and read back. It is also kept in this app (.neonplug and CSV). Choose the list for each channel in the Scan List column of the channel table.")}
       </p>
       <div>
         <h4 className="text-neon-cyan font-medium mb-1">{tr("Channels in list {0}", reference)} ({members.length})</h4>

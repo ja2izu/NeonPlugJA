@@ -64,6 +64,16 @@ export const UVK1_ATTR_SIZE = 2;
 export const UVK1_LIST_NAME_SIZE = 4;
 
 /**
+ * Scan list names with kanji (25Ja scanlist-name build): SPI 0x008880, 12 bytes
+ * x 24 (0x008880-0x00899F), UTF-8, ends at 0x00 or 0xFF. Up to 4 kanji / kana, or
+ * 12 ASCII. Unlike the 4-byte names at 0x880e (never written), the app writes these.
+ * Not in the EEPROM-command map: read and written with the SPI commands, like the
+ * second name slots.
+ */
+export const UVK1_LIST_KANJI_BASE = 0x8880;
+export const UVK1_LIST_KANJI_SIZE = 12;
+
+/**
  * Longest name in bytes (CHANNEL_NAME_MAX_BYTES). The name is UTF-8, so this is
  * 15 ASCII characters or 5 kanji / kana (3 bytes each).
  */

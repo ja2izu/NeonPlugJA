@@ -3,6 +3,8 @@ import type { RadioProtocol } from '../types/radio';
 import { createDefaultProtocol, createProtocolForModel } from '../radios';
 import { D890UVProtocol } from '../radios/d890uv/protocol';
 import { DM32UVProtocol } from '../radios/dm32uv/protocol';
+import { UVK1Protocol } from '../radios/uvk1/protocol';
+import { listNamesFromScanLists, mergeRadioListNames } from '../radios/uvk1/scanListNames';
 import { BaseDigitalProtocol } from '../radios/shared/BaseProtocols';
 import type { OptionalDigitalReads } from '../radios/optionalReads';
 import { CODEPLUG_READS } from '../radios/codeplugReads';
@@ -381,6 +383,16 @@ export function useRadioConnection() {
           run: async () => {
             setZones(await proto.readZones());
             if (dm32) setRawZoneData(dm32.rawZoneData);
+          },
+        });
+      }
+
+      // UV-K1 (25ja): names held by the radio are merged into the app's lists (radio wins where it has one).
+      if (caps?.scanListNamesAppSideOnly && proto instanceof UVK1Protocol && proto.supportsScanListNames()) {
+        configSteps.push({
+          label: 'Scan list names',
+          run: async () => {
+            setScanLists(mergeRadioListNames(useScanListsStore.getState().scanLists, proto.readScanListNames()));
           },
         });
       }
@@ -1327,6 +1339,11 @@ export function useRadioConnection() {
           );
         } else {
           onProgress?.(20, 'Writing channels to radio...', steps[4]);
+          // UV-K1 (25ja): the list names go with the channels (raw store, so lists without members count).
+          const uvk1 = protocol instanceof UVK1Protocol ? protocol : null;
+          if (uvk1 && uvk1.supportsScanListNames()) {
+            uvk1.setScanListNames(listNamesFromScanLists(useScanListsStore.getState().scanLists));
+          }
           await protocol.writeChannels(validChannels);
         }
         if (hasSettingsToWrite && protocol.bufferedSettingsWrite) {

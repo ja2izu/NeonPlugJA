@@ -413,12 +413,18 @@ export interface RadioCapabilities {
   /** The channel table has no TG (TX contact) column: the radio has no talk groups. */
   noTxContactColumn?: boolean;
   /**
-   * UV-K1: the radio holds no list names the app can use (4 bytes, not written) and no list
-   * membership of its own: a list is just a number on each channel. So the names live in the
-   * app only (.neonplug, CSV), a read leaves them alone, and a list's members are the channels
-   * that carry its number.
+   * UV-K1: the radio has no list membership of its own: a list is just a number on each
+   * channel, so a list's members are the channels that carry its number, and lists are
+   * addressed by slot. Names live in the app (.neonplug, CSV); a radio with the 25ja font
+   * also holds them (see scanListNameUtf8Bytes) and a read merges them in.
    */
   scanListNamesAppSideOnly?: boolean;
+  /**
+   * UV-K1 (25ja font): list names are UTF-8 held by the radio in a field of
+   * maxScanListNameLength bytes (up to 4 kanji / kana, or ASCII by bytes). The editor limits
+   * the input to that many bytes.
+   */
+  scanListNameUtf8Bytes?: boolean;
   /**
    * RX group members are talk group slots (0-based positions in the talk group
    * list), not DMR IDs. The DA-7X2 stores slots; the DM-32 stores DMR IDs. The

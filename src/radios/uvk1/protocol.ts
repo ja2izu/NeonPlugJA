@@ -29,11 +29,15 @@ import { log as plog } from '../../utils/protocolLogger';
 import { UVK1Connection, openUVK1Port, type UVK1SerialPort } from './connection';
 import {
   UVK1_ADDR, UVK1_ATTR_SIZE, UVK1_BLOCK_SIZE, UVK1_CHANNEL_SIZE, UVK1_FONT_BASE,
+  UVK1_LIST_KANJI_BASE, UVK1_LIST_KANJI_SIZE, UVK1_SCAN_LISTS,
   UVK1_FONT_PROFILES, UVK1_HELLO_MARKER, UVK1_IMAGE_EXT_BASE, UVK1_MAX_CHANNELS,
   UVK1_MAX_NAME_BYTES, UVK1_MAX_NAME_BYTES_LONG, UVK1_NAME_EXT_SPI, UVK1_NAME_SIZE, type UVK1FontId,
 } from './constants';
-import { decodeAttribute, isUnusedAttribute, parseChannel } from './structures';
-import { assertWritable, buildTarget, imageToSpiAddress, planWrites, validateChannels } from './writePlan';
+import { decodeAttribute, decodeChannelName, isUnusedAttribute, parseChannel } from './structures';
+import {
+  applyListNames, assertWritable, buildTarget, imageToSpiAddress, planListNameWrites, planWrites,
+  validateChannels, validateListNames,
+} from './writePlan';
 
 /**
  * Size of the image this driver keeps: channels, names, attributes and list
@@ -62,6 +66,8 @@ export class UVK1Protocol extends BaseAnalogProtocol {
   private image: Uint8Array | null = null;
   /** Start addresses of the blocks actually read into `image`. */
   private readBlocks = new Set<number>();
+  /** Scan list names to write (index = list number - 1). Null: leave the radio's names alone. */
+  private listNames: ReadonlyArray<string | undefined> | null = null;
 
   async connect(portOrOptions?: string | { forcePortSelection?: boolean; transport?: string }): Promise<void> {
     const opts = typeof portOrOptions === 'object' ? portOrOptions : {};
@@ -176,6 +182,22 @@ export class UVK1Protocol extends BaseAnalogProtocol {
         done.add(UVK1_IMAGE_EXT_BASE + first * UVK1_NAME_SIZE);
       }
     }
+    // Scan list names (25ja only): 24 x 12 bytes at 0x8880. A radio that does not
+    // answer leaves the area 0xFF (no names); the read goes on.
+    if (this.font === '25ja') {
+      const bytes = UVK1_SCAN_LISTS * UVK1_LIST_KANJI_SIZE;
+      const part = 96;
+      for (let off = 0; off < bytes; off += part) {
+        const data = await conn.spiRead(UVK1_LIST_KANJI_BASE + off, Math.min(part, bytes - off));
+        if (!data) {
+          plog.warn(`scan list names: no answer at 0x${(UVK1_LIST_KANJI_BASE + off).toString(16)}, names not read`, 'UV-K1');
+          image.fill(0xff, UVK1_LIST_KANJI_BASE, UVK1_LIST_KANJI_BASE + bytes);
+          break;
+        }
+        image.set(data, UVK1_LIST_KANJI_BASE + off);
+        done.add(UVK1_LIST_KANJI_BASE + off);
+      }
+    }
     plog.info(`read: ${done.size} block(s), ${used.length} channel(s) in use, ${Date.now() - tStart} ms`, 'UV-K1');
     this.onProgress?.(1, 'Read complete');
     this.image = image;
@@ -186,6 +208,29 @@ export class UVK1Protocol extends BaseAnalogProtocol {
   async readChannels(): Promise<Channel[]> {
     const image = await this.readImage();
     return channelsFromImage(image, this.longNames);
+  }
+
+  /** Scan list names held by the radio (index = list number - 1; undefined = no name). Needs readChannels first. */
+  readScanListNames(): (string | undefined)[] {
+    const image = this.image;
+    const out: (string | undefined)[] = [];
+    for (let i = 0; i < UVK1_SCAN_LISTS; i++) {
+      if (!image || this.font !== '25ja') { out.push(undefined); continue; }
+      const at = UVK1_LIST_KANJI_BASE + i * UVK1_LIST_KANJI_SIZE;
+      const name = decodeChannelName(image.subarray(at, at + UVK1_LIST_KANJI_SIZE), UVK1_LIST_KANJI_SIZE);
+      out.push(name === '' ? undefined : name);
+    }
+    return out;
+  }
+
+  /** Whether this radio keeps scan list names (25ja font). */
+  supportsScanListNames(): boolean {
+    return this.font === '25ja';
+  }
+
+  /** Names for the next writeChannels (index = list number - 1; undefined = leave). Null clears. */
+  setScanListNames(names: ReadonlyArray<string | undefined> | null): void {
+    this.listNames = names;
   }
 
   /** The image read last, or null when nothing has been read yet. */
@@ -213,6 +258,8 @@ export class UVK1Protocol extends BaseAnalogProtocol {
     if (!conn) throw new Error('Not connected');
 
     const problems = validateChannels(channels, this.font, this.maxNameBytes());
+    const listNames = this.font === '25ja' ? this.listNames : null;
+    if (listNames) problems.push(...validateListNames(listNames, this.font));
     if (problems.length > 0) {
       const shown = problems.slice(0, 30).join('\n');
       const more = problems.length > 30 ? `\n... and ${problems.length - 30} more` : '';
@@ -221,7 +268,11 @@ export class UVK1Protocol extends BaseAnalogProtocol {
 
     const current = await this.readImage();
     const target = buildTarget(current, channels, this.longNames);
-    const writes = planWrites(current, target.image, target.touched, this.longNames);
+    if (listNames) applyListNames(target.image, listNames);
+    const writes = [
+      ...planWrites(current, target.image, target.touched, this.longNames),
+      ...(listNames ? planListNameWrites(current, target.image) : []),
+    ];
     const total = writes.length * 2;
 
     plog.info(
@@ -236,7 +287,7 @@ export class UVK1Protocol extends BaseAnalogProtocol {
 
     let step = 0;
     for (const w of writes) {
-      assertWritable(w.address, w.data.length, this.longNames);
+      assertWritable(w.address, w.data.length, this.longNames, true);
       const spi = imageToSpiAddress(w.address);
       await conn.spiWrite(spi, w.data);
       step++;

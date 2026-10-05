@@ -14,9 +14,11 @@
  * 3. planWrites        the byte ranges that differ, as SPI writes of at most
  *                      120 bytes, each checked against WRITABLE_RANGES
  *
- * Only three areas are ever written: channel records, channel names and the
- * 1024 channel attributes. Settings, VFOs, scan list names, calibration and
- * the font are outside WRITABLE_RANGES and cannot be reached.
+ * Only these areas are ever written: channel records, channel names and the
+ * 1024 channel attributes, plus (25Ja only, when asked) the second name slots and
+ * the 24 scan list kanji names at 0x8880. Settings, VFOs, the 4-byte scan list
+ * names at 0x880e, calibration and the font are outside the writable ranges and
+ * cannot be reached.
  *
  * A channel that is on the radio but not in the list is deleted the way the
  * radio deletes one (SETTINGS_UpdateChannel with keep = false): its attribute
@@ -28,7 +30,8 @@ import { encodeChannel } from '../uvk5/structures';
 import {
   UVK1_ADDR, UVK1_ATTR_SIZE, UVK1_BAND_EMPTY, UVK1_BAND_LOWER_MHZ, UVK1_CHANNEL_SIZE,
   UVK1_FREQ_MAX_MHZ, UVK1_FREQ_MIN_MHZ, UVK1_IMAGE_EXT_BASE, UVK1_MAX_CHANNELS, UVK1_MAX_NAME_BYTES,
-  UVK1_MAX_NAME_BYTES_LONG, UVK1_NAME_EXT_SPI, UVK1_NAME_SIZE, UVK1_SCAN_LISTS, UVK1_SPI_WRITE_MAX, type UVK1FontId,
+  UVK1_LIST_KANJI_BASE, UVK1_LIST_KANJI_SIZE, UVK1_MAX_NAME_BYTES_LONG, UVK1_NAME_EXT_SPI, UVK1_NAME_SIZE, UVK1_SCAN_LISTS,
+  UVK1_SPI_WRITE_MAX, type UVK1FontId,
 } from './constants';
 import { applyUvk1Power, decodeAttribute, isUnusedAttribute } from './structures';
 import { FONT_25JA_CHARS } from './font25ja';
@@ -48,9 +51,17 @@ export const WRITABLE_RANGES: ReadonlyArray<readonly [number, number]> = [
 export const WRITABLE_EXT_RANGE: readonly [number, number] =
   [UVK1_IMAGE_EXT_BASE, UVK1_IMAGE_EXT_BASE + UVK1_MAX_CHANNELS * UVK1_NAME_SIZE];
 
+/** The scan list kanji names, writable only on a 25Ja when the app has names to write. */
+export const WRITABLE_LIST_NAME_RANGE: readonly [number, number] =
+  [UVK1_LIST_KANJI_BASE, UVK1_LIST_KANJI_BASE + UVK1_SCAN_LISTS * UVK1_LIST_KANJI_SIZE];
+
 /** Throws unless [address, address + length) lies inside one writable range. */
-export function assertWritable(address: number, length: number, longNames = false): void {
-  const ranges = longNames ? [...WRITABLE_RANGES, WRITABLE_EXT_RANGE] : WRITABLE_RANGES;
+export function assertWritable(address: number, length: number, longNames = false, listNames = false): void {
+  const ranges = [
+    ...WRITABLE_RANGES,
+    ...(longNames ? [WRITABLE_EXT_RANGE] : []),
+    ...(listNames ? [WRITABLE_LIST_NAME_RANGE] : []),
+  ];
   const ok = ranges.some(([s, e]) => address >= s && address + length <= e);
   if (!ok || length < 1) {
     throw new Error(`UV-K1: refusing to write 0x${address.toString(16)}+${length}: outside the channel areas`);
@@ -172,6 +183,72 @@ export function encodeAttribute(channel: Channel, previousRaw: number | null): n
     scanList = 0;
   }
   return (band & 0x07) | ((compander & 0x03) << 3) | ((exclude ? 1 : 0) << 7) | ((scanList & 0xff) << 8);
+}
+
+/** One list name as the radio stores it: UTF-8, 0x00 padded to 12 bytes. */
+export function encodeListName(name: string): Uint8Array {
+  const out = new Uint8Array(UVK1_LIST_KANJI_SIZE);
+  out.set(encoder.encode(name.replace(/ +$/, '')).subarray(0, UVK1_LIST_KANJI_SIZE));
+  return out;
+}
+
+/** Problems with list names (index = list number - 1; undefined = no list). One line each. */
+export function validateListNames(names: ReadonlyArray<string | undefined>, font: UVK1FontId): string[] {
+  const problems: string[] = [];
+  names.forEach((raw, i) => {
+    if (raw === undefined) return;
+    const name = raw.replace(/ +$/, '');
+    const where = `Scan list ${i + 1}${name ? ` "${name}"` : ''}`;
+    const bytes = encoder.encode(name).length;
+    if (bytes > UVK1_LIST_KANJI_SIZE) {
+      problems.push(`${where}: name is ${bytes} bytes, the radio holds ${UVK1_LIST_KANJI_SIZE} (${Math.floor(UVK1_LIST_KANJI_SIZE / 3)} kanji / kana, or ${UVK1_LIST_KANJI_SIZE} ASCII)`);
+    }
+    const bad = unsupportedCharacters(name, font);
+    if (bad.length > 0) problems.push(`${where}: not in the 25ja font: ${bad.join(' ')}`);
+  });
+  return problems;
+}
+
+/**
+ * Put the app's list names into `image` (a copy of the radio's). A list the app
+ * does not have (undefined) leaves the radio's name alone. An empty name clears
+ * the entry only if it holds something; an entry the radio already shows as empty
+ * (first byte 0x00 or 0xFF) is left as it is, so nothing is written for it.
+ */
+export function applyListNames(image: Uint8Array, names: ReadonlyArray<string | undefined>): void {
+  for (let i = 0; i < UVK1_SCAN_LISTS; i++) {
+    const name = names[i];
+    if (name === undefined) continue;
+    const at = UVK1_LIST_KANJI_BASE + i * UVK1_LIST_KANJI_SIZE;
+    const bytes = encodeListName(name);
+    if (bytes[0] === 0 && (image[at] === 0x00 || image[at] === 0xff)) continue;
+    image.set(bytes, at);
+  }
+}
+
+/** SPI writes for the list names that differ, runs of neighbours merged (at most 120 bytes each). */
+export function planListNameWrites(current: Uint8Array, target: Uint8Array): PlannedWrite[] {
+  const size = UVK1_LIST_KANJI_SIZE;
+  const changed: number[] = [];
+  for (let i = 0; i < UVK1_SCAN_LISTS; i++) {
+    const at = UVK1_LIST_KANJI_BASE + i * size;
+    for (let b = 0; b < size; b++) {
+      if (current[at + b] !== target[at + b]) { changed.push(i); break; }
+    }
+  }
+  const writes: PlannedWrite[] = [];
+  const perWrite = Math.floor(UVK1_SPI_WRITE_MAX / size);
+  let i = 0;
+  while (i < changed.length) {
+    let j = i + 1;
+    while (j < changed.length && changed[j] === changed[j - 1] + 1 && j - i < perWrite) j++;
+    const start = UVK1_LIST_KANJI_BASE + changed[i] * size;
+    const end = UVK1_LIST_KANJI_BASE + (changed[j - 1] + 1) * size;
+    assertWritable(start, end - start, false, true);
+    writes.push({ address: start, data: target.slice(start, end) });
+    i = j;
+  }
+  return writes;
 }
 
 /** Attribute the radio writes when it deletes a channel. */

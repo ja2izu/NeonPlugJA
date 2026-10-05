@@ -1,6 +1,6 @@
 import { getCapabilitiesForModel } from '../radios/capabilities';
 import { useRadioStore } from './radioStore';
-import { isJapaneseNamesActive, nameByteLength } from '../utils/japaneseNames';
+import { isJapaneseNamesActive, nameByteLength, utf8NameByteLength } from '../utils/japaneseNames';
 import { create } from 'zustand';
 import type { ScanList } from '../models/ScanList';
 
@@ -66,10 +66,13 @@ export const useScanListsStore = create<ScanListsState>((set) => ({
       return false;
     }
     // Per radio: the DM-32's name field is 11 bytes, the D890UV family's 16 characters.
-    const maxNameLength =
-      getCapabilitiesForModel(useRadioStore.getState().selectedRadioModel ?? '')?.maxScanListNameLength ?? 16;
-    // 日本語名 ON: バイト数で数える（DM-32 は 11 バイト）
-    if (isJapaneseNamesActive() ? nameByteLength(trimmedNewName) > maxNameLength : trimmedNewName.length > maxNameLength) {
+    const nameCaps = getCapabilitiesForModel(useRadioStore.getState().selectedRadioModel ?? '');
+    const maxNameLength = nameCaps?.maxScanListNameLength ?? 16;
+    // UV-K1: UTF-8 bytes (kanji 3, ASCII 1)
+    if (nameCaps?.scanListNameUtf8Bytes) {
+      if (utf8NameByteLength(trimmedNewName) > maxNameLength) return false;
+    } else if (isJapaneseNamesActive() ? nameByteLength(trimmedNewName) > maxNameLength : trimmedNewName.length > maxNameLength) {
+      // 日本語名 ON: バイト数で数える（DM-32 は 11 バイト）
       return false;
     }
 
