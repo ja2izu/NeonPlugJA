@@ -120,3 +120,52 @@ describe('UV-K1 への変換（codeplugMigration）', () => {
     expect(migrated.scanLists.map((l) => l.slot)).toEqual([0, 1]);
   });
 });
+
+import { exportScanListsToCSV, importScanListsFromCSV } from '../../src/services/csv';
+import { checkScanListLimits } from '../../src/services/csv/importLimits';
+
+describe('UV-K1 スキャンリストの CSV', () => {
+  const list = (name: string, slot?: number): ScanList => ({ name, slot, channels: [], ctcScanMode: 0, scanTxMode: 0 });
+  const ch = (number: number, scanListId: number): Channel =>
+    ({ number, name: `CH${number}`, rxFrequency: 145.5, txFrequency: 145.5, mode: 'Analog', scanListId } as Channel);
+
+  it('書出し：番号（1〜24）、名前、使っているチャンネル（ALL を含む）', () => {
+    const csv = exportScanListsToCSV([list('別名１', 0), list('別名前', 1)], { channels: [ch(3, 2), ch(1, 1), ch(7, 25), ch(9, 0)], allValue: 25 });
+    expect(csv.split('\n')).toEqual([
+      'Number,Name,Channels',
+      '"1","別名１","1;7"',
+      '"2","別名前","3;7"',
+    ]);
+  });
+
+  it('書出し→読込で、番号と名前がそのまま戻る（飛び番、名前に引用符）', () => {
+    const lists = [list('別名１', 0), list('"引用"です', 4), list('枠24', 23)];
+    const csv = exportScanListsToCSV(lists, { channels: [], allValue: 25 });
+    const r = importScanListsFromCSV(csv);
+    expect(r.errors).toBeUndefined();
+    expect(r.scanLists!.map((l) => [l.name, l.slot])).toEqual([['別名１', 0], ['"引用"です', 4], ['枠24', 23]]);
+  });
+
+  it('番号が 0 以下・小数・重複なら、その行を名指しで外す', () => {
+    const r = importScanListsFromCSV('Number,Name\n0,A\n1.5,B\n2,C\n2,D');
+    expect(r.success).toBe(false);
+    expect(r.scanLists!.map((l) => l.name)).toEqual(['C']);
+    expect(r.errors!.join('\n')).toMatch(/Row 2: Number "0"/);
+    expect(r.errors!.join('\n')).toMatch(/Row 3: Number "1.5"/);
+    expect(r.errors!.join('\n')).toMatch(/Row 5: Slot 1 appears more than once/);
+  });
+
+  it('従来の Slot 列のファイルも読める', () => {
+    expect(importScanListsFromCSV('Name,Channels,Slot\nA,1;2,3').scanLists![0].slot).toBe(3);
+  });
+
+  it('25 番以降は UV-K1 に無いので外して知らせる', () => {
+    const r = checkScanListLimits([list('A', 0), list('B', 24)], UVK1_CAPS);
+    expect(r.trimmed.map((l) => l.name)).toEqual(['A']);
+    expect(r.issues.join('\n')).toMatch(/number 25 is beyond the 24/);
+  });
+
+  it('DM-32 向けの書出しは従来の見出しのまま', () => {
+    expect(exportScanListsToCSV([list('A')]).split('\n')[0]).toBe('Name,Channels,CTC Scan Mode,Scan TX Mode,Hang Time,Priority 1 Type,Priority 2 Type,Priority Channel 1,Priority Channel 2,Designated TX Channel,Slot');
+  });
+});

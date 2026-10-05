@@ -58,7 +58,28 @@ export function exportZonesToCSV(zones: Zone[]): string {
   return toCSV(headers, rows);
 }
 
-export function exportScanListsToCSV(scanLists: ScanList[]): string {
+/**
+ * UV-K1: a list is a name and a number (1-24), and its members are the channels that carry that
+ * number (or the all-lists number). The Channels column is for reading; an import does not use it.
+ */
+export interface AppSideScanListExport {
+  channels: readonly Channel[];
+  /** The number that puts a channel in every list (caps.scanListAllValue) */
+  allValue?: number;
+}
+
+export function exportScanListsToCSV(scanLists: ScanList[], appSide?: AppSideScanListExport): string {
+  if (appSide) {
+    const rows = scanLists.map((scanList, index) => {
+      const number = (scanList.slot ?? index) + 1;
+      const members = appSide.channels
+        .filter((ch) => ch.scanListId === number || (appSide.allValue !== undefined && ch.scanListId === appSide.allValue))
+        .map((ch) => ch.number)
+        .sort((a, b) => a - b);
+      return [number, scanList.name, members.join(CHANNEL_LIST_SEPARATOR)];
+    });
+    return toCSV(['Number', 'Name', 'Channels'], rows);
+  }
   const headers = [
     'Name',
     'Channels',

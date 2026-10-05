@@ -309,9 +309,15 @@ export function importScanListsFromCSV(content: string): ImportResult {
         const priority2Type = getValue(headers, row, 'priority 2 type');
         const hangTime = getValue(headers, row, 'hang time');
         const slotCell = getValue(headers, row, 'slot');
-        const slot = slotCell === '' ? undefined : Number(slotCell);
-        if (slot !== undefined && !(Number.isInteger(slot) && slot >= 0)) {
+        // UV-K1 files carry "Number" (1-24, the number a channel stores) in place of the 0-based Slot.
+        const numberCell = slotCell === '' ? getValue(headers, row, 'number') : '';
+        const slot = slotCell !== '' ? Number(slotCell) : numberCell !== '' ? Number(numberCell) - 1 : undefined;
+        if (slotCell !== '' && !(Number.isInteger(slot) && slot! >= 0)) {
           errors.push(`Row ${i + 1}: Slot "${slotCell}" is not a whole number of 0 or more`);
+          continue;
+        }
+        if (numberCell !== '' && !(Number.isInteger(slot) && slot! >= 0)) {
+          errors.push(`Row ${i + 1}: Number "${numberCell}" is not a whole number of 1 or more`);
           continue;
         }
         if (slot !== undefined && scanLists.some((l) => l.slot === slot)) {

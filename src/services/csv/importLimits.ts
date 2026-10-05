@@ -52,7 +52,16 @@ export function checkZoneLimits(zones: Zone[], caps: Caps): LimitCheck<Zone> {
 export function checkScanListLimits(scanLists: ScanList[], caps: Caps): LimitCheck<ScanList> {
   const issues: string[] = [];
   const perList = caps?.maxScanListChannels;
-  const trimmed = capCount(scanLists, caps?.maxScanLists, 'scan list', issues).map((list) => {
+  // UV-K1: the number is a slot on the radio, so one past the last slot cannot be kept.
+  const maxSlots = caps?.scanListNamesAppSideOnly ? caps.maxScanLists : undefined;
+  const reachable = maxSlots === undefined
+    ? scanLists
+    : scanLists.filter((list) => {
+        const out = list.slot !== undefined && list.slot >= maxSlots;
+        if (out) issues.push(`Scan list "${list.name}": number ${list.slot! + 1} is beyond the ${maxSlots} this radio has. Leaving it out.`);
+        return !out;
+      });
+  const trimmed = capCount(reachable, caps?.maxScanLists, 'scan list', issues).map((list) => {
     let next = list;
     if (perList !== undefined && next.channels.length > perList) {
       issues.push(

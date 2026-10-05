@@ -13,6 +13,8 @@ import { addScanLists } from '../../services/csv/importModes';
 import { checkScanListLimits } from '../../services/csv/importLimits';
 import { nothingImportedMessage } from '../../services/csv/importProblems';
 import { useJapaneseNamesActive } from '../../hooks/useJapaneseNamesActive';
+import { useChannelsStore } from '../../store/channelsStore';
+import { lowestFreeSlot } from '../../utils/lowestFreeSlot';
 import { readCsvText } from '../../utils/readCsvText';
 
 export const ScanListsTab: React.FC = () => {
@@ -22,9 +24,16 @@ export const ScanListsTab: React.FC = () => {
   const { alertOpen, alertMessage, alertTitle, showAlert, closeAlert } = useAlert('Full CSV Export/Import');
   const { startImport, csvImportDialog } = useCsvImport();
 
+  // UV-K1: the file is Number, Name and the channels that use the list; members are set per channel.
+  const appSide = caps?.scanListNamesAppSideOnly === true;
+  const channels = useChannelsStore((s) => s.channels);
+
   const handleExportScanListsCsv = useCallback(() => {
-    downloadCSV(exportScanListsToCSV(scanLists), 'scanlists.csv');
-  }, [scanLists]);
+    downloadCSV(
+      exportScanListsToCSV(scanLists, appSide ? { channels, allValue: caps?.scanListAllValue } : undefined),
+      'scanlists.csv'
+    );
+  }, [scanLists, appSide, channels, caps?.scanListAllValue]);
 
   const handleImportScanListsFile = useCallback((file: File) => {
     readCsvText(file, ja).then(content => {
@@ -35,7 +44,16 @@ export const ScanListsTab: React.FC = () => {
         showAlert(nothingImportedMessage(result.errors), 'Import failed');
         return;
       }
-      const imported = result.scanLists;
+      // UV-K1: a list's members are the channels' own numbers, so a Channels column is not applied.
+      // A list with no number in the file (a Name-only CSV) takes the lowest number the file leaves free.
+      const taken = new Set(result.scanLists.flatMap((l) => (l.slot === undefined ? [] : [l.slot])));
+      const imported = appSide
+        ? result.scanLists.map((l) => {
+            const slot = l.slot ?? lowestFreeSlot(taken, caps?.maxScanLists ?? 24);
+            if (slot !== undefined) taken.add(slot);
+            return { ...l, channels: [], ...(slot === undefined ? {} : { slot }) };
+          })
+        : result.scanLists;
       startImport({
         noun: 'scan list',
         existing: scanLists,
@@ -48,7 +66,7 @@ export const ScanListsTab: React.FC = () => {
     }).catch(err => {
       showAlert(err instanceof Error ? err.message : 'Failed to read CSV file', 'Import failed');
     });
-  }, [showAlert, startImport, scanLists, caps, setScanLists, ja]);
+  }, [showAlert, startImport, scanLists, caps, setScanLists, ja, appSide]);
 
   return (
     <div className="h-full flex flex-col">
