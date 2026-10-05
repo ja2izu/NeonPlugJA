@@ -19,7 +19,7 @@ import {
 } from './extraChannelColumns';
 import { BUTTON, FIELD, FIELD_INVALID } from '../ui/controlStyles';
 import { FrequencyInput } from './FrequencyInput';
-import { fitNameBytes } from '../../utils/japaneseNames';
+import { fitNameBytes, fitUtf8NameBytes } from '../../utils/japaneseNames';
 import {
   channelProblems,
   type ChannelProblems,
@@ -210,6 +210,8 @@ export const ChannelRow: React.FC<ChannelRowProps> = React.memo(({
   const hasColumn = (g: ChannelColumnGroup) => declaredColumns.has(g);
   // Whether this radio's channels name a scan list by slot or by position: see utils/scanListReference.ts.
   const scanListsBySlot = caps?.scanListsBySlot === true;
+  // UV-K1: one more number, 25, puts the channel in every list ("ALL").
+  const scanAllValue = caps?.scanListAllValue;
   // What this radio's write would do with the channel, marked on the cells it
   // concerns. VFO rows are settings, which the channel write never filters.
   const problems = isVFOChannel(channel.number) ? NO_PROBLEMS : channelProblems(channel, writeRule);
@@ -252,7 +254,7 @@ export const ChannelRow: React.FC<ChannelRowProps> = React.memo(({
         <input
           type="text"
           value={isVFOChannel(channel.number) ? '' : channel.name}
-          onChange={(e) => handleCellChange(channel.number, 'name', writeRule.nameBytes ? fitNameBytes(e.target.value, writeRule.maxNameLength) : e.target.value)}
+          onChange={(e) => handleCellChange(channel.number, 'name', writeRule.nameBytes ? fitNameBytes(e.target.value, writeRule.maxNameLength) : writeRule.nameUtf8 ? fitUtf8NameBytes(e.target.value, writeRule.maxNameLength) : e.target.value)}
           disabled={isVFOChannel(channel.number)}
           className={`${problems.name ? FIELD_INVALID : FIELD} border rounded px-2 py-1 w-full text-xs ${
             isVFOChannel(channel.number) ? 'text-cool-gray cursor-not-allowed' : ''
@@ -260,7 +262,7 @@ export const ChannelRow: React.FC<ChannelRowProps> = React.memo(({
           title={problems.name}
           aria-invalid={problems.name ? true : undefined}
           aria-label={tr("Channel {0} name", channel.number)}
-          maxLength={writeRule.nameBytes ? undefined : writeRule.maxNameLength}
+          maxLength={writeRule.nameBytes || writeRule.nameUtf8 ? undefined : writeRule.maxNameLength}
           placeholder={isVFOChannel(channel.number) ? `VFO ${getVFOIdentifier(channel.number)}` : ''}
         />
       </td>
@@ -555,11 +557,22 @@ export const ChannelRow: React.FC<ChannelRowProps> = React.memo(({
       <td className="px-2 py-2">
         <select
           value={channel.scanListId}
-          onChange={(e) => handleCellChange(channel.number, 'scanListId', parseInt(e.target.value) || 0)}
+          onChange={(e) => {
+            const id = parseInt(e.target.value) || 0;
+            handleCellChange(channel.number, 'scanListId', id);
+            // UV-K1: "None" also clears the scan flag and the exclude mark that go with a list.
+            if (scanAllValue !== undefined && id === 0) {
+              // Always, not only for this row: an edit applies to every selected row.
+              handleCellChange(channel.number, 'scanAdd', false);
+              handleCellChange(channel.number, 'scanExcluded', false);
+            }
+          }}
           title={
-            channel.scanListId > 0
-              ? `${channel.scanListId}: ${scanListByReference(scanLists, channel.scanListId, scanListsBySlot)?.name ?? '(missing list)'}`
-              : tr("No scan list")
+            scanAllValue !== undefined && channel.scanListId === scanAllValue
+              ? tr("ALL (every scan list)")
+              : channel.scanListId > 0
+                ? `${channel.scanListId}: ${scanListByReference(scanLists, channel.scanListId, scanListsBySlot)?.name ?? (scanAllValue !== undefined ? tr("(no name)") : '(missing list)')}`
+                : tr("No scan list")
           }
           className={`${FIELD} border rounded px-2 py-1 text-xs w-full min-w-[6rem] max-w-[120px]`}
         >
@@ -570,10 +583,21 @@ export const ChannelRow: React.FC<ChannelRowProps> = React.memo(({
               {scanListReference(scanList, index, scanListsBySlot)}: {scanList.name}
             </option>
           ))}
-          {channel.scanListId > 0 && !scanListByReference(scanLists, channel.scanListId, scanListsBySlot) && (
-            <option value={channel.scanListId}>{channel.scanListId}: (missing list)</option>
+          {scanAllValue !== undefined && <option value={scanAllValue}>ALL</option>}
+          {channel.scanListId > 0 && channel.scanListId !== scanAllValue && !scanListByReference(scanLists, channel.scanListId, scanListsBySlot) && (
+            <option value={channel.scanListId}>
+              {channel.scanListId}: {scanAllValue !== undefined ? tr("(no name)") : '(missing list)'}
+            </option>
           )}
         </select>
+        {channel.scanExcluded === true && channel.scanListId > 0 && (
+          <span
+            className="block text-[10px] leading-tight text-yellow-300 mt-0.5"
+            title={tr("Excluded from scanning on the radio (MENU long press during a scan). Kept as it is on a write; clear it on the radio with MENU while scanning is standing by.")}
+          >
+            {tr("Excluded")}
+          </span>
+        )}
       </td>
       {hasColumn('freeToAir') && (
         <td className="px-2 py-2 text-center">

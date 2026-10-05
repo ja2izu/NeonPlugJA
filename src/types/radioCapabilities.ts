@@ -191,6 +191,11 @@ export interface RadioCapabilities {
    */
   supportsJapaneseNames?: boolean;
   /**
+   * チャンネル名の長さ（maxChannelNameLength）を UTF-8 のバイト数で数える（英数字 1、漢字・かな 3）。
+   * 入力欄は上限で自動的に切り詰める。UV-K1（25Ja）向け。日本語名スイッチには関係しない。
+   */
+  channelNameUtf8Bytes?: boolean;
+  /**
    * CSV の書き出しに常に UTF-8 の BOM を付ける。名前がもともと UTF-8 の日本語を
    * 含みうる無線機（UV-K1 の 25ja / Dondji）向け。BOM が無いと Excel が
    * CP932 として開いて化ける。日本語名スイッチには関係しない。
@@ -398,6 +403,18 @@ export interface RadioCapabilities {
    * the DM-32 writes its lists in order and never reads it.
    */
   scanListsBySlot?: boolean;
+  /**
+   * UV-K1: the scan list number that means "all lists" (25). A channel holding it is in every list.
+   * The channel table offers it as "ALL" after the registered lists.
+   */
+  scanListAllValue?: number;
+  /**
+   * UV-K1: the radio holds no list names the app can use (4 bytes, not written) and no list
+   * membership of its own: a list is just a number on each channel. So the names live in the
+   * app only (.neonplug, CSV), a read leaves them alone, and a list's members are the channels
+   * that carry its number.
+   */
+  scanListNamesAppSideOnly?: boolean;
   /**
    * RX group members are talk group slots (0-based positions in the talk group
    * list), not DMR IDs. The DA-7X2 stores slots; the DM-32 stores DMR IDs. The

@@ -11,7 +11,7 @@ export function useChannelWriteRule(): ChannelWriteRule {
   const outOfBand = useOutOfBandActive();
   const nameBytes = useJapaneseNamesActive();
   return useMemo(
-    () => ({ ...writeFilterOptionsFor(model, caps, outOfBand), maxNameLength: caps?.maxChannelNameLength ?? 16, nameBytes }),
+    () => ({ ...writeFilterOptionsFor(model, caps, outOfBand), maxNameLength: caps?.maxChannelNameLength ?? 16, nameBytes, nameUtf8: caps?.channelNameUtf8Bytes === true }),
     [model, caps, outOfBand, nameBytes]
   );
 }

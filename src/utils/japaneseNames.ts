@@ -61,6 +61,28 @@ export function fitNameBytes(name: string, maxBytes: number): string {
   return out;
 }
 
+/**
+ * UV-K1（25Ja）用：名前は UTF-8 で持つ（英数字 1、漢字・かな 3 バイト）。
+ * 入力欄では末尾の空白も数える（書込は末尾の空白を落とすので、入力側が同じかやや厳しい）。
+ */
+const utf8Encoder = new TextEncoder();
+export function utf8NameByteLength(name: string): number {
+  return utf8Encoder.encode(name).length;
+}
+
+/** maxBytes（UTF-8）に収まるように後ろを落とす（文字の途中では切らない） */
+export function fitUtf8NameBytes(name: string, maxBytes: number): string {
+  let n = 0;
+  let out = '';
+  for (const ch of name) {
+    const w = utf8Encoder.encode(ch).length;
+    if (n + w > maxBytes) break;
+    n += w;
+    out += ch;
+  }
+  return out;
+}
+
 /** 書けない字（重複なし、出てきた順） */
 export function unwritableChars(name: string): string[] {
   const seen = new Set<string>();

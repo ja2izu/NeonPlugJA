@@ -21,7 +21,7 @@ import {
 import { BUTTON, FIELD } from '../ui/controlStyles';
 import { FrequencyInput } from './FrequencyInput';
 import { useJapaneseNamesActive } from '../../hooks/useJapaneseNamesActive';
-import { fitNameBytes, nameByteLength, unwritableChars } from '../../utils/japaneseNames';
+import { fitNameBytes, fitUtf8NameBytes, nameByteLength, unwritableChars, utf8NameByteLength } from '../../utils/japaneseNames';
 
 import { tr } from '../../utils/tr';  // NeonPlugJA: 日本語表示
 interface ChannelEditModalProps {
@@ -62,6 +62,8 @@ export const ChannelEditModal: React.FC<ChannelEditModalProps> = ({
   const powerLevels = powerLevelsFor(caps);
   const maxNameLength = caps?.maxChannelNameLength ?? 16;
   const nameBytes = useJapaneseNamesActive();
+  // UV-K1: the limit is in UTF-8 bytes; the field cuts the name there while typing.
+  const nameUtf8 = caps?.channelNameUtf8Bytes === true;
   // What is wrong with text typed into a frequency field that isn't a frequency
   // yet. Save refuses while there is any, rather than save the old value.
   const [frequencyTyping, setFrequencyTyping] = React.useState<{ rx?: string | null; tx?: string | null }>({});
@@ -102,6 +104,7 @@ export const ChannelEditModal: React.FC<ChannelEditModalProps> = ({
       ...validateChannel(editedChannel, bandLimits, maxChannels, {
         maxNameLength,
         nameBytes,
+        nameUtf8,
         blankTxAnyBand: caps?.blankTxAnyBand,
         checkRxBand,
       }),
@@ -176,9 +179,9 @@ export const ChannelEditModal: React.FC<ChannelEditModalProps> = ({
                     <input
                       type="text"
                       value={editedChannel.name}
-                      onChange={(e) => handleChange('name', nameBytes ? fitNameBytes(e.target.value, maxNameLength) : e.target.value)}
+                      onChange={(e) => handleChange('name', nameBytes ? fitNameBytes(e.target.value, maxNameLength) : nameUtf8 ? fitUtf8NameBytes(e.target.value, maxNameLength) : e.target.value)}
                       className={`${FIELD} w-full border rounded px-2 py-1 text-sm`}
-                      maxLength={nameBytes ? undefined : maxNameLength}
+                      maxLength={nameBytes || nameUtf8 ? undefined : maxNameLength}
                     />
                     {nameBytes ? (
                       <p
@@ -189,6 +192,10 @@ export const ChannelEditModal: React.FC<ChannelEditModalProps> = ({
                         }`}
                       >
                         {nameByteLength(editedChannel.name)}/{maxNameLength} バイト
+                      </p>
+                    ) : nameUtf8 ? (
+                      <p className="text-xs mt-0.5 text-cool-gray">
+                        {utf8NameByteLength(editedChannel.name)}/{maxNameLength} バイト（英数字 1、漢字・かな 3）
                       </p>
                     ) : (
                     <p

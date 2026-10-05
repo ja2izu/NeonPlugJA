@@ -56,9 +56,20 @@ export const UVK1_CAPS: RadioCapabilities = {
   // Characters the editor accepts. The radio counts bytes (UTF-8): 15 on 25ja /
   // Dondji, 31 on 25Ja with long names; the write checks bytes per radio.
   maxChannelNameLength: UVK1_MAX_NAME_BYTES_LONG,
+  // The limit is in UTF-8 bytes (kanji / kana 3 each): the editor cuts the name
+  // at 31 bytes while typing. A radio without long names (15) is still checked at write.
+  channelNameUtf8Bytes: true,
   channelDeleteKeepsNumbers: true,
   supportsZones: false,
-  supportsScanLists: false,
+  // Scan lists: 24 slots, a channel holds a number (0 none, 1-24, 25 all). The radio's
+  // own 4-byte list names are not used: names live in the app only and are never written.
+  supportsScanLists: true,
+  maxScanLists: UVK1_SCAN_LISTS,
+  maxScanListNameLength: 16,
+  scanListsBySlot: true,
+  scanListAllValue: UVK1_SCAN_LISTS + 1,
+  scanListNamesAppSideOnly: true,
+  scanListFields: [],
   supportsContacts: false,
   analogOnly: true,
   supportsBle: false,

@@ -34,6 +34,8 @@ export interface Channel {
   bandwidth: Bandwidth;        // Bit 7: 0=12.5KHz/Narrow, 1=25KHz/Wide (spec appears inverted)
   scanAdd: boolean;            // Bit 6: 0=Off, 1=On
   scanListId: number;         // Byte 0x19 bits 5-0: 0=None, 1-32 = 1-indexed scan list
+  /** UV-K1: the channel is excluded from scanning (attribute bit 7) while still holding a list number. Read-only in the UI; carried through a write unchanged. */
+  scanExcluded?: boolean;
   
   // Talkaround & APRS (0x1A)
   forbidTalkaround: boolean;  // Bit 7: 0=Allow, 1=Forbid

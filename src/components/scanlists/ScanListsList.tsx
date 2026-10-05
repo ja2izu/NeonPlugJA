@@ -19,6 +19,7 @@ import { EmptyState } from '../ui/EmptyState';
 import { ConfirmModal } from '../ui/ConfirmModal';
 import { BUTTON, FIELD, FIELD_INVALID } from '../ui/controlStyles';
 import { useJapaneseNamesActive } from '../../hooks/useJapaneseNamesActive';
+import { tr } from '../../utils/tr';
 import { fitNameBytes } from '../../utils/japaneseNames';
 
 export const ScanListsList: React.FC = () => {
@@ -42,6 +43,18 @@ export const ScanListsList: React.FC = () => {
   const { alertOpen, alertMessage, alertTitle, showAlert, closeAlert } = useAlert();
   const channels = useChannelsStore((s) => s.channels);
   const channelNames = useMemo(() => new Map(channels.map((ch) => [ch.number, ch.name])), [channels]);
+  // UV-K1: a list is only a number on each channel, so its members are the channels that carry it
+  // (or the "all lists" number) and are changed in the channel table, not here.
+  const appSide = caps?.scanListNamesAppSideOnly === true;
+  const allValue = caps?.scanListAllValue;
+  const membersOf = (list: ScanList, index: number): number[] => {
+    if (!appSide) return list.channels;
+    const ref = scanListReference(list, index, scanListsBySlot);
+    return channels
+      .filter((ch) => (ch.scanListId ?? 0) === ref || (allValue !== undefined && ch.scanListId === allValue))
+      .map((ch) => ch.number)
+      .sort((a, b) => a - b);
+  };
 
   const selectedScanListData = selectedScanList === null ? undefined : scanLists[selectedScanList];
   const selected =
@@ -190,19 +203,19 @@ export const ScanListsList: React.FC = () => {
                     {scanList.name}
                   </span>
                   <span className="text-cool-gray text-xs">
-                    {scanList.channels.length} {formatPlural(scanList.channels.length, 'channel')}
+                    {membersOf(scanList, index).length} {formatPlural(membersOf(scanList, index).length, 'channel')}
                   </span>
                 </>
               )}
             </div>
             {editingScanList !== index && (
               <>
-                {scanList.channels.length > 0 && (
+                {membersOf(scanList, index).length > 0 && (
                   <div
                     className="text-cool-gray text-xs mb-2 truncate"
-                    title={channelListPreview(scanList.channels, channelNames, 20)}
+                    title={channelListPreview(membersOf(scanList, index), channelNames, 20)}
                   >
-                    {channelListPreview(scanList.channels, channelNames)}
+                    {channelListPreview(membersOf(scanList, index), channelNames)}
                   </div>
                 )}
                 <div className="flex gap-2 justify-end mt-2">
@@ -240,7 +253,17 @@ export const ScanListsList: React.FC = () => {
       </div>
       {selected ? (
         <div className="flex-1 min-h-0">
-          <ScanListEditor index={selected.index} scanList={selected.scanList} onAlert={showAlert} />
+          {appSide ? (
+            <AppSideScanListDetail
+              index={selected.index}
+              scanList={selected.scanList}
+              members={membersOf(selected.scanList, selected.index)}
+              reference={scanListReference(selected.scanList, selected.index, scanListsBySlot)}
+              maxLength={maxNameLength}
+            />
+          ) : (
+            <ScanListEditor index={selected.index} scanList={selected.scanList} onAlert={showAlert} />
+          )}
         </div>
       ) : (
         <EmptyState
@@ -516,6 +539,49 @@ const ScanListNameField: React.FC<{ index: number; name: string; maxLength: numb
       <p className={`text-xs mt-0.5 ${error ? 'text-red-300' : 'text-cool-gray'}`}>
         {error ?? `${shown.length}/${maxLength} characters`}
       </p>
+    </div>
+  );
+};
+
+/**
+ * UV-K1 scan list: only the name is edited here (kept in the app, never written to the radio).
+ * The members are read-only: they are the channels whose scan list number is this list's.
+ */
+const AppSideScanListDetail: React.FC<{
+  index: number;
+  scanList: ScanList;
+  members: number[];
+  reference: number;
+  maxLength: number;
+}> = ({ index, scanList, members, reference, maxLength }) => {
+  const channels = useChannelsStore((s) => s.channels);
+  const byNumber = useMemo(() => new Map(channels.map((ch) => [ch.number, ch])), [channels]);
+  return (
+    <div className="h-full overflow-y-auto p-4 space-y-4">
+      <ScanListNameField key={index} index={index} name={scanList.name} maxLength={maxLength} />
+      <p className="text-xs text-cool-gray">
+        {tr("The name is kept in this app only (.neonplug and CSV). It is not written to the radio. Choose the list for each channel in the Scan List column of the channel table.")}
+      </p>
+      <div>
+        <h4 className="text-neon-cyan font-medium mb-1">{tr("Channels in list {0}", reference)} ({members.length})</h4>
+        {members.length === 0 ? (
+          <p className="text-xs text-cool-gray">{tr("No channel uses this list.")}</p>
+        ) : (
+          <ul className="text-sm text-white space-y-0.5">
+            {members.map((n) => {
+              const ch = byNumber.get(n);
+              return (
+                <li key={n}>
+                  <span className="text-cool-gray mr-2">{n}</span>
+                  {ch?.name}
+                  {ch?.scanListId !== reference && <span className="text-cool-gray text-xs ml-2">(ALL)</span>}
+                  {ch?.scanExcluded && <span className="text-yellow-300 text-xs ml-2">{tr("Excluded")}</span>}
+                </li>
+              );
+            })}
+          </ul>
+        )}
+      </div>
     </div>
   );
 };

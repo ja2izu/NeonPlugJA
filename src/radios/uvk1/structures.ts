@@ -112,5 +112,7 @@ export function parseChannel({ number, record, attrLo, attrHi, nameField, maxNam
     ...base,
     name: decodeChannelName(nameField, maxNameBytes ?? UVK1_MAX_NAME_BYTES),
     scanAdd: attr.scanList !== 0 && !attr.exclude,
+    scanListId: attr.scanList,
+    scanExcluded: attr.exclude && attr.scanList !== 0,
   };
 }

@@ -61,6 +61,8 @@ export function migrateCodeplug(source: CodeplugData, targetModel: string): Migr
   const maxChannels = caps?.maxChannels ?? 4000;
   const supportsZones = caps?.supportsZones ?? true;
   const supportsScanLists = caps?.supportsScanLists ?? true;
+  // UV-K1: lists are names kept in the app, and a channel's number is a slot: no member lists to trim.
+  const appSideScanLists = caps?.scanListNamesAppSideOnly === true;
   const analogOnly = caps?.analogOnly ?? false;
   const powerLevels = powerLevelsFor(caps);
 
@@ -132,6 +134,10 @@ export function migrateCodeplug(source: CodeplugData, targetModel: string): Migr
   let scanLists = source.scanLists;
   if (!supportsScanLists) {
     scanLists = [];
+  } else if (appSideScanLists) {
+    scanLists = source.scanLists
+      .slice(0, maxScanLists ?? undefined)
+      .map((s, i) => ({ ...s, slot: sameRadio && s.slot !== undefined ? s.slot : i }));
   } else {
     scanLists = source.scanLists
       .map((s) => ({
@@ -160,7 +166,10 @@ export function migrateCodeplug(source: CodeplugData, targetModel: string): Migr
   if (supportsScanLists) {
     channels = channels.map((ch) => {
       const ref = ch.scanListId ?? 0;
-      if (ref <= scanLists.length) return ch;
+      const reachable = appSideScanLists
+        ? ref <= (maxScanLists ?? 0) || ref === caps?.scanListAllValue
+        : ref <= scanLists.length;
+      if (reachable) return ch;
       scanListRefsCleared += 1;
       return { ...ch, scanListId: 0 };
     });

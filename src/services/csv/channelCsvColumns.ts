@@ -137,6 +137,7 @@ export const CHANNEL_CSV_COLUMNS = {
   loneWorker: flag('Lone Worker'),
   scanAdd: flag('Scan Add'),
   scanListId: num('Scan List ID'),
+  scanExcluded: flag('Scan Excluded'),
   forbidTalkaround: flag('Forbid Talkaround'),
   aprsReceive: flag('APRS Receive'),
   // The old exporter wrote Yes/No here, which the importer then cast straight to

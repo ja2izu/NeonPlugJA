@@ -110,9 +110,31 @@ describe('UV-K1 属性の組み立て', () => {
   it('既存の CH：リスト番号とコンパンダを保つ', () => {
     expect(encodeAttribute(ch(1, '', 145, { scanAdd: true }), raw(2, 7, false, 2))).toBe(raw(2, 7, false, 2));
     expect(encodeAttribute(ch(1, '', 145, { scanAdd: false }), raw(2, 7, false, 2))).toBe(raw(2, 0, false, 2));
-    expect(encodeAttribute(ch(1, '', 145, { scanAdd: false }), raw(2, 7, true))).toBe(raw(2, 7, true));
     expect(encodeAttribute(ch(1, '', 145, { scanAdd: true }), raw(2, 7, true))).toBe(raw(2, 7, false));
     expect(encodeAttribute(ch(1, '', 433, { scanAdd: true }), raw(2, 25))).toBe(raw(5, 25));
+  });
+  it('リスト番号（scanListId）を書く：0 なし、1-24、25 ALL', () => {
+    expect(encodeAttribute(ch(1, '', 145, { scanListId: 5, scanAdd: true }), raw(2, 7))).toBe(raw(2, 5));
+    expect(encodeAttribute(ch(1, '', 145, { scanListId: 24, scanAdd: true }), null)).toBe(raw(2, 24));
+    expect(encodeAttribute(ch(1, '', 145, { scanListId: 25, scanAdd: true }), raw(2, 3))).toBe(raw(2, 25));
+    // 「なし」＝ 0、元がリスト 7 でも 0 にする（スキャン OFF）
+    expect(encodeAttribute(ch(1, '', 145, { scanListId: 0, scanAdd: false }), raw(2, 7, false, 2))).toBe(raw(2, 0, false, 2));
+    // なし を選んだ後は、元が除外中でも 0・除外なし
+    expect(encodeAttribute(ch(1, '', 145, { scanListId: 0, scanAdd: false, scanExcluded: false }), raw(2, 7, true))).toBe(raw(2, 0, false));
+  });
+  it('除外ビット：読み込んだ scanExcluded をそのまま書き戻す（アプリでは変えない）', () => {
+    expect(encodeAttribute(ch(1, '', 145, { scanListId: 7, scanAdd: false, scanExcluded: true }), raw(2, 7, true))).toBe(raw(2, 7, true));
+    // 別のリストへ変えても除外は保つ
+    expect(encodeAttribute(ch(1, '', 145, { scanListId: 9, scanAdd: false, scanExcluded: true }), raw(2, 7, true))).toBe(raw(2, 9, true));
+    expect(encodeAttribute(ch(1, '', 145, { scanListId: 7, scanExcluded: false }), raw(2, 7, true))).toBe(raw(2, 7, false));
+    // 番号が 0 の CH に除外ビットは付けない
+    expect(encodeAttribute(ch(1, '', 145, { scanListId: 0, scanAdd: false, scanExcluded: true }), raw(2, 7, true))).toBe(raw(2, 0, false));
+  });
+  it('範囲外のリスト番号は検査で止める（26 以上、負、小数）', () => {
+    expect(validateChannels([ch(1, 'A', 145, { scanListId: 26 })], '25ja').join('\n')).toMatch(/scan list 26/);
+    expect(validateChannels([ch(1, 'A', 145, { scanListId: -1 })], '25ja')).not.toEqual([]);
+    expect(validateChannels([ch(1, 'A', 145, { scanListId: 1.5 })], '25ja')).not.toEqual([]);
+    expect(validateChannels([ch(1, 'A', 145, { scanListId: 25 })], '25ja')).toEqual([]);
   });
 });
 

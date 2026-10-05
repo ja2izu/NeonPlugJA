@@ -17,6 +17,7 @@ const EVERY_FIELD: Required<Channel> = {
   bandwidth: '12.5kHz',
   scanAdd: true,
   scanListId: 5,
+  scanExcluded: true,
   forbidTalkaround: true,
   unknown1A_6_4: 2,
   unknown1A_3: true,

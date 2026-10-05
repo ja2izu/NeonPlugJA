@@ -10,13 +10,15 @@
 import type { Channel } from '../../models/Channel';
 import { isNoTxFrequency, isRxInNoTxBand, isValidFrequencyRange } from './frequencyValidator';
 import { isChannelWritable, type WriteFilterOptions } from './writeFilter';
-import { nameByteLength, unwritableChars } from '../../utils/japaneseNames';
+import { nameByteLength, unwritableChars, utf8NameByteLength } from '../../utils/japaneseNames';
 
 export interface ChannelWriteRule extends WriteFilterOptions {
   /** capabilities.maxChannelNameLength */
   maxNameLength: number;
   /** 日本語名 ON: maxNameLength をバイト数として数え、書けない字も問題にする */
   nameBytes?: boolean;
+  /** UV-K1: maxNameLength は UTF-8 のバイト数（英数字 1、漢字・かな 3） */
+  nameUtf8?: boolean;
 }
 
 export interface ChannelProblems {
@@ -35,6 +37,10 @@ export function channelProblems(channel: Channel, rule: ChannelWriteRule): Chann
       problems.name = `書けない字があります: ${bad.join(' ')}`;
     } else if (nameByteLength(channel.name) > rule.maxNameLength) {
       problems.name = `${rule.maxNameLength} バイトを超えています（英数字 1、漢字・かな 2）。書込で切り詰めます。`;
+    }
+  } else if (rule.nameUtf8) {
+    if (utf8NameByteLength(channel.name) > rule.maxNameLength) {
+      problems.name = `${rule.maxNameLength} バイトを超えています（英数字 1、漢字・かな 3）。書込は止まります。`;
     }
   } else if (channel.name.length > rule.maxNameLength) {
     problems.name = `Longer than the ${rule.maxNameLength} characters this radio keeps.`;

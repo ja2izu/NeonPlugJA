@@ -193,8 +193,11 @@ export function useRadioConnection() {
       setRawChannelData(new Map());
       setZones([]);
       setRawZoneData(new Map());
-      setScanLists([]);
-      setRawScanListData(new Map());
+      // The UV-K1 reads no scan list data: its names are kept in the app, so a read leaves them.
+      if (!getCapabilitiesForModel(selectedRadioModel ?? '')?.scanListNamesAppSideOnly) {
+        setScanLists([]);
+        setRawScanListData(new Map());
+      }
       setContacts([]);
       setContactsLoaded(false);
       setMessages([]);
@@ -382,7 +385,7 @@ export function useRadioConnection() {
         });
       }
 
-      if (caps?.supportsScanLists) {
+      if (caps?.supportsScanLists && !caps?.scanListNamesAppSideOnly) {
         configSteps.push({
           label: 'Scan lists',
           run: async () => {
@@ -1416,7 +1419,7 @@ export function useRadioConnection() {
       const summary = [
         validChannels.length > 0 ? `${validChannels.length} channels` : null,
         filteredZones.length > 0 ? `${filteredZones.length} zones` : null,
-        filteredScanLists.length > 0 ? `${filteredScanLists.length} scan lists` : null,
+        filteredScanLists.length > 0 && !getCapabilitiesForModel(effectiveModel ?? '')?.scanListNamesAppSideOnly ? `${filteredScanLists.length} scan lists` : null,
         summaryQuickContacts?.length ? `${summaryQuickContacts.length} talk group(s)` : null,
         summaryQuickMessages?.length ? `${summaryQuickMessages.length} quick message(s)` : null,
         summaryRxGroupsStore.groups?.length && summaryRxGroupsStore.groupsLoaded ? `${summaryRxGroupsStore.groups.length} RX group(s)` : null,

@@ -28,7 +28,7 @@ import { encodeChannel } from '../uvk5/structures';
 import {
   UVK1_ADDR, UVK1_ATTR_SIZE, UVK1_BAND_EMPTY, UVK1_BAND_LOWER_MHZ, UVK1_CHANNEL_SIZE,
   UVK1_FREQ_MAX_MHZ, UVK1_FREQ_MIN_MHZ, UVK1_IMAGE_EXT_BASE, UVK1_MAX_CHANNELS, UVK1_MAX_NAME_BYTES,
-  UVK1_MAX_NAME_BYTES_LONG, UVK1_NAME_EXT_SPI, UVK1_NAME_SIZE, UVK1_SPI_WRITE_MAX, type UVK1FontId,
+  UVK1_MAX_NAME_BYTES_LONG, UVK1_NAME_EXT_SPI, UVK1_NAME_SIZE, UVK1_SCAN_LISTS, UVK1_SPI_WRITE_MAX, type UVK1FontId,
 } from './constants';
 import { decodeAttribute, isUnusedAttribute } from './structures';
 import { FONT_25JA_CHARS } from './font25ja';
@@ -123,6 +123,10 @@ export function validateChannels(channels: Channel[], font: UVK1FontId, maxNameB
         problems.push(`${where}: ${label} ${f} MHz is outside ${UVK1_FREQ_MIN_MHZ}-${UVK1_FREQ_MAX_MHZ} MHz`);
       }
     }
+    const listId = ch.scanListId ?? 0;
+    if (!Number.isInteger(listId) || listId < 0 || listId > UVK1_SCAN_LISTS + 1) {
+      problems.push(`${where}: scan list ${listId} does not exist on this radio (0 none, 1-${UVK1_SCAN_LISTS}, ${UVK1_SCAN_LISTS + 1} = ALL)`);
+    }
     const name = ch.name.replace(/ +$/, '');
     const bytes = encoder.encode(name).length;
     if (bytes > maxNameBytes) {
@@ -143,24 +147,29 @@ export function validateChannels(channels: Channel[], font: UVK1FontId, maxNameB
   return problems;
 }
 
-/** 2-byte attribute for a written channel, keeping what the app does not model. */
+/**
+ * 2-byte attribute for a written channel, keeping what the app does not model.
+ *
+ * The scan list number is the channel's `scanListId` (0 none, 1-24 that list,
+ * 25 all lists). The exclude bit is not edited by the app: it is written back as
+ * `scanExcluded` carried from the read, and only while the channel has a list.
+ * A channel that has no list number but is marked `scanAdd` (an import from a
+ * source with no lists) keeps the list it was in, or goes to list 1.
+ */
 export function encodeAttribute(channel: Channel, previousRaw: number | null): number {
   const prev = previousRaw === null ? null : decodeAttribute(previousRaw & 0xff, previousRaw >> 8);
   const band = bandForFrequency(channel.rxFrequency);
   const compander = prev ? prev.compander : 0;
+  const listId = Number.isInteger(channel.scanListId) ? Math.max(0, Math.min(UVK1_SCAN_LISTS + 1, channel.scanListId)) : 0;
   let scanList: number;
-  let exclude: boolean;
-  if (channel.scanAdd) {
-    // Keep the list it was in; a channel newly added to scanning goes to list 1.
+  let exclude = false;
+  if (listId > 0) {
+    scanList = listId;
+    exclude = channel.scanExcluded === true;
+  } else if (channel.scanAdd) {
     scanList = prev && prev.scanList !== 0 ? prev.scanList : 1;
-    exclude = false;
-  } else if (prev && prev.scanList !== 0 && prev.exclude) {
-    // Already out of scanning by the exclude bit: leave both as they are.
-    scanList = prev.scanList;
-    exclude = true;
   } else {
     scanList = 0;
-    exclude = false;
   }
   return (band & 0x07) | ((compander & 0x03) << 3) | ((exclude ? 1 : 0) << 7) | ((scanList & 0xff) << 8);
 }
