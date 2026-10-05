@@ -2,6 +2,8 @@
 @tailwind components;
 @tailwind utilities;
 
+/* NeonPlugJA: 色の値（変数）は jaThemes.css（main.tsx で読み込む）。ここの色も変数を読む */
+
 @layer base {
   body {
     @apply bg-dark-charcoal text-white;
@@ -38,11 +40,11 @@
 
 @layer utilities {
   .glow-cyan {
-    text-shadow: 0 0 4px #00fff7, 0 0 10px #00fff7;
+    text-shadow: 0 0 4px rgb(var(--np-cyan)), 0 0 10px rgb(var(--np-cyan));
   }
 
   .glow-magenta {
-    box-shadow: 0 0 6px #ff00ff, 0 0 15px #ff00ff;
+    box-shadow: 0 0 6px rgb(var(--np-magenta)), 0 0 15px rgb(var(--np-magenta));
   }
 }
 
@@ -50,7 +52,7 @@
 input[type="checkbox"] {
   @apply w-4 h-4 rounded cursor-pointer border-2 border-neon-cyan/40 bg-deep-gray;
   @apply focus:outline-none focus:ring-2 focus:ring-neon-cyan/60 focus:ring-offset-0;
-  accent-color: #00FFF7;
+  accent-color: rgb(var(--np-cyan));
   appearance: none;
   -webkit-appearance: none;
   background-position: center;
@@ -58,16 +60,16 @@ input[type="checkbox"] {
   background-repeat: no-repeat;
 }
 input[type="checkbox"]:checked {
-  background-color: rgba(0, 255, 247, 0.15);
-  border-color: #00FFF7;
+  background-color: rgb(var(--np-cyan) / 0.15);
+  border-color: rgb(var(--np-cyan));
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='%2300FFF7' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3 8l3 3 7-7'/%3E%3C/svg%3E");
 }
 input[type="checkbox"]:disabled {
   @apply opacity-50 cursor-not-allowed;
 }
 input[type="checkbox"]:indeterminate {
-  background-color: rgba(0, 255, 247, 0.2);
-  border-color: #00FFF7;
+  background-color: rgb(var(--np-cyan) / 0.2);
+  border-color: rgb(var(--np-cyan));
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath fill='%2300FFF7' d='M4 7h8v2H4z'/%3E%3C/svg%3E");
 }
 
@@ -93,26 +95,26 @@ select {
 }
 
 ::-webkit-scrollbar-track {
-  background: #121212; /* dark-charcoal */
+  background: rgb(var(--np-charcoal)); /* dark-charcoal */
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(0, 255, 247, 0.75); /* neon-cyan */
+  background: rgb(var(--np-cyan) / 0.75); /* neon-cyan */
   border-radius: 5px;
   /* Track-colored border insets the thumb into a floating pill */
-  border: 2px solid #121212;
-  box-shadow: inset 0 0 6px rgba(0, 255, 247, 0.9);
+  border: 2px solid rgb(var(--np-charcoal));
+  box-shadow: inset 0 0 6px rgb(var(--np-cyan) / 0.9);
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(0, 255, 247, 0.95);
+  background: rgb(var(--np-cyan) / 0.95);
 }
 
 ::-webkit-scrollbar-thumb:active {
-  background: #00fff7;
+  background: rgb(var(--np-cyan));
 }
 
 ::-webkit-scrollbar-corner {
-  background: #121212;
+  background: rgb(var(--np-charcoal));
 }
 

@@ -29,7 +29,7 @@ export const SettingsRangeField: React.FC<Props> = ({ field, value, onChange }) 
         onChange={(e) => onChange(parseInt(e.target.value, 10) || field.min)}
         className={rangeClass}
         style={{
-          background: `linear-gradient(to right, #00FFF7 0%, #00FFF7 ${pct}%, #1a1a1a ${pct}%, #1a1a1a 100%)`,
+          background: `linear-gradient(to right, rgb(var(--np-cyan)) 0%, rgb(var(--np-cyan)) ${pct}%, #1a1a1a ${pct}%, #1a1a1a 100%)`,  // NeonPlugJA: 配色の変数
         }}
       />
     </div>

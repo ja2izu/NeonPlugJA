@@ -1,0 +1,30 @@
+/*
+ * NeonPlugJA Ver.0.91.2 — 配色の変数（英語表示 = 上流のネオン、日本語表示 = utils/jaThemes.ts の配色）
+ * Copyright (c) 2026 JA2IZU. MIT License.
+ * Based on NeonPlug (https://github.com/infamy/NeonPlug), MIT License,
+ * Copyright (c) NeonPlug contributors.
+ *
+ * tailwind.config.js の色名（neon-cyan など）はここの変数を読む。値は "R G B"
+ * （Tailwind の不透明度指定がそのまま効く形）。ここにあるのは起動直後の値（上流のネオン）で、
+ * 日本語表示の配色は utils/jaThemes.ts の applyPalette が <html> に直接設定する。
+ */
+:root {
+  --np-cyan: 0 255 247;           /* #00FFF7 */
+  --np-cyan-bright: 51 255 249;   /* #33FFF9 */
+  --np-magenta: 255 0 255;        /* #FF00FF */
+  --np-magenta-bright: 255 51 255;/* #FF33FF */
+  --np-yellow: 255 242 0;         /* #FFF200 */
+  --np-charcoal: 18 18 18;        /* #121212 */
+  --np-deep-gray: 30 30 30;       /* #1E1E1E */
+  --np-cool-gray: 176 176 176;    /* #B0B0B0 */
+}
+
+/* 日本語表示では光彩を控えめにする（和の配色にネオンの光は合わないため） */
+:root[data-theme="ja"] .shadow-glow-cyan,
+:root[data-theme="ja"] .shadow-glow-magenta,
+:root[data-theme="ja"] .glow-magenta {
+  box-shadow: 0 0 3px rgb(var(--np-cyan) / 0.35);
+}
+:root[data-theme="ja"] .glow-cyan {
+  text-shadow: none;
+}
