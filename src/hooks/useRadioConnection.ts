@@ -1246,7 +1246,9 @@ export function useRadioConnection() {
       
       // Step 1: Select port
       // A write opens its own session, in upload mode: see the UV5R-Mini driver.
-      const writeOptions = connectOptionsFor(null, { mode: 'upload' });
+      // JA: 読込と同じく毎回ポートを選ばせる。選ばせないと getPorts()[0]（このページに許可済みの
+      // 先頭のポート）を開くため、ポートが 2 個以上あると別の機器を開いて失敗する。
+      const writeOptions = connectOptionsFor(null, { mode: 'upload', forcePortSelection: true });
       onProgress?.(5,
         writeOptions.transport === 'ble'
           ? 'Please select the radio in the Bluetooth dialog...'

@@ -66,6 +66,11 @@ export class UVK1Protocol extends BaseAnalogProtocol {
   async connect(portOrOptions?: string | { forcePortSelection?: boolean; transport?: string }): Promise<void> {
     const opts = typeof portOrOptions === 'object' ? portOrOptions : {};
     this.port = await openUVK1Port(opts.forcePortSelection ?? false);
+    const info = (this.port as { getInfo?: () => { usbVendorId?: number; usbProductId?: number } }).getInfo?.();
+    plog.info(
+      `serial port VID:PID ${info?.usbVendorId?.toString(16) ?? '?'}:${info?.usbProductId?.toString(16) ?? '?'}`,
+      'UV-K1',
+    );
     const conn = new UVK1Connection();
     this.onProgress?.(0, 'UV-K1: opening port');
     await conn.open(this.port);
