@@ -40,6 +40,21 @@ const write = (key: string, value: string): void => {
   }
 };
 
+/**
+ * 最初の表示言語。保存された選択（EN／日本語を押した結果）があればそれ、無ければブラウザの言語が
+ * 日本語（ja、ja-JP など）なら日本語、それ以外は英語。
+ */
+export const initialLanguage = (): UiLanguage => {
+  const saved = read(LANG_KEY);
+  if (saved === 'ja' || saved === 'en') return saved;
+  try {
+    const langs = typeof navigator !== 'undefined' ? [navigator.language, ...(navigator.languages ?? [])] : [];
+    return /^ja\b/i.test(langs[0] ?? '') ? 'ja' : 'en';
+  } catch {
+    return 'en';
+  }
+};
+
 const loadUser = (slot: UserSlot): Palette | null => {
   const t = read(USER_KEY[slot]);
   if (!t) return null;
@@ -75,7 +90,7 @@ interface UiLanguageState {
 }
 
 export const useUiLanguageStore = create<UiLanguageState>((set, get) => ({
-  language: read(LANG_KEY) === 'ja' ? 'ja' : 'en',
+  language: initialLanguage(),
   theme: loadTheme(),
   user: { user1: loadUser('user1'), user2: loadUser('user2') },
   setLanguage: (language) => {
