@@ -18,6 +18,7 @@
 - ライセンス：MIT License（`LICENSE`）
 - 原作：NeonPlug, MIT License, Copyright (c) NeonPlug contributors
 - ベース：NeonPlug v2026.9.0（コミット `fb22b49`）
+- 字表：`tools/data/master_1990.csv` は JA2IZU が別プロジェクトで作成したもので、著作権は JA2IZU、ライセンスは同じ MIT です（`tools/data/README.md`）
 
 ## 前提
 
