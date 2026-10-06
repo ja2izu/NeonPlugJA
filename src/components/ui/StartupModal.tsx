@@ -12,6 +12,7 @@ import { useConfirmDialog } from '../../hooks/useConfirmDialog';
 import { confirmNewerFormat } from '../../utils/codeplugFormatPrompt';
 
 import { tr } from '../../utils/tr';  // NeonPlugJA: 日本語表示
+import { FORK_VERSION } from '../../utils/forkVersion';
 function formatEventType(eventType?: SnapshotEventType): string {
   if (!eventType) return '';
   return eventType.charAt(0).toUpperCase() + eventType.slice(1);
@@ -135,6 +136,10 @@ export const StartupModal: React.FC<StartupModalProps> = ({
     <div
       className="fixed inset-0 z-50 flex justify-center overflow-y-auto bg-black bg-opacity-90 p-4"
     >
+      {/* NeonPlugJA: 起動時に版を確認できるよう、右上に小さく出す（言語に関係なく日本語固定） */}
+      <div className="fixed top-1 right-2 z-[60] text-xs text-cool-gray whitespace-nowrap select-text bg-black px-2 py-1 rounded">
+        日本語サポート25Ja Ver.{FORK_VERSION}
+      </div>
       <div
         className="my-auto bg-deep-gray rounded-lg p-6 sm:p-8 max-w-md w-full border border-neon-cyan shadow-glow-cyan"
       >
