@@ -99,6 +99,13 @@ export const UVK1_IMAGE_EXT_BASE = 0x9000;
 /** Hello reply marker of 25Ja: Version[13..15] = 0x25 'J' flags (payload bytes 17..19). */
 export const UVK1_HELLO_MARKER = { offset: 17, tag: [0x25, 0x4a] as const, flagLongNames: 0x01 } as const;
 
+/**
+ * 25Ja firmware version in the hello reply (25Ja firmware 0.3 and later; App/app/uart.c SendVersion).
+ * Offsets are from the start of the reply, 4-byte header included, like UVK1_HELLO_MARKER.offset:
+ * [22] = (major << 4) | minor, [23] = patch. 00 00 means "no version" (older builds).
+ */
+export const UVK1_HELLO_VERSION = { offset: 22 } as const;
+
 /** Attribute band value of an unused slot (band > BAND7_470MHz means empty). */
 export const UVK1_BAND_EMPTY = 7;
 

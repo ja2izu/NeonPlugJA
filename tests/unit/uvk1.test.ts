@@ -130,7 +130,7 @@ describe('UV-K1 空き CH の読み飛ばし', () => {
 // ---- 疑似無線機で接続から読込までを通す ----
 
 /** Dondji / 25ja の応答を真似る。spi=false なら F4HWN のように 0x051F に答えない。 */
-function fakeRadio(image: Uint8Array, opts: { spi: boolean; fontVersionAt?: Record<number, number> }) {
+function fakeRadio(image: Uint8Array, opts: { spi: boolean; longNames?: boolean; fwVersion?: [number, number]; fontVersionAt?: Record<number, number> }) {
   const reads: number[] = [];
   const writes: Array<[number, number]> = [];
   let push: (b: Uint8Array) => void = () => {};
@@ -149,6 +149,7 @@ function fakeRadio(image: Uint8Array, opts: { spi: boolean; fontVersionAt?: Reco
     if (id === 0x0514) {
       const r = new Uint8Array(4 + 36); r.set([0x15, 0x05, 36, 0]); r.set(utf8('F4HWN v5.2.8'), 4);
       if (opts.longNames) r.set([0x25, 0x4a, 0x01], 17); // 25Ja: Version[13..15]
+      if (opts.fwVersion) r.set(opts.fwVersion, 22); // 25Ja 0.3+: Padding[0..1] = (major<<4)|minor, patch
       reply(r);
     } else if (id === 0x051b) {
       const off = payload[4] | (payload[5] << 8); const len = payload[6];
@@ -202,6 +203,21 @@ describe('UV-K1 接続と読込（疑似無線機）', () => {
     image = new Uint8Array(UVK1_IMAGE_SIZE).fill(0xff);
     putSlot(image, 0, record(145.0e6), '名古屋', attr(2, 1));
     putSlot(image, 500, record(433.0e6), 'かな', attr(5));
+  });
+
+  it('25ja：hello の版数（Padding）を読む：0.3 / 0.3.1 / 00 00 = 版数なし / 25Ja の目印なしでは読まない', async () => {
+    const info = async (o: { longNames?: boolean; fwVersion?: [number, number] }) => {
+      const r = fakeRadio(image, { spi: true, fontVersionAt: { [UVK1_FONT_BASE + ja.versionOffset]: 4 }, ...o });
+      serial.port = r.port;
+      const p = new UVK1Protocol();
+      await p.connect();
+      return p.getRadioInfo();
+    };
+    expect((await info({ longNames: true, fwVersion: [0x03, 0] })).firmware).toMatch(/^25Ja v0\.3\(F4HWN v5\.2\.8\) \/ font: 25ja/);
+    expect((await info({ longNames: true, fwVersion: [0x03, 1] })).firmware).toMatch(/^25Ja v0\.3\.1\(F4HWN/);
+    expect((await info({ longNames: true, fwVersion: [0x1c, 5] })).firmware).toMatch(/^25Ja v1\.12\.5\(F4HWN/);
+    expect((await info({ longNames: true, fwVersion: [0, 0] })).firmware).toMatch(/^25Ja\(F4HWN/);
+    expect((await info({ fwVersion: [0x03, 0] })).firmware).toMatch(/^25Ja\(F4HWN/);
   });
 
   it('25ja：字庫の版 4 を判定し、使用中の CH のブロックだけ読む', async () => {

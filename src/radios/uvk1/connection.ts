@@ -35,7 +35,14 @@ import {
   spiReadPayload, dataFromSpiReadReply, spiWritePayload, spiWriteAccepted,
   CMD_SPI_READ_REPLY, CMD_SPI_WRITE_REPLY,
 } from './framing';
-import { UVK1_BAUD_RATE, UVK1_BLOCK_SIZE, UVK1_HELLO_MARKER, UVK1_SPI_READ_MAX, UVK1_SPI_WRITE_MAX } from './constants';
+import { UVK1_BAUD_RATE, UVK1_BLOCK_SIZE, UVK1_HELLO_MARKER, UVK1_HELLO_VERSION, UVK1_SPI_READ_MAX, UVK1_SPI_WRITE_MAX } from './constants';
+
+/** "0.3" / "0.3.1" from the two version bytes ((major << 4) | minor, patch); null for 00 00 = no version. */
+export function formatFirmwareVersion(majorMinor: number, patch: number): string | null {
+  if (majorMinor === 0 && patch === 0) return null;
+  const base = `${majorMinor >> 4}.${majorMinor & 0x0f}`;
+  return patch === 0 ? base : `${base}.${patch}`;
+}
 
 const TIMEOUT_MS = 5000;
 
@@ -164,6 +171,18 @@ export class UVK1Connection {
     if (!r || r.length < offset + 3) return null;
     if (r[offset] !== tag[0] || r[offset + 1] !== tag[1]) return null;
     return r[offset + 2];
+  }
+
+  /**
+   * 25Ja firmware version from the last hello reply, as "0.3" (or "0.3.1" when patch is not 0),
+   * or null when the reply has no 25Ja marker, is too short, or carries 00 00 (older builds).
+   */
+  helloFirmwareVersion(): string | null {
+    const r = this.helloReply;
+    if (!r || this.helloFeatureFlags() === null) return null;
+    const at = UVK1_HELLO_VERSION.offset;
+    if (r.length < at + 2) return null;
+    return formatFirmwareVersion(r[at], r[at + 1]);
   }
 
   async open(port: UVK1SerialPort): Promise<void> {

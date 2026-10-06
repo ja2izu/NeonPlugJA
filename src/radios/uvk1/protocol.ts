@@ -62,6 +62,8 @@ export class UVK1Protocol extends BaseAnalogProtocol {
   private font: UVK1FontId = 'unknown';
   /** 25Ja with names of up to 31 bytes (hello marker bit 0 and the 25ja font). */
   private longNames = false;
+  /** 25Ja firmware version from hello ("0.3"), or null when the radio gives none. */
+  private fwVersion: string | null = null;
   /** Last image read. Bytes of blocks that were skipped stay 0xFF. */
   private image: Uint8Array | null = null;
   /** Start addresses of the blocks actually read into `image`. */
@@ -101,6 +103,7 @@ export class UVK1Protocol extends BaseAnalogProtocol {
     }
     this.font = await identifyFont(conn, v);
     const flags = conn.helloFeatureFlags();
+    this.fwVersion = this.font === '25ja' ? conn.helloFirmwareVersion() : null;
     this.longNames = this.font === '25ja' && flags !== null && (flags & UVK1_HELLO_MARKER.flagLongNames) !== 0;
     plog.info(`font ${this.font}, 25Ja flags ${flags === null ? 'none' : `0x${flags.toString(16)}`}, names up to ${this.maxNameBytes()} bytes`, 'UV-K1');
   }
@@ -131,8 +134,10 @@ export class UVK1Protocol extends BaseAnalogProtocol {
 
   async getRadioInfo(): Promise<RadioInfo> {
     const profile = UVK1_FONT_PROFILES.find((p) => p.id === this.font);
-    // 25ja: "25Ja(F4HWN v5.2.8)". The 25Ja version number is not read: the radio gives none yet.
-    const firmware = this.font === '25ja' ? `25Ja(${this.firmware})` : this.firmware;
+    // 25ja: "25Ja v0.3(F4HWN v5.2.8)"; without a version (older builds): "25Ja(F4HWN v5.2.8)".
+    const firmware = this.font === '25ja'
+      ? `25Ja${this.fwVersion ? ` v${this.fwVersion}` : ''}(${this.firmware})`
+      : this.firmware;
     return {
       model: 'UV-K1',
       firmwareLabel: 'F/W:',
