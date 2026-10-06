@@ -1,5 +1,6 @@
 import { createZip } from './zip';
 import { downloadBlob } from './download';
+import { FORK_REPO_URL, FORK_RELEASE_ASSET } from './forkVersion';
 
 /**
  * The newest release's single-file build. The release workflow uploads every build
@@ -8,7 +9,7 @@ import { downloadBlob } from './download';
  * here when the ZIP download isn't available, so it lives in one place.
  */
 export const OFFLINE_RELEASE_URL =
-  'https://github.com/infamy/NeonPlug/releases/latest/download/neonplug-latest.html';
+  `${FORK_REPO_URL}/releases/latest/download/${FORK_RELEASE_ASSET}`;
 
 /**
  * Fetch the app's index (current origin + path, no full URL) and trigger download as neonplug-offline.zip.

@@ -1,109 +1,31 @@
-![NeonPlug Banner](neonplug_banner.jpg)
+# NeonPlugJA
 
-# NEONPLUG
+**日本語** | [English](#english)
 
-[![Discord](https://img.shields.io/badge/discord-join-5865F2?logo=discord&logoColor=white)](https://discord.gg/j59TBHVD22)
-[![Latest release](https://img.shields.io/github/v/release/infamy/NeonPlug?label=release&color=00e5ff)](https://github.com/infamy/NeonPlug/releases/latest)
+ブラウザで動く無線機のチャンネル設定ソフト [NeonPlug](https://github.com/infamy/NeonPlug)（infamy 氏）のフォークです。日本語の名前（DM-32UV）と、UV-K1（25Ja ファーム）の漢字・かな名に対応します。インストール不要で、1 つの HTML ファイルをブラウザ（Chrome / Edge）で開いて使います。
 
-**A next-generation, web-based Channel Programming Software (CPS) for supported radios.**
+- 使い方・仕様：[README_JA.md](README_JA.md)
+- ダウンロード：[Releases](../../releases) の `neonplugja-latest.html`（単一ファイル、ネット接続なしで使えます）
+- 上流（原作）の説明：[README_UPSTREAM.md](README_UPSTREAM.md)
 
-NeonPlug lets you program your radio directly from your browser—no software installation required. Connect via Web Serial (USB) or, where supported, Bluetooth Low Energy (BLE). A sleek, cyberpunk neon-themed UI puts channels, zones, scan lists, contacts, and settings at your fingertips.
+## ご利用にあたって（必ずお読みください）
 
-**Supported radios:**
-| Radio | Manufacturer | Bands | Connection |
-|---|---|---|---|
-| DM-32UV / DP570UV | Baofeng | VHF + UHF (DMR/Analog) | USB |
-| DA-7X2 / DA-7XR — alpha | BTECH | VHF + UHF (DMR/Analog) | USB |
-| AT-D890UV — alpha | Anytone | VHF + UHF (DMR/Analog) | USB |
-| UV5R-Mini | Baofeng | VHF + UHF (Analog) | USB or BLE |
-| FT-65 / FT-65R / FT-65E | Yaesu | VHF + UHF (Analog) | USB (SCU-35) |
-| FT-4 / FT-4XR / FT-4XE | Yaesu | VHF + UHF (Analog) | USB (SCU-35) |
-| FT-4VR | Yaesu | VHF (Analog) | USB (SCU-35) |
-| FT-25R | Yaesu | VHF (Analog) | USB (SCU-35) |
+- この開発では、コードのすべてについて Claude（Anthropic の AI）の作成支援を受けています。
+- 個人が自分のために作成したもので、十分な検証が済んでいない恐れがあります。
+- 無保証・サポートなしです。利用は自己責任でお願いします。無線機に書き込むソフトなので、書込の失敗や不具合で無線機が正しく動かなくなる可能性があります。
+- バージョンアップを行うことはありますが、期待しないでください。
+- 使用に不安がある方や、内容が理解できない方には向いていません。
+- 著作権は、上位の NeonPlug と同様に MIT License とします（[LICENSE](LICENSE)）。
 
-*Alpha* means the driver reads and writes the whole codeplug, but not every part of it has been checked on the radio yet. The DA-7X2, DA-7XR and AT-D890UV are the same radio under three names.
+## English
 
-**🚀 Try it live:** [https://neonplug.app](https://neonplug.app) · **📥 [Download offline version](https://github.com/infamy/NeonPlug/releases/latest/download/neonplug-latest.html)** (single-file, no install)
+NeonPlugJA is a fork of [NeonPlug](https://github.com/infamy/NeonPlug) (by infamy), a browser-based channel programming software for radios. It adds Japanese channel names for the DM-32UV and kanji/kana names (channels, scan lists) for the UV-K1 running the 25Ja firmware. No installation: open one HTML file in Chrome or Edge. Documentation is in Japanese ([README_JA.md](README_JA.md)); the upstream README is [README_UPSTREAM.md](README_UPSTREAM.md).
 
-| Build | URL | What it is |
-|---|---|---|
-| **Release** | [neonplug.app](https://neonplug.app) | Latest tagged version — what you want |
-| **Development** | [neonplug.app/dev](https://neonplug.app/dev/) | Latest `main`, unreleased and untagged |
-| **PR preview** | `neonplug.app/test/<branch>/` | A specific open pull request |
+**Please read before use**
 
-> ⚠️ **Note:** Currently in active development. Some features are still being implemented.
-
----
-
-## ✨ Demo
-
-![NeonPlug Demo](demo.gif)
-
-*Create channels, manage contacts, and program your radio—all from your browser.*
-
----
-
-## 🎯 Key Features
-
-### 📻 Radio Management
-- **Web Serial & BLE** - Connect via USB (Web Serial API, no drivers) or Bluetooth Low Energy where supported (e.g. UV5R-Mini)
-- **Read & Write** - Full codeplug read/write support for each radio
-- **Live Validation** - Real-time frequency and configuration validation
-
-### 📡 Channel Configuration
-- **Smart Import** - Location-based channel wizard using repeater databases
-- **Bulk Editing** - Powerful table interface for editing multiple channels at once
-- **Codeplug backup** - Save and load a full codeplug as a `.neonplug` file: a zipped JSON archive you can unzip to read, but edit it in NeonPlug rather than by hand
-- **Chirp CSV** - Import and export channels in CHIRP CSV format; custom CSV import also supported
-- **Auto-Configuration** - Automatic offset, CTCSS, and color code detection
-
-### 👥 Contact & Group Management
-- **Digital Contacts** - Manage DMR contacts with full talk group support (DMR radios)
-- **RX Groups** - Create and organize receive groups (DMR radios)
-- **Scan Lists** - Configure scan lists across zones
-
----
-
-## 🚀 Getting Started
-
-Just visit **[neonplug.app](https://neonplug.app)** in a Chrome-based browser (Chrome, Edge, Opera, Brave). No installation needed!
-
-**Requirements:**
-- Chrome, Edge, Opera, or Brave browser (for Web Serial API support)
-- A supported radio (see table above) with the appropriate USB cable—or BLE for the UV5R-Mini
-
-### 📥 Offline mode
-
-You can use NeonPlug without an internet connection. Either:
-
-- **Download a released build directly:** [neonplug-latest.html](https://github.com/infamy/NeonPlug/releases/latest/download/neonplug-latest.html) — or pick a specific version from [Releases](https://github.com/infamy/NeonPlug/releases). This is the same file the live site serves, so it is a known, citable version.
-- **Or export from the running app:** on the startup screen click **Download offline version (ZIP)** — or open **Settings → About** and click **Download Offline Version (ZIP)** — then unzip and open **neonplug.html**.
-
-Either way the result is a single, self-contained HTML file (all assets inlined). No server or network required; Web Serial for the radio still works when the file is opened locally.
-
-Releases are numbered by date, `YEAR.MONTH.N`: `2026.9.0` is the first release of September 2026, and the next one that month is `2026.9.1`. The version you are running is shown in **Settings → About**. A tagged release reads `v2026.9.0`; anything built from `main` or a PR reads `v2026.9.0-dev+abc1234` so bug reports can be traced to an exact commit.
-
----
-
-## 🤝 Contributing
-
-We welcome contributions from everyone—not just developers!
-
-- 🧪 **Test the app** and report bugs or issues
-- 💡 **Share ideas** for new features
-- 📣 **Spread the word** about NeonPlug to other radio enthusiasts
-- 💻 **Write code** — the [Contributing Guide](CONTRIBUTING.md) covers setup, architecture and guidelines
-
-This project was built with the assistance of AI, but all design decisions and architecture are intentional and human-guided.
-
----
-
-## 📜 License
-
-MIT License - feel free to use this project for your own radio programming needs!
-
----
-
-## 💬 Community
-
-Have questions or want to share your experience? [Join our Discord](https://discord.gg/j59TBHVD22).
+- All of the code was written with the help of Claude (an AI by Anthropic).
+- This is a personal project made for the author's own use. It may not have been tested enough.
+- No warranty and no support: use it at your own risk. This software writes to a radio, and a failed or faulty write can leave the radio not working correctly.
+- New versions may be released, but please do not count on them.
+- Not suitable for people who are unsure about using it or who cannot follow what it does.
+- Copyright and license: MIT License, the same as the upstream NeonPlug ([LICENSE](LICENSE)).

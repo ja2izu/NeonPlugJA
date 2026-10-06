@@ -146,7 +146,7 @@ export const JA_DICT: Readonly<Record<string, string>> = {
   ", and {0} more": "、ほか {0}",
   "Changes {0} {1}: {2}{3}.": "{0} {1} を変更: {2}{3}。",
   "The latest tagged release is published as a single downloadable HTML file.": "最新の正式版は、ダウンロードできる 1 つの HTML ファイルとして公開しています。",
-  "Click Download to save neonplug-latest.html from GitHub Releases.": "「ダウンロード」を押すと GitHub Releases から neonplug-latest.html を保存します。",
+  "Click Download to save neonplugja-latest.html from GitHub Releases.": "「ダウンロード」を押すと GitHub Releases から neonplugja-latest.html を保存します。",
   "Or build it locally using the instructions in the About tab.": "または「情報」タブの手順で自分でビルドしてください。",
   "Channel programming software": "チャンネル設定ソフト",
   "Pick a radio": "機種を選ぶ",

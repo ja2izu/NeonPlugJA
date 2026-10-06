@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useDebugStore } from '../../store/debugStore';
 import { useOutOfBandStore } from '../../store/outOfBandStore';
 import { useJapaneseNamesStore } from '../../store/japaneseNamesStore';
-import { FORK_LABEL, FORK_AUTHOR } from '../../utils/forkVersion';
+import { FORK_LABEL, FORK_AUTHOR, FORK_REPO_URL } from '../../utils/forkVersion';
 import { useRadioCapabilities } from '../../hooks/useRadioCapabilities';
 import { RADIO_DESCRIPTORS } from '../../radios';
 import { Card } from '../ui/Card';
@@ -19,7 +19,7 @@ import { tr } from '../../utils/tr';  // NeonPlugJA: 日本語表示
 // NeonPlugJA: 表示のたびに組み立てる（日本語表示の切替に追従するため）
 const offlineFallbackMessage = () =>
   tr('The latest tagged release is published as a single downloadable HTML file.') + '\n\n' +
-  tr('Click Download to save neonplug-latest.html from GitHub Releases.') + '\n\n' +
+  tr('Click Download to save neonplugja-latest.html from GitHub Releases.') + '\n\n' +
   tr('Or build it locally using the instructions below.');
 
 const LATEST_RELEASE = latestEntry(changelogSource);
@@ -56,6 +56,13 @@ export const AboutTab: React.FC = () => {
           <p className="text-xs text-muted mt-2">
             Copyright (c) 2026 {FORK_AUTHOR} · MIT License ·
             Based on NeonPlug (Copyright (c) NeonPlug contributors), MIT License
+          </p>
+          <p className="text-xs text-cool-gray mt-3 leading-relaxed">
+            <b>ご利用にあたって</b>：この開発では、コードのすべてについて Claude（Anthropic の AI）の作成支援を受けています。
+            個人が自分のために作成したもので、十分な検証が済んでいない恐れがあります。無保証・サポートなしです。
+            利用は自己責任でお願いします。バージョンアップを行うことはありますが、期待しないでください。
+            使用に不安がある方や、内容が理解できない方には向いていません。無線機に書き込むソフトです。
+            著作権は上位の NeonPlug と同じ MIT License とします。
           </p>
         </Card>
 
@@ -147,7 +154,7 @@ export const AboutTab: React.FC = () => {
                 {/* A string, not JSX text: JSX folds line breaks in text into
                     single spaces, so these four commands rendered as one line
                     that fails when pasted. */}
-                <code>{'git clone https://github.com/infamy/NeonPlug.git\ncd NeonPlug\nnpm install\nnpm run build:single'}</code>
+                <code>{`git clone ${FORK_REPO_URL}.git\ncd NeonPlugJA\nnpm install\nnpm run build:single`}</code>
               </pre>
               <p className="text-cool-gray text-xs mt-2">
                 {tr("The single-file HTML will be in the")} <code className="text-neon-cyan">dist/index.html</code> file.
@@ -220,6 +227,12 @@ export const AboutTab: React.FC = () => {
         <Card>
           <SectionTitle>{tr("Links")}</SectionTitle>
           <div className="space-y-3">
+            <div>
+              <span className="text-cool-gray">NeonPlugJA リポジトリ: </span>
+              <a href={FORK_REPO_URL} target="_blank" rel="noopener noreferrer" className="link-accent">
+                {FORK_REPO_URL}
+              </a>
+            </div>
             <div>
               <span className="text-cool-gray">{tr("NeonPlug Repository:")} </span>
               <a

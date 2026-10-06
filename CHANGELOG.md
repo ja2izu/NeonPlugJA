@@ -19,6 +19,9 @@ version says how old a build is, not how big its changes are. Whether a saved
 
 ## [Unreleased]
 
+- NeonPlugJA 0.92: UV-K1 (25Ja firmware) support: channels with kanji/kana names (up to 31 bytes), scan lists with kanji names, scan list CSV, exclude flag, power Low1-Low5/Medium/High.
+- NeonPlugJA 0.92: starts in Japanese when the browser language is Japanese; Japanese display with seasonal colour themes.
+- NeonPlugJA 0.92: release links point to the NeonPlugJA repository.
 - MMDVM hotspot channels can be duplex, use either timeslot, and pick existing talk groups.
 - Every list exports to CSV and imports back, adding to what's there or replacing it.
 - DM-32 talk groups past 170 now read and write.

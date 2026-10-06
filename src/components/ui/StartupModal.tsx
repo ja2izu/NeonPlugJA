@@ -46,7 +46,7 @@ interface StartupModalProps {
 // NeonPlugJA: 表示のたびに組み立てる（日本語表示の切替に追従するため）
 const offlineFallbackMessage = () =>
   tr('The latest tagged release is published as a single downloadable HTML file.') + '\n\n' +
-  tr('Click Download to save neonplug-latest.html from GitHub Releases.') + '\n\n' +
+  tr('Click Download to save neonplugja-latest.html from GitHub Releases.') + '\n\n' +
   tr('Or build it locally using the instructions in the About tab.');
 
 export const StartupModal: React.FC<StartupModalProps> = ({

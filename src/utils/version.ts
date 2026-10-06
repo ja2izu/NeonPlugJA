@@ -13,6 +13,8 @@
  * actually built from — it is ahead of that release, never equal to it.
  */
 
+import { FORK_REPO_URL } from './forkVersion';
+
 /** YEAR.MONTH.N from package.json, pinned by the release workflow at tag time. */
 export const APP_VERSION: string =
   typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : '0.0.0';
@@ -37,7 +39,5 @@ export const VERSION_LABEL: string = IS_RELEASE_BUILD
   ? `v${APP_VERSION}`
   : `v${APP_VERSION}-dev+${COMMIT_HASH}`;
 
-/** GitHub release page for this exact version (release builds) or the tag list. */
-export const RELEASE_NOTES_URL: string = IS_RELEASE_BUILD
-  ? `https://github.com/infamy/NeonPlug/releases/tag/v${APP_VERSION}`
-  : 'https://github.com/infamy/NeonPlug/releases';
+/** NeonPlugJA's release list on GitHub (the fork's releases, not the upstream tags). */
+export const RELEASE_NOTES_URL: string = `${FORK_REPO_URL}/releases`;
