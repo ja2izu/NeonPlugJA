@@ -2,6 +2,8 @@ import { describe, it, expect } from 'vitest';
 import { planWritableCodeplug } from '../../src/services/validation/writeFilter';
 import type { ScanList } from '../../src/models/ScanList';
 import { createDefaultChannel } from '../../src/utils/channelHelpers';
+import { getCapabilitiesForModel } from '../../src/radios/capabilities';
+import { writeFilterOptionsFor } from '../../src/services/writeFilterOptions';
 
 const channels = [createDefaultChannel({ number: 1, name: 'Simplex', rxFrequency: 146.52, txFrequency: 146.52 })];
 const scanLists = [
@@ -20,5 +22,15 @@ describe('scan lists in the write plan', () => {
     const plan = planWritableCodeplug(channels, [], scanLists, { filterBand: false });
     expect(plan.scanLists.map((list) => list.name)).toEqual(['Full', 'Empty']);
     expect(plan.droppedScanLists).toEqual([]);
+  });
+
+  it('does not list an empty scan list as left out on a radio whose lists belong by channel number (UV-K1)', () => {
+    const plan = planWritableCodeplug(channels, [], scanLists, { filterBand: true, scanListsByChannelNumber: true });
+    expect(plan.droppedScanLists).toEqual([]);
+  });
+
+  it('the options for the UV-K1 turn that on, and another radio does not', () => {
+    expect(writeFilterOptionsFor('UV-K1', getCapabilitiesForModel('UV-K1'), false).scanListsByChannelNumber).toBe(true);
+    expect(writeFilterOptionsFor('DM-32UV', getCapabilitiesForModel('DM-32UV'), false).scanListsByChannelNumber).toBe(false);
   });
 });

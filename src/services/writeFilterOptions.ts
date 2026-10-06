@@ -32,6 +32,8 @@ export function writeFilterOptionsFor(
     // and only for a channel whose TX frequency was CHANGED to something out
     // of band. One already on the radio is left alone.
     filterBand: !(model != null && (D890_MODEL_IDS as readonly string[]).includes(model)),
+    // JA: UV-K1 (25Ja) はリストの所属をチャンネルの番号で持つ（capabilities.ts の scanListNamesAppSideOnly）
+    scanListsByChannelNumber: caps?.scanListNamesAppSideOnly === true,
     bandLimits: caps?.bandLimits,
     blankTxAnyBand: caps?.blankTxAnyBand,
     outOfBand,

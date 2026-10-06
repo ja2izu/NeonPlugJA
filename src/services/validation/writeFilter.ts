@@ -21,6 +21,11 @@ export interface WriteFilterOptions {
    * and which sends every scan list by its slot, empty ones included.
    */
   filterBand: boolean;
+  /**
+   * JA: UV-K1 (25Ja)。スキャンリストの所属は各チャンネルの番号で決まり、リストの「メンバー一覧」は
+   * 書込に使わない（名前はメンバーに関係なく送る）。空のリストを「外すもの」として確認画面に出さない。
+   */
+  scanListsByChannelNumber?: boolean;
   bandLimits?: RadioBandLimits | null;
   blankTxAnyBand?: boolean;
   outOfBand?: boolean;
@@ -74,7 +79,7 @@ export function planWritableCodeplug(
     scanLists: everyScanList ? [...scanLists] : trimmedScanLists.filter((list) => list.channels.length > 0),
     droppedChannels: kept === channels ? [] : channels.filter((ch) => !keptNumbers.has(ch.number)),
     droppedZones: trimmedZones.filter((zone) => zone.channels.length === 0).map((zone) => zone.name),
-    droppedScanLists: everyScanList
+    droppedScanLists: everyScanList || options.scanListsByChannelNumber
       ? []
       : trimmedScanLists.filter((list) => list.channels.length === 0).map((list) => list.name),
   };
