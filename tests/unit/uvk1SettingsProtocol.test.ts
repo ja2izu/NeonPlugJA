@@ -75,3 +75,9 @@ describe('UV-K1 settings through the protocol', () => {
     await expect(proto.writeRadioSettings({ radioSpecific: {} } as unknown as RadioSettings)).rejects.toThrow();
   });
 });
+
+describe('UV-K1 settings notice', () => {
+  it('asks for a power cycle after settings were written', () => {
+    expect(new UVK1Protocol().settingsWrittenNotice).toMatch(/電源/);
+  });
+});

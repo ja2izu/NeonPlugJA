@@ -11,7 +11,7 @@
  *
  * Source of the layout: the 25Ja firmware source (Fusion build) as read by the
  * firmware担当, cross-checked with CHIRP's F4HWN driver v6.1.0. NOT verified on
- * a real radio (実機未確認).
+ * a real radio by the author's own tests (JA2IZU, 2026-10-07: read, write, power cycle, menu check).
  *
  * Rules kept here:
  *  - Only the bits listed in WRITE_MASKS can ever be written. Everything else in

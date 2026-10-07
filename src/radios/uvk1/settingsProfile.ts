@@ -8,7 +8,7 @@ import type { OptionItem, SettingsProfile } from '../../types/settingsProfile';
 import { UVK1_KEY_ACTIONS } from './settings';
 
 /**
- * 25Ja (UV-K1) 設定タブ。値・範囲は 25Ja ファームのソースの読みによる（実機未確認）。
+ * 25Ja (UV-K1) 設定タブ。値・範囲は 25Ja ファームのソースの読みによる。JA2IZU の実機確認済み（2026-10-07）。
  * 項目名は本体メニューの英語名を括弧内に併記する。
  */
 
@@ -29,7 +29,7 @@ const key = (k: string, label: string, hint?: string) => ({
 const BACKLIGHT_TIME: OptionItem[] = [
   { value: 0, label: 'OFF' },
   ...Array.from({ length: 60 }, (_, i) => ({ value: i + 1, label: `${(i + 1) * 5} 秒` })),
-  { value: 61, label: '常時ON（ソースで確認・実機未確認）' },
+  { value: 61, label: '常時ON' },
 ];
 
 const SCAN_RESUME: OptionItem[] = [
@@ -43,7 +43,7 @@ const LIST_OPTIONS: OptionItem[] = [
   { value: 25, label: 'ALL（すべて）' },
 ];
 
-const PROVENANCE = '値は 25Ja ファームのソースの読み。実機未確認。';
+const PROVENANCE = '値は 25Ja ファームのソースの読み。JA2IZU の実機確認済み（2026-10-07）。';
 
 export const UVK1_SETTINGS_PROFILE: SettingsProfile = {
   radioType: 'UV-K1 (25Ja)',
@@ -90,7 +90,7 @@ export const UVK1_SETTINGS_PROFILE: SettingsProfile = {
         },
         { key: 'radioSpecific.priorityScan', label: '優先スキャン', type: 'checkbox' },
         { key: 'radioSpecific.defaultList', label: '既定スキャングループ（SList）', type: 'select', options: LIST_OPTIONS },
-        { key: 'radioSpecific.priorityCh1', label: '優先 CH 1', type: 'number', min: 0, max: 1024, hint: 'チャンネル番号（1〜1024）。0 = なし。保存値は 0 始まり、なしは 1024（ファームのソースで確認・実機未確認）。' },
+        { key: 'radioSpecific.priorityCh1', label: '優先 CH 1', type: 'number', min: 0, max: 1024, hint: 'チャンネル番号（1〜1024）。0 = なし。保存値は 0 始まり、なしは 1024（ファームのソースで確認）。' },
         { key: 'radioSpecific.priorityCh2', label: '優先 CH 2', type: 'number', min: 0, max: 1024, hint: 'チャンネル番号（1〜1024）。0 = なし。' },
         { key: 'radioSpecific.callCh', label: 'ワンキー呼出 CH', type: 'number', min: 1, max: 1024, hint: 'チャンネル番号（1〜1024）。' },
       ],

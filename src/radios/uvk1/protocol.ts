@@ -64,6 +64,10 @@ export class UVK1Protocol extends BaseAnalogProtocol {
     return this.font !== '25ja';
   }
 
+  /** Shown after a write that included settings: the radio loads them only at start-up. */
+  readonly settingsWrittenNotice =
+    '⚠ 設定を反映するには、本体を操作せずに電源を切り、入れ直してください（Switch the radio off and on; do not use its keys before that）。';
+
   private conn: UVK1Connection | null = null;
   private port: UVK1SerialPort | null = null;
   private firmware = '';

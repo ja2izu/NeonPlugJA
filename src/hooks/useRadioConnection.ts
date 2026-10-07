@@ -1463,12 +1463,14 @@ export function useRadioConnection() {
         hasSettingsToWrite ? `${changedFields.length} setting(s)` : null,
       ].filter(Boolean).join(', ');
       
+      // A protocol can ask for a line after settings were written (UV-K1: power cycle).
+      const settingsNotice = hasSettingsToWrite && protocol.settingsWrittenNotice ? `  ${protocol.settingsWrittenNotice}` : '';
       // Add warning if channels were filtered
       if (filteredCount > 0) {
-        const warningMsg = `Note: ${filteredCount} channel(s) were filtered out due to unsupported frequencies. Successfully wrote ${summary} to radio!`;
+        const warningMsg = `Note: ${filteredCount} channel(s) were filtered out due to unsupported frequencies. Successfully wrote ${summary} to radio!${settingsNotice}`;
         onProgress?.(100, warningMsg, steps[4]);
       } else {
-        onProgress?.(100, `Successfully wrote ${summary} to radio!`, steps[4]);
+        onProgress?.(100, `Successfully wrote ${summary} to radio!${settingsNotice}`, steps[4]);
       }
     } catch (err) {
       const rawMessage = err instanceof Error ? err.message : 'Write failed';

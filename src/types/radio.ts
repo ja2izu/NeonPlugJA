@@ -176,4 +176,7 @@ export interface RadioProtocol {
    *  The connection hook refuses the write UP FRONT rather than calling the base
    *  no-op and then clearing the change flags — see BaseProtocols. */
   readonly settingsWriteUnsupported?: boolean;
+  /** A line the write-complete message adds after settings were written (e.g. the radio
+   *  has to be switched off and on before it uses them). */
+  readonly settingsWrittenNotice?: string;
 }
