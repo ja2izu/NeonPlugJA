@@ -24,6 +24,7 @@
  */
 import type { RadioInfo } from '../../types/radio';
 import type { Channel } from '../../models';
+import type { RadioSettings } from '../../models/RadioSettings';
 import { BaseAnalogProtocol } from '../shared/BaseProtocols';
 import { log as plog } from '../../utils/protocolLogger';
 import { UVK1Connection, openUVK1Port, type UVK1SerialPort } from './connection';
@@ -35,6 +36,10 @@ import {
 } from './constants';
 import { decodeAttribute, decodeChannelName, isUnusedAttribute, parseChannel } from './structures';
 import { applyBootText, decodeBootText, planBootTextWrite, validateBootText } from './bootText';
+import {
+  UVK1_SETTINGS_BASE, UVK1_SETTINGS_SIZE, assertSettingsWritable, decodeSettings, encodeSettings,
+  planSettingsWrites, type Uvk1Settings,
+} from './settings';
 import {
   applyListNames, assertWritable, buildTarget, imageToSpiAddress, planListNameWrites, planWrites,
   validateChannels, validateListNames,
@@ -54,8 +59,10 @@ const EXT_SLOTS_PER_READ = 4;
 const SLOTS_PER_BLOCK = UVK1_BLOCK_SIZE / UVK1_CHANNEL_SIZE;
 
 export class UVK1Protocol extends BaseAnalogProtocol {
-  /** Settings are not handled by this driver yet. */
-  readonly settingsWriteUnsupported = true;
+  /** Settings are read and written for the 25Ja font only (see settings.ts). */
+  get settingsWriteUnsupported(): boolean {
+    return this.font !== '25ja';
+  }
 
   private conn: UVK1Connection | null = null;
   private port: UVK1SerialPort | null = null;
@@ -73,6 +80,8 @@ export class UVK1Protocol extends BaseAnalogProtocol {
   private listNames: ReadonlyArray<string | undefined> | null = null;
   /** 起動画面の文言（25Ja v0.3 以降）。Null: 無線機の値のまま。 */
   private bootText: string | null = null;
+  /** Settings as last read (decoded), the baseline for the next settings write. */
+  private settingsBaseline: Uvk1Settings | null = null;
 
   async connect(portOrOptions?: string | { forcePortSelection?: boolean; transport?: string }): Promise<void> {
     const opts = typeof portOrOptions === 'object' ? portOrOptions : {};
@@ -225,6 +234,75 @@ export class UVK1Protocol extends BaseAnalogProtocol {
     this.image = image;
     this.readBlocks = done;
     return image;
+  }
+
+  /** The settings area 0xA000–0xA17F, read in 96-byte parts. */
+  private async readSettingsRegion(): Promise<Uint8Array> {
+    const conn = this.conn;
+    if (!conn) throw new Error('Not connected');
+    const region = new Uint8Array(UVK1_SETTINGS_SIZE);
+    const part = 96;
+    for (let off = 0; off < UVK1_SETTINGS_SIZE; off += part) {
+      const data = await conn.spiRead(UVK1_SETTINGS_BASE + off, Math.min(part, UVK1_SETTINGS_SIZE - off));
+      if (!data) throw new Error(`UV-K1: no answer reading settings at 0x${(UVK1_SETTINGS_BASE + off).toString(16)}`);
+      region.set(data, off);
+    }
+    return region;
+  }
+
+  /** Global settings (25Ja only; other radios: null). Values are shown values, see settings.ts. */
+  override async readRadioSettings(): Promise<RadioSettings | null> {
+    if (this.font !== '25ja' || !this.conn) return null;
+    this.onProgress?.(0, 'Reading settings');
+    const region = await this.readSettingsRegion();
+    const radioSpecific = decodeSettings(region);
+    this.settingsBaseline = radioSpecific;
+    return { radioSpecific } as unknown as RadioSettings;
+  }
+
+  /**
+   * Write the settings that differ from the radio. The area is read again first,
+   * only changed values are written (bit fields keep their other bits), every
+   * written range is read back, and the radio has to be switched off and on.
+   */
+  override async writeRadioSettings(settings: RadioSettings, _options?: { changedFields?: string[] }): Promise<void> {
+    const conn = this.conn;
+    if (!conn) throw new Error('Not connected');
+    if (this.font !== '25ja') throw new Error('UV-K1: settings can be written for the 25Ja firmware only.');
+    const next = (settings as unknown as { radioSpecific?: Uvk1Settings }).radioSpecific;
+    if (!next) return;
+
+    const current = await this.readSettingsRegion();
+    const base = this.settingsBaseline ?? decodeSettings(current);
+    const target = encodeSettings(current, base, next);
+    const runs = planSettingsWrites(current, target);
+    plog.info(
+      `settings write plan: ${runs.length} write(s): ` + runs.map((r) => `0x${r.address.toString(16)}+${r.data.length}`).join(' '),
+      'UV-K1',
+    );
+    if (runs.length === 0) {
+      this.onProgress?.(1, 'No settings changes to write');
+      return;
+    }
+    for (const r of runs) assertSettingsWritable(current, r);
+
+    const total = runs.length * 2;
+    let step = 0;
+    for (const r of runs) {
+      await conn.spiWrite(r.address, r.data);
+      step++;
+      this.onProgress?.(step / total, `Writing settings 0x${r.address.toString(16)} (${r.data.length} bytes)`);
+    }
+    for (const r of runs) {
+      const back = await conn.spiRead(r.address, r.data.length);
+      if (!back || back.some((b, i) => b !== r.data[i])) {
+        throw new Error(`UV-K1: settings verify failed at 0x${r.address.toString(16)}. Read the radio again before writing.`);
+      }
+      step++;
+      this.onProgress?.(step / total, `Verifying settings 0x${r.address.toString(16)}`);
+    }
+    this.settingsBaseline = decodeSettings(target);
+    this.onProgress?.(1, `Wrote ${runs.length} settings block(s). Switch the radio off and on: it reads its settings only at start-up.`);
   }
 
   async readChannels(): Promise<Channel[]> {

@@ -7,10 +7,11 @@
 import type { RadioDescriptor } from '../types';
 import { UVK1Protocol } from './protocol';
 import { UVK1_CAPS } from './capabilities';
+import { UVK1_SETTINGS_PROFILE } from './settingsProfile';
 
 /**
  * Quansheng UV-K1 / UV-K5 V3 with Dondji or 25ja firmware.
- * Reads and writes channels — see protocol.ts. Settings are not handled.
+ * Reads and writes channels and (25Ja only) global settings — see protocol.ts / settings.ts.
  */
 export const UVK1_DESCRIPTOR: RadioDescriptor = {
   modelIds: ['UV-K1', 'UV-K1 (25ja)'],
@@ -21,4 +22,5 @@ export const UVK1_DESCRIPTOR: RadioDescriptor = {
   status: 'alpha',
   protocolFactory: () => new UVK1Protocol(),
   capabilities: UVK1_CAPS,
+  settingsProfile: UVK1_SETTINGS_PROFILE,
 };
