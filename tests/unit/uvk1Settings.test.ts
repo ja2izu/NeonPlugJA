@@ -234,16 +234,21 @@ describe('UV-K1 (25Ja) settings codec', () => {
     expect(UVK1_WRITE_MASKS.get(0xa004)).toBe(0x40);
   });
 
-  it('runs are at most 120 bytes and merge neighbours', () => {
+  it('runs are even-aligned, at most 120 bytes, and merge neighbours', () => {
     const a = blank(0x00);
     const b = blank(0xff);
     const runs = planSettingsWrites(a, b);
-    expect(runs.every((r) => r.data.length <= 120)).toBe(true);
+    expect(runs.every((r) => r.data.length <= 120 && r.data.length % 2 === 0 && r.address % 2 === 0)).toBe(true);
     expect(runs.reduce((n, r) => n + r.data.length, 0)).toBe(UVK1_SETTINGS_SIZE);
     const c = a.slice();
     c[at(0xa001)] = 1;
     c[at(0xa002)] = 1;
-    expect(planSettingsWrites(a, c)).toEqual([{ address: 0xa001, data: new Uint8Array([1, 1]) }]);
+    expect(planSettingsWrites(a, c)).toEqual([{ address: 0xa000, data: new Uint8Array([0, 1, 1, 0]) }]);
+    const d = a.slice();
+    d[at(0xa001)] = 7;
+    expect(planSettingsWrites(a, d)).toEqual([{ address: 0xa000, data: new Uint8Array([0, 7]) }]);
+    d[at(0xa002)] = 9;
+    for (const r of planSettingsWrites(a, d)) { expect(r.address % 2).toBe(0); expect(r.data.length % 2).toBe(0); }
   });
 
   it('every profile field is a field the codec knows, and every select offers valid values', () => {

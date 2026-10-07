@@ -7,8 +7,13 @@ import type { RadioSettings } from '../../src/models/RadioSettings';
 function fakeRadio(font: string, flash: Uint8Array) {
   const writes: Array<{ address: number; data: Uint8Array }> = [];
   const conn = {
-    spiRead: async (address: number, length: number) => flash.slice(address - UVK1_SETTINGS_BASE, address - UVK1_SETTINGS_BASE + length),
+    spiRead: async (address: number, length: number) => {
+      if (length % 2 !== 0) throw new Error('odd-sized SPI read');
+      return flash.slice(address - UVK1_SETTINGS_BASE, address - UVK1_SETTINGS_BASE + length);
+    },
+    spiReadOld: async (address: number, length: number) => flash.slice(address - UVK1_SETTINGS_BASE, address - UVK1_SETTINGS_BASE + length),
     spiWrite: async (address: number, data: Uint8Array) => {
+      if (data.length % 2 !== 0 || address % 2 !== 0) throw new Error('odd SPI write');
       writes.push({ address, data: data.slice() });
       flash.set(data, address - UVK1_SETTINGS_BASE);
     },
@@ -30,9 +35,10 @@ describe('UV-K1 settings through the protocol', () => {
     const next = { ...s, radioSpecific: { ...s.radioSpecific, squelch: s.radioSpecific.squelch === 3 ? 4 : 3 } };
     await proto.writeRadioSettings(next as unknown as RadioSettings, { changedFields: ['radioSpecific'] });
     expect(writes).toHaveLength(1);
-    expect(writes[0].address).toBe(0xa001);
-    expect(writes[0].data.length).toBe(1);
+    expect(writes[0].address).toBe(0xa000);
+    expect(writes[0].data.length).toBe(2);
     flash.forEach((b, i) => { if (i !== 1) expect(b).toBe(before[i]); });
+    expect(flash[1]).not.toBe(before[1]);
   });
 
   it('writes nothing when nothing changed', async () => {

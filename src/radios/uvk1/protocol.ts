@@ -284,7 +284,10 @@ export class UVK1Protocol extends BaseAnalogProtocol {
       this.onProgress?.(1, 'No settings changes to write');
       return;
     }
-    for (const r of runs) assertSettingsWritable(current, r);
+    for (const r of runs) {
+      assertSettingsWritable(current, r);
+      if (r.address % 2 !== 0 || r.data.length % 2 !== 0) throw new Error('UV-K1: internal error, odd-sized settings write. Nothing was written.');
+    }
 
     const total = runs.length * 2;
     let step = 0;

@@ -214,15 +214,23 @@ export interface SettingsWriteRun {
 
 const MAX_RUN = 120;
 
-/** Runs of bytes that differ between two settings areas (each at most 120 bytes). */
+/**
+ * Runs of bytes to write (each at most 120 bytes). Every run starts at an even
+ * address and has an even length, like every other transfer of this driver
+ * (an odd-sized transfer is refused by the connection: it stops the radio). A
+ * changed byte therefore brings its neighbour in the same 2-byte pair along;
+ * the neighbour is sent with the value it already has.
+ */
 export function planSettingsWrites(oldRegion: Uint8Array, newRegion: Uint8Array): SettingsWriteRun[] {
   const runs: SettingsWriteRun[] = [];
   let i = 0;
   while (i < UVK1_SETTINGS_SIZE) {
-    if (oldRegion[i] === newRegion[i]) { i++; continue; }
-    let j = i;
-    while (j < UVK1_SETTINGS_SIZE && oldRegion[j] !== newRegion[j] && j - i < MAX_RUN) j++;
-    runs.push({ address: UVK1_SETTINGS_BASE + i, data: newRegion.slice(i, j) });
+    if (oldRegion[i] === newRegion[i] && oldRegion[i ^ 1] === newRegion[i ^ 1]) { i += 2 - (i & 1); continue; }
+    const start = i & ~1;
+    let j = start;
+    while (j < UVK1_SETTINGS_SIZE && j - start < MAX_RUN &&
+      (oldRegion[j] !== newRegion[j] || oldRegion[j ^ 1] !== newRegion[j ^ 1])) j += 2;
+    runs.push({ address: UVK1_SETTINGS_BASE + start, data: newRegion.slice(start, j) });
     i = j;
   }
   return runs;
