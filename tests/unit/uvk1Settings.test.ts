@@ -187,6 +187,7 @@ describe('UV-K1 (25Ja) settings codec', () => {
     const r = blank();
     r[at(0xa008)] = 0x0a;
     expect(() => change(r, { backlightMin: 10 })).toThrow();
+    expect(() => change(r, { backlightMin: 9, backlightMax: 9 })).toThrow();
     expect(change(r, { backlightMin: 9 })[at(0xa008)]).toBe(0x9a);
   });
 
@@ -261,8 +262,7 @@ describe('UV-K1 (25Ja) settings codec', () => {
         const k = f.key.replace('radioSpecific.', '');
         for (const o of f.options) {
           if (o.label.startsWith('不明')) continue;
-          if (k === 'backlightMin' && o.value >= 10) continue; // needs max > min
-          expect(() => change(r, { [k]: o.value, ...(k === 'backlightMin' ? { backlightMax: 10 } : {}) }), `${k}=${o.value}`).not.toThrow();
+                    expect(() => change(r, { [k]: o.value, ...(k === 'backlightMin' ? { backlightMax: 10 } : {}) }), `${k}=${o.value}`).not.toThrow();
         }
       }
     }

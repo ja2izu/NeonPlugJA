@@ -29,7 +29,7 @@ const key = (k: string, label: string, hint?: string) => ({
 const BACKLIGHT_TIME: OptionItem[] = [
   { value: 0, label: 'OFF' },
   ...Array.from({ length: 60 }, (_, i) => ({ value: i + 1, label: `${(i + 1) * 5} 秒` })),
-  { value: 61, label: '常時ON（動作はファーム側で未確認）' },
+  { value: 61, label: '常時ON（ソースで確認・実機未確認）' },
 ];
 
 const SCAN_RESUME: OptionItem[] = [
@@ -100,7 +100,7 @@ export const UVK1_SETTINGS_PROFILE: SettingsProfile = {
       title: '表示・照明',
       fields: [
         { key: 'radioSpecific.backlightTime', label: '照明時間（BLTime）', type: 'select', options: BACKLIGHT_TIME },
-        { key: 'radioSpecific.backlightMin', label: '照明 最小（BLMin）', type: 'select', options: opts(Array.from({ length: 11 }, (_, i) => String(i))), hint: '最大より小さい値だけ書けます。' },
+        { key: 'radioSpecific.backlightMin', label: '照明 最小（BLMin）', type: 'select', options: opts(Array.from({ length: 10 }, (_, i) => String(i))), hint: '0〜9。最大より小さい値だけ書けます。' },
         { key: 'radioSpecific.backlightMax', label: '照明 最大（BLMax）', type: 'select', options: opts(Array.from({ length: 11 }, (_, i) => String(i))) },
         { key: 'radioSpecific.backlightTxRx', label: '送受信時の照明（BLTxRx）', type: 'select', options: opts(['OFF', 'TX', 'RX', 'TX/RX']) },
         { key: 'radioSpecific.batteryText', label: '電池表示（BatTXT）', type: 'select', options: opts(['NONE', 'VOLTAGE', 'PERCENT']) },
@@ -121,8 +121,8 @@ export const UVK1_SETTINGS_PROFILE: SettingsProfile = {
         {
           key: 'radioSpecific.fLock', label: '送信周波数ロック（F Lock）', type: 'select',
           options: opts([
-            'DEFAULT+', 'FCC HAM', 'CA HAM', 'JA/CE HAM（144-146・430-440 MHz）', 'GB HAM',
-            '137-174 / 400-430', '137-174 / 400-438', 'PMR 446', 'GMRS/FRS/MURS', 'DISABLE ALL',
+            '標準（137-174 / 400-470）', 'FCCアマ（144-148 / 420-450）', 'CAアマ（144-148 / 430-450）', 'JA/CEアマ（144-146 / 430-440）', 'GBアマ（144-148 / 430-440）',
+            '137-174 / 400-430', '137-174 / 400-438', 'PMR 446', 'GMRS FRS MURS', '全送信 禁止',
           ]),
           hint: 'UNLOCK ALL（10）は本体メニューからだけ設定できます。並びは 25Ja（Fusion）のものです。',
         },
@@ -135,7 +135,7 @@ export const UVK1_SETTINGS_PROFILE: SettingsProfile = {
       fields: [
         key('keyMenuLong', 'MENU 長押し'),
         key('keyPf1Short', 'PF1 短押し'),
-        key('keyPf1Long', 'PF1 長押し', '名称は本体メニューの英語表記です。25Ja の番号は CHIRP と違います。'),
+        key('keyPf1Long', 'PF1 長押し', '名称は本体メニューの表示（日本語）です。25Ja の番号は CHIRP と違います。'),
         key('keyPf2Short', 'PF2 短押し'),
         key('keyPf2Long', 'PF2 長押し'),
       ],

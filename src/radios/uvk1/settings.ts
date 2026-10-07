@@ -55,9 +55,9 @@ const oneOf = (list: readonly number[]) => (v: number) => list.includes(v);
 
 /** Key action IDs of 25Ja that the Fusion menu offers (CHIRP's numbers differ). */
 export const UVK1_KEY_ACTIONS: ReadonlyArray<readonly [number, string]> = [
-  [0, 'NONE'], [1, 'FLASHLIGHT'], [2, 'POWER'], [3, 'MONITOR'], [4, 'SCAN'], [7, 'FM RADIO'],
-  [9, 'LOCK KEYPAD'], [10, 'VFO A/B'], [11, 'VFO/MEM'], [12, 'MODE'], [14, 'RX MODE'],
-  [15, 'MAIN ONLY'], [16, 'PTT'], [17, 'WIDE/NARROW'], [19, 'MUTE'], [20, 'RxA'],
+  [0, 'なし'], [1, 'ライト'], [2, '送信出力'], [3, 'モニター'], [4, 'スキャン'], [7, 'FMラジオ'],
+  [9, 'キーロック'], [10, 'A/B切替'], [11, 'VFO/CH'], [12, 'モード'], [14, '受信 モード'],
+  [15, 'メインのみ'], [16, 'PTT'], [17, 'ワイド/ナロー'], [19, 'ミュート'], [20, 'RxA'],
 ];
 const KEY_ACTION_IDS = UVK1_KEY_ACTIONS.map(([id]) => id);
 
@@ -98,7 +98,7 @@ const FIELDS: FieldDef[] = [
   // 表示・音・バックライト
   bits('chDisplay', 0xa009, 0xff, range(0, 3)),
   bits('backlightTime', 0xa00d, 0xff, range(0, 61)),
-  bits('backlightMin', 0xa008, 0xf0, range(0, 10)),
+  bits('backlightMin', 0xa008, 0xf0, range(0, 9)),
   bits('backlightMax', 0xa008, 0x0f, range(0, 10)),
   bits('backlightTxRx', 0xa157, 0xc0, range(0, 3)),
   bits('batteryText', 0xa157, 0x0c, range(0, 2)),
