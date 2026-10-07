@@ -116,17 +116,17 @@ export const UVK1_SETTINGS_PROFILE: SettingsProfile = {
         { key: 'radioSpecific.autoKeyLock', label: '自動キーロック（KeyLck・秒）', type: 'number', min: 0, max: 600, step: 15, hint: '0 = OFF。15 秒単位（〜10 分）。' },
         { key: 'radioSpecific.sleepMin', label: 'スリープ（SetOff・分）', type: 'number', min: 0, max: 120, hint: '0 = OFF。' },
         { key: 'radioSpecific.timer', label: 'タイマー（SetTmr）', type: 'checkbox', hint: '本体メニューでは隠れている項目です。' },
-        { key: 'radioSpecific.navKeys', label: '機種依存キー（SetNav）', type: 'select', options: opts(['LEFT/RIGHT（K1）', 'UP/DOWN（K5 V3）']) },
-        { key: 'radioSpecific.batteryType', label: '電池の種類（BatTyp）', type: 'select', options: opts(['1600K5', '2200K5', '3500K5', '1400K1', '2500K1']) },
+        { key: 'radioSpecific.navKeys', label: '機種依存キー（SetNav）', type: 'select', options: opts(['LEFT/RIGHT（K1）', 'UP/DOWN（K5 V3）']), hint: '本体では隠しメニューの項目です。' },
+        { key: 'radioSpecific.batteryType', label: '電池の種類（BatTyp）', type: 'select', options: opts(['1600K5', '2200K5', '3500K5', '1400K1', '2500K1']), hint: '本体では隠しメニューの項目です。' },
         {
           key: 'radioSpecific.fLock', label: '送信周波数ロック（F Lock）', type: 'select',
           options: opts([
             '標準（137-174 / 400-470）', 'FCCアマ（144-148 / 420-450）', 'CAアマ（144-148 / 430-450）', 'JA/CEアマ（144-146 / 430-440）', 'GBアマ（144-148 / 430-440）',
             '137-174 / 400-430', '137-174 / 400-438', 'PMR 446', 'GMRS FRS MURS', '全送信 禁止',
           ]),
-          hint: 'UNLOCK ALL（10）は本体メニューからだけ設定できます。並びは 25Ja（Fusion）のものです。',
+          hint: '本体では隠しメニュー（PTT と上側のサイドキーを押しながら電源を入れる）の項目です。UNLOCK ALL（10）は本体メニューからだけ設定できます。並びは 25Ja（Fusion）のものです。',
         },
-        { key: 'radioSpecific.rx350', label: '350 MHz 受信解除', type: 'checkbox', hint: '本体メニューでは隠れている項目です。' },
+        { key: 'radioSpecific.rx350', label: '350 MHz 受信解除', type: 'checkbox', hint: '本体では隠しメニュー（PTT と上側のサイドキーを押しながら電源を入れる）の項目です。' },
       ],
     },
     {
