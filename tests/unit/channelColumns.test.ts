@@ -154,7 +154,9 @@ describe('channel column gating', () => {
     // rather than a screen of features it may not have.
     for (const d of RADIO_DESCRIPTORS) {
       if (d.capabilities === DM32UV_CAPABILITIES || d.capabilities === D890UV_CAPABILITIES) continue;
-      expect(d.capabilities.channelColumns ?? []).toEqual([]);
+      // UV-K1 (25Ja) は専用の列グループ 'uvk1Channel' だけを宣言する
+      const expected = d.capabilities.scanListTermGroup === true ? ['uvk1Channel'] : [];
+      expect(d.capabilities.channelColumns ?? []).toEqual(expected);
     }
   });
 });

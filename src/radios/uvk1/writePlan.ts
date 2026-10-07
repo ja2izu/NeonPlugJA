@@ -30,10 +30,10 @@ import { encodeChannel } from '../uvk5/structures';
 import {
   UVK1_ADDR, UVK1_ATTR_SIZE, UVK1_BAND_EMPTY, UVK1_BAND_LOWER_MHZ, UVK1_CHANNEL_SIZE,
   UVK1_FREQ_MAX_MHZ, UVK1_FREQ_MIN_MHZ, UVK1_IMAGE_EXT_BASE, UVK1_MAX_CHANNELS, UVK1_MAX_NAME_BYTES,
-  UVK1_LIST_KANJI_BASE, UVK1_LIST_KANJI_SIZE, UVK1_MAX_NAME_BYTES_LONG, UVK1_NAME_EXT_SPI, UVK1_NAME_SIZE, UVK1_SCAN_LISTS,
+  UVK1_BOOT_TEXT_BASE, UVK1_BOOT_TEXT_SIZE, UVK1_LIST_KANJI_BASE, UVK1_LIST_KANJI_SIZE, UVK1_MAX_NAME_BYTES_LONG, UVK1_NAME_EXT_SPI, UVK1_NAME_SIZE, UVK1_SCAN_LISTS,
   UVK1_SPI_WRITE_MAX, type UVK1FontId,
 } from './constants';
-import { applyUvk1Power, decodeAttribute, isUnusedAttribute } from './structures';
+import { applyUvk1Power, applyUvk1RecordFields, decodeAttribute, isUnusedAttribute, previousForEncode } from './structures';
 import { FONT_25JA_CHARS } from './font25ja';
 
 /**
@@ -55,12 +55,17 @@ export const WRITABLE_EXT_RANGE: readonly [number, number] =
 export const WRITABLE_LIST_NAME_RANGE: readonly [number, number] =
   [UVK1_LIST_KANJI_BASE, UVK1_LIST_KANJI_BASE + UVK1_SCAN_LISTS * UVK1_LIST_KANJI_SIZE];
 
+/** 25Ja v0.3 以降の起動文言（24 バイト）。文言があるときだけ書ける。 */
+export const WRITABLE_BOOT_TEXT_RANGE: readonly [number, number] =
+  [UVK1_BOOT_TEXT_BASE, UVK1_BOOT_TEXT_BASE + UVK1_BOOT_TEXT_SIZE];
+
 /** Throws unless [address, address + length) lies inside one writable range. */
-export function assertWritable(address: number, length: number, longNames = false, listNames = false): void {
+export function assertWritable(address: number, length: number, longNames = false, listNames = false, bootText = false): void {
   const ranges = [
     ...WRITABLE_RANGES,
     ...(longNames ? [WRITABLE_EXT_RANGE] : []),
     ...(listNames ? [WRITABLE_LIST_NAME_RANGE] : []),
+    ...(bootText ? [WRITABLE_BOOT_TEXT_RANGE] : []),
   ];
   const ok = ranges.some(([s, e]) => address >= s && address + length <= e);
   if (!ok || length < 1) {
@@ -170,7 +175,11 @@ export function validateChannels(channels: Channel[], font: UVK1FontId, maxNameB
 export function encodeAttribute(channel: Channel, previousRaw: number | null): number {
   const prev = previousRaw === null ? null : decodeAttribute(previousRaw & 0xff, previousRaw >> 8);
   const band = bandForFrequency(channel.rxFrequency);
-  const compander = prev ? prev.compander : 0;
+  const compander = Number.isInteger(channel.uvk1Compander)
+    ? Math.max(0, Math.min(3, channel.uvk1Compander as number))
+    : prev ? prev.compander : 0;
+  // bits 5-6 are unused by the firmware; keep them as the radio had them. JA: 未使用 bit は元のまま保つ
+  const keptBits = prev ? prev.raw & 0x60 : 0;
   const listId = Number.isInteger(channel.scanListId) ? Math.max(0, Math.min(UVK1_SCAN_LISTS + 1, channel.scanListId)) : 0;
   let scanList: number;
   let exclude = false;
@@ -182,7 +191,7 @@ export function encodeAttribute(channel: Channel, previousRaw: number | null): n
   } else {
     scanList = 0;
   }
-  return (band & 0x07) | ((compander & 0x03) << 3) | ((exclude ? 1 : 0) << 7) | ((scanList & 0xff) << 8);
+  return (band & 0x07) | ((compander & 0x03) << 3) | keptBits | ((exclude ? 1 : 0) << 7) | ((scanList & 0xff) << 8);
 }
 
 /** One list name as the radio stores it: UTF-8, 0x00 padded to 12 bytes. */
@@ -294,8 +303,10 @@ export function buildTarget(current: Uint8Array, channels: Channel[], longNames 
     const previous = usedOnRadio
       ? { record: current.subarray(recAt, recAt + UVK1_CHANNEL_SIZE), attribute: 0, nameField: new Uint8Array(16) }
       : undefined;
-    const record = encodeChannel(ch, previous).record;
-    applyUvk1Power(record, ch.power, previous?.record);
+    const originalRecord = previous?.record.slice();
+    const record = encodeChannel(ch, previous && { ...previous, record: previousForEncode(previous.record) }).record;
+    applyUvk1Power(record, ch.power, originalRecord);
+    applyUvk1RecordFields(record, ch, originalRecord);
     const attr = encodeAttribute(ch, usedOnRadio ? prevRaw : null);
 
     image.set(record, recAt);

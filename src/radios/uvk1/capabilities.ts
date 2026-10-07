@@ -70,6 +70,8 @@ export const UVK1_CAPS: RadioCapabilities = {
   scanListsBySlot: true,
   scanListAllValue: UVK1_SCAN_LISTS + 1,
   scanListNamesAppSideOnly: true,
+  scanListTermGroup: true,
+  channelColumns: ['uvk1Channel'],
   scanExcludeEditable: true,
   scanListFields: [],
   supportsContacts: false,

@@ -1168,7 +1168,7 @@ export const ChannelEditModal: React.FC<ChannelEditModalProps> = ({
                       </label>
                       {c.editor.kind === 'select' ? (
                         <select
-                          value={String(typeof raw === 'number' ? raw : 0)}
+                          value={String(typeof raw === 'number' ? raw : c.unsetValue ?? 0)}
                           disabled={disabled}
                           onChange={(e) => handleChange(c.field, parseInt(e.target.value) || 0)}
                           className={`${FIELD} w-full border rounded px-2 py-1 text-sm`}
@@ -1184,7 +1184,7 @@ export const ChannelEditModal: React.FC<ChannelEditModalProps> = ({
                           type="number"
                           min={c.editor.min}
                           max={c.editor.max}
-                          value={typeof raw === 'number' ? raw : 0}
+                          value={typeof raw === 'number' ? raw : c.unsetValue ?? 0}
                           disabled={disabled}
                           onChange={(e) => {
                             const parsed = parseInt(e.target.value);

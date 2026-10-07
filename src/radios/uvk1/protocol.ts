@@ -29,11 +29,12 @@ import { log as plog } from '../../utils/protocolLogger';
 import { UVK1Connection, openUVK1Port, type UVK1SerialPort } from './connection';
 import {
   UVK1_ADDR, UVK1_ATTR_SIZE, UVK1_BLOCK_SIZE, UVK1_CHANNEL_SIZE, UVK1_FONT_BASE,
-  UVK1_LIST_KANJI_BASE, UVK1_LIST_KANJI_SIZE, UVK1_SCAN_LISTS,
+  UVK1_BOOT_TEXT_BASE, UVK1_BOOT_TEXT_SIZE, UVK1_LIST_KANJI_BASE, UVK1_LIST_KANJI_SIZE, UVK1_SCAN_LISTS,
   UVK1_FONT_PROFILES, UVK1_HELLO_MARKER, UVK1_IMAGE_EXT_BASE, UVK1_MAX_CHANNELS,
   UVK1_MAX_NAME_BYTES, UVK1_MAX_NAME_BYTES_LONG, UVK1_NAME_EXT_SPI, UVK1_NAME_SIZE, type UVK1FontId,
 } from './constants';
 import { decodeAttribute, decodeChannelName, isUnusedAttribute, parseChannel } from './structures';
+import { applyBootText, decodeBootText, planBootTextWrite, validateBootText } from './bootText';
 import {
   applyListNames, assertWritable, buildTarget, imageToSpiAddress, planListNameWrites, planWrites,
   validateChannels, validateListNames,
@@ -70,6 +71,8 @@ export class UVK1Protocol extends BaseAnalogProtocol {
   private readBlocks = new Set<number>();
   /** Scan list names to write (index = list number - 1). Null: leave the radio's names alone. */
   private listNames: ReadonlyArray<string | undefined> | null = null;
+  /** 起動画面の文言（25Ja v0.3 以降）。Null: 無線機の値のまま。 */
+  private bootText: string | null = null;
 
   async connect(portOrOptions?: string | { forcePortSelection?: boolean; transport?: string }): Promise<void> {
     const opts = typeof portOrOptions === 'object' ? portOrOptions : {};
@@ -206,6 +209,17 @@ export class UVK1Protocol extends BaseAnalogProtocol {
         done.add(UVK1_LIST_KANJI_BASE + off);
       }
     }
+    // 起動文言（25Ja v0.3 以降）: 24 バイト。応答が無ければ「文言なし」（0xFF）のまま続ける。
+    if (this.supportsBootText()) {
+      const data = await conn.spiRead(UVK1_BOOT_TEXT_BASE, UVK1_BOOT_TEXT_SIZE);
+      if (data) {
+        image.set(data, UVK1_BOOT_TEXT_BASE);
+        done.add(UVK1_BOOT_TEXT_BASE);
+      } else {
+        plog.warn(`boot text: no answer at 0x${UVK1_BOOT_TEXT_BASE.toString(16)}, not read`, 'UV-K1');
+        image.fill(0xff, UVK1_BOOT_TEXT_BASE, UVK1_BOOT_TEXT_BASE + UVK1_BOOT_TEXT_SIZE);
+      }
+    }
     plog.info(`read: ${done.size} block(s), ${used.length} channel(s) in use, ${Date.now() - tStart} ms`, 'UV-K1');
     this.onProgress?.(1, 'Read complete');
     this.image = image;
@@ -234,6 +248,27 @@ export class UVK1Protocol extends BaseAnalogProtocol {
   /** Whether this radio keeps scan list names (25ja font). */
   supportsScanListNames(): boolean {
     return this.font === '25ja';
+  }
+
+  /**
+   * 起動画面の文言を扱えるか。25ja のフォントで、ファームが版数（v0.3 以降）を返すときだけ。
+   * 版数を返さない旧 25Ja では 0x0089A0 が使われていない保証が無い（FW 側の申し送り §5）。
+   */
+  supportsBootText(): boolean {
+    return this.font === '25ja' && this.fwVersion !== null;
+  }
+
+  /** 無線機の起動文言（空は ''）。対応しない無線機、または readChannels の前は null。 */
+  readBootText(): string | null {
+    if (!this.supportsBootText() || !this.image) return null;
+    const at = UVK1_BOOT_TEXT_BASE;
+    if (!this.readBlocks.has(at)) return null;
+    return decodeBootText(this.image.subarray(at, at + UVK1_BOOT_TEXT_SIZE));
+  }
+
+  /** 次の writeChannels で書く起動文言。Null は触らない。空文字列は消去（0x00 で埋める）。 */
+  setBootText(text: string | null): void {
+    this.bootText = text;
   }
 
   /** Names for the next writeChannels (index = list number - 1; undefined = leave). Null clears. */
@@ -268,6 +303,8 @@ export class UVK1Protocol extends BaseAnalogProtocol {
     const problems = validateChannels(channels, this.font, this.maxNameBytes());
     const listNames = this.font === '25ja' ? this.listNames : null;
     if (listNames) problems.push(...validateListNames(listNames, this.font));
+    const bootText = this.supportsBootText() ? this.bootText : null;
+    if (bootText !== null) problems.push(...validateBootText(bootText, this.font));
     if (problems.length > 0) {
       const shown = problems.slice(0, 30).join('\n');
       const more = problems.length > 30 ? `\n... and ${problems.length - 30} more` : '';
@@ -277,9 +314,11 @@ export class UVK1Protocol extends BaseAnalogProtocol {
     const current = await this.readImage();
     const target = buildTarget(current, channels, this.longNames);
     if (listNames) applyListNames(target.image, listNames);
+    if (bootText !== null) applyBootText(target.image, bootText);
     const writes = [
       ...planWrites(current, target.image, target.touched, this.longNames),
       ...(listNames ? planListNameWrites(current, target.image) : []),
+      ...(bootText !== null ? planBootTextWrite(current, target.image) : []),
     ];
     const total = writes.length * 2;
 
@@ -295,7 +334,7 @@ export class UVK1Protocol extends BaseAnalogProtocol {
 
     let step = 0;
     for (const w of writes) {
-      assertWritable(w.address, w.data.length, this.longNames, true);
+      assertWritable(w.address, w.data.length, this.longNames, true, bootText !== null);
       const spi = imageToSpiAddress(w.address);
       await conn.spiWrite(spi, w.data);
       step++;

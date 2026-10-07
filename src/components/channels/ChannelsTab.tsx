@@ -18,6 +18,7 @@ import type { Channel } from '../../models/Channel';
 
 import { isVFOChannel } from '../../utils/vfoChannels';
 import { useRadioStore } from '../../store/radioStore';
+import { BootTextPanel } from './BootTextPanel';
 import { BroadcastChannelsTable } from './BroadcastChannelsTable';
 import { D890_BROADCAST } from '../../radios/d890uv/broadcastChannels';
 import { PageHeader } from '../ui/PageHeader';
@@ -337,6 +338,7 @@ export const ChannelsTab: React.FC = () => {
           {tr("⚠ Out-of-band frequencies are ON. Channels aren't checked against the radio's bands, and a write keeps them as they are. Turn it off in About.")}
         </div>
       )}
+      {!isBroadcast && <BootTextPanel />}
       <div className="mb-3 flex items-center gap-3 shrink-0">
         <div className="relative flex-1 min-w-0">
           <input

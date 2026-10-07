@@ -15,6 +15,7 @@ import type {
   DigitalEmergency, AnalogEmergency, EncryptionKey, Contact,
 } from '../../models';
 import { unwritableChars } from '../../utils/japaneseNames';
+import { scanTerm } from '../../utils/tr';
 
 export interface JapaneseNameCheckInput {
   channels: readonly Channel[];
@@ -44,7 +45,7 @@ export function findUnwritableNames(input: JapaneseNameCheckInput): UnwritableNa
   };
   input.channels.forEach((c) => check(`チャンネル ${c.number}`, c.name));
   input.zones.forEach((z, i) => check(`ゾーン ${i + 1}`, z.name));
-  input.scanLists.forEach((s, i) => check(`スキャンリスト ${s.slot ?? i + 1}`, s.name));
+  input.scanLists.forEach((s, i) => check(scanTerm(`スキャンリスト ${s.slot ?? i + 1}`), s.name));
   input.talkGroups.forEach((t) => check(`トークグループ ${t.index}`, t.name));
   input.rxGroups.forEach((g) => check(`RX グループ ${g.index + 1}`, g.name));
   input.radioIds.forEach((r) => check(`無線機 ID ${r.index + 1}`, r.name));

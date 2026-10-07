@@ -38,6 +38,8 @@ import { isJapaneseNamesActive } from './utils/japaneseNames';
 import { readCsvText } from './utils/readCsvText';
 import { useUiLanguageStore, resolvePalette } from './store/uiLanguageStore';  // NeonPlugJA: 日本語表示と配色
 import { applyPalette } from './utils/jaThemes';
+import { setScanTermGroup } from './utils/tr';  // NeonPlugJA: UV-K1 は「スキャングループ」
+import { useRadioCapabilities } from './hooks/useRadioCapabilities';
 
 function App() {
   const [activeTab, setActiveTab] = useState('channels');
@@ -50,6 +52,9 @@ function App() {
   const { setPreferredTransport, showPickRadioModal, setShowPickRadioModal } = useRadioStore();
   const { isConnecting, error: radioError } = useRadioConnection();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  // NeonPlugJA: 選択中の無線機が「スキャングループ」と呼ぶなら、子の描画より前に切り替える（同じ値の再設定は無害）
+  const { caps: appCaps } = useRadioCapabilities();
+  setScanTermGroup(appCaps?.scanListTermGroup === true);
 
   // NeonPlugJA: 日本語表示のときの配色。自動は 1 時間ごとに見直す（季節・ハロウィンの切替）
   const { language: uiLanguage, theme: uiTheme, user: uiUser } = useUiLanguageStore();

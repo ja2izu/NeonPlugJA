@@ -125,7 +125,7 @@ export const ExtraColumnCell: React.FC<{
 
   if (column.editor.kind === 'select') {
     const options = column.editor.options;
-    const index = typeof raw === 'number' ? raw : 0;
+    const index = typeof raw === 'number' ? raw : column.unsetValue ?? 0;
     return (
       <td className="px-2 py-2" title={title}>
         <select
@@ -160,7 +160,7 @@ export const ExtraColumnCell: React.FC<{
           type="number"
           min={min}
           max={max}
-          value={typeof raw === 'number' ? raw : 0}
+          value={typeof raw === 'number' ? raw : column.unsetValue ?? 0}
           onChange={(e) => {
             const parsed = parseInt(e.target.value);
             onCellChange(channel.number, column.field, Number.isNaN(parsed) ? 0 : parsed);

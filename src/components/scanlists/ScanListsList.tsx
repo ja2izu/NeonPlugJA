@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect, useId, useMemo } from 'react';
 import { useAlert } from '../../hooks/useAlert';
+import { scanTerm } from '../../utils/tr';
 import { formatPlural } from '../../utils/formatPlural';
 import { createPortal } from 'react-dom';
 import { useScanListsStore } from '../../store/scanListsStore';
@@ -137,7 +138,7 @@ export const ScanListsList: React.FC = () => {
       setEditScanListName('');
     } else {
       showAlert(ja
-        ? `スキャンリスト名が不正か、同じ名前があります。名前は 1〜${maxNameLength} バイト（${utf8 ? '英数字 1、漢字・かな 3' : '英数字 1、漢字・かな 2'}）で、重複できません。`
+        ? scanTerm(`スキャンリスト名が不正か、同じ名前があります。名前は 1〜${maxNameLength} バイト（${utf8 ? '英数字 1、漢字・かな 3' : '英数字 1、漢字・かな 2'}）で、重複できません。`)
         : `Invalid scan list name or name already exists. Scan list names must be 1-${maxNameLength} characters and unique.`);
     }
   };

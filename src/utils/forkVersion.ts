@@ -13,7 +13,7 @@
 export const FORK_NAME = 'NeonPlugJA';
 
 /** フォークの版。上流を取り込んだときは上流の版ではなくこちらを上げる */
-export const FORK_VERSION = '0.92.1';
+export const FORK_VERSION = '0.93';
 
 export const FORK_AUTHOR = 'JA2IZU';
 

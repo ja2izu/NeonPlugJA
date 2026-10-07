@@ -33,7 +33,9 @@ export type ExtraColumnProvenance =
   /** Offset from the vendor marshaller; the captured codeplug never varied it. */
   | 'marshaller'
   /** Offset from the marshaller AND the stored encoding is reasoned, not read. */
-  | 'inferred';
+  | 'inferred'
+  /** UV-K1 (25Ja): ファームのソース（radio.c / settings.c）の読みによる。実機では未確認。 */
+  | 'firmware';
 
 export type ExtraColumnEditor =
   | { kind: 'boolean' }
@@ -72,6 +74,8 @@ export interface ExtraChannelColumn {
    * predicate rather than an approximation of one.
    */
   analogOnly?: boolean;
+  /** Value shown while the channel does not carry the field (undefined); the select / number editors use it instead of 0. */
+  unsetValue?: number;
 }
 
 /**
@@ -395,11 +399,58 @@ export const EXTRA_CHANNEL_COLUMNS: readonly ExtraChannelColumn[] = [
   },
 ];
 
+/** UV-K1 (25Ja) のステップ表示（番号 0-22。7 以上はカスタム）。 */
+export const UVK1_STEP_LABELS: readonly string[] = [
+  '2.5kHz', '5kHz', '6.25kHz', '10kHz', '12.5kHz', '25kHz', '8.33kHz',
+  ...Array.from({ length: 16 }, (_, i) => `カスタム${7 + i}`),
+];
+
+/**
+ * UV-K1 (25Ja) のチャンネル項目。レコードの位置は FW の radio.c / settings.c から。
+ * 実機では未確認なので provenance は 'firmware'（見出しに * が付く）。
+ */
+export const UVK1_CHANNEL_COLUMNS: readonly ExtraChannelColumn[] = [
+  {
+    group: 'uvk1Channel', field: 'uvk1Modulation', header: '受信モード', label: '受信モード（変調）',
+    offset: 'レコード byte 11 上位4bit', provenance: 'firmware',
+    editor: { kind: 'select', options: ['FM', 'AM', 'USB'] }, unsetValue: 0,
+  },
+  {
+    group: 'uvk1Channel', field: 'uvk1Step', header: 'ステップ', label: 'ステップ',
+    offset: 'レコード byte 14（番号 0-22）', provenance: 'firmware',
+    editor: { kind: 'select', options: UVK1_STEP_LABELS }, unsetValue: 4,
+    note: '7 以上のカスタムの周波数は本体側の設定による',
+  },
+  {
+    group: 'uvk1Channel', field: 'uvk1Reverse', header: '反転', label: '周波数反転（Reverse）',
+    offset: 'レコード byte 12 bit 0', provenance: 'firmware', editor: { kind: 'boolean' },
+  },
+  {
+    group: 'uvk1Channel', field: 'uvk1Bclo', header: 'ビジーロック', label: 'ビジーロック（使用中は送信しない）',
+    offset: 'レコード byte 12 bit 5', provenance: 'firmware', editor: { kind: 'boolean' },
+  },
+  {
+    group: 'uvk1Channel', field: 'uvk1DtmfDecode', header: 'DTMF受信', label: 'DTMF 受信デコード',
+    offset: 'レコード byte 13 bit 0', provenance: 'firmware', editor: { kind: 'boolean' },
+  },
+  {
+    group: 'uvk1Channel', field: 'uvk1PttId', header: 'PTT ID', label: 'PTT ID',
+    offset: 'レコード byte 13 bit 1-3（0-4）', provenance: 'firmware',
+    editor: { kind: 'select', options: ['0', '1', '2', '3', '4'] }, unsetValue: 0,
+    note: '25Ja の本体メニューでは PTT ID は隠れており、読込時は常に「なし」として扱われる',
+  },
+  {
+    group: 'uvk1Channel', field: 'uvk1Compander', header: 'コンパンド', label: 'コンパンド',
+    offset: '属性 bit 3-4', provenance: 'firmware',
+    editor: { kind: 'select', options: ['OFF', '送信', '受信', '送受信'] }, unsetValue: 0,
+  },
+];
+
 /** Columns a radio actually renders, in declaration order. */
 export function extraColumnsFor(
   declared: ReadonlySet<ChannelColumnGroup>
 ): readonly ExtraChannelColumn[] {
-  return EXTRA_CHANNEL_COLUMNS.filter((c) => declared.has(c.group));
+  return [...EXTRA_CHANNEL_COLUMNS, ...UVK1_CHANNEL_COLUMNS].filter((c) => declared.has(c.group));
 }
 
 /**
@@ -411,7 +462,9 @@ export function extraColumnTitle(c: ExtraChannelColumn): string {
   const caveat =
     c.provenance === 'hardware'
       ? ''
-      : c.provenance === 'marshaller'
+      : c.provenance === 'firmware'
+        ? ' — ' + 'ファームのソースによる。実機では未確認 (not yet confirmed)'
+        : c.provenance === 'marshaller'
         ? ' ' + tr('— offset from the vendor CPS; not yet confirmed against a radio')
         : ' ' + tr('— offset from the vendor CPS; encoding inferred, not confirmed');
   return `${tr(c.label)} (${c.offset})${caveat}${c.note ? `. ${c.note}` : ''}`;

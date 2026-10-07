@@ -114,7 +114,9 @@ export type ChannelColumnGroup =
   | 'callConfirmation'
   | 'messaging'
   | 'aprsAdvanced'
-  | 'emergencyCodes';
+  | 'emergencyCodes'
+  // UV-K1 (25Ja): 受信モード、ステップ、反転、ビジーロック、DTMF受信、PTT ID、コンパンド
+  | 'uvk1Channel';
 
 export interface RadioCapabilitiesDiagnostics {
   parseRadioSettings: (data: Uint8Array) => RadioSettings;
@@ -419,6 +421,8 @@ export interface RadioCapabilities {
    * also holds them (see scanListNameUtf8Bytes) and a read merges them in.
    */
   scanListNamesAppSideOnly?: boolean;
+  /** 日本語表示で「スキャンリスト」を「スキャングループ」と呼ぶ無線機（UV-K1 25Ja の本体メニューの呼び方）。 */
+  scanListTermGroup?: boolean;
   /**
    * UV-K1 (25ja font): list names are UTF-8 held by the radio in a field of
    * maxScanListNameLength bytes (up to 4 kanji / kana, or ASCII by bytes). The editor limits

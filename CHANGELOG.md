@@ -22,6 +22,7 @@ version says how old a build is, not how big its changes are. Whether a saved
 - NeonPlugJA 0.92: UV-K1 (25Ja firmware) support: channels with kanji/kana names (up to 31 bytes), scan lists with kanji names, scan list CSV, exclude flag, power Low1-Low5/Medium/High.
 - NeonPlugJA 0.92: starts in Japanese when the browser language is Japanese; Japanese display with seasonal colour themes.
 - NeonPlugJA 0.92: release links point to the NeonPlugJA repository.
+- NeonPlugJA 0.93: UV-K1 (25Ja): all per-channel parameters can now be read, edited and written — receive mode (FM/AM/USB), step, reverse, busy lock, DTMF decode, PTT ID and compander; a new channel starts at FM / 12.5 kHz; unused attribute bits and a channel record whose flags byte is 0xFF are no longer altered by a write. Boot-screen text (SPI 0x0089A0, 24 bytes, 128 px) for 25Ja v0.3 or later. Japanese UI: UV-K1 calls scan lists "スキャングループ" like the radio's menu. Not confirmed on a real radio.
 - NeonPlugJA 0.92.1: UV-K1 (25Ja): the write confirmation no longer lists empty scan lists as "left out" (their names are written; a list belongs to a channel by its number).
 - MMDVM hotspot channels can be duplex, use either timeslot, and pick existing talk groups.
 - Every list exports to CSV and imports back, adding to what's there or replacing it.

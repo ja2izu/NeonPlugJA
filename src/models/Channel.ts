@@ -126,6 +126,22 @@ export interface Channel {
   // These fields reuse bytes 0x1D, 0x1E, 0x1F which are used for analog features in analog mode
   rxGroupListId?: number;      // Byte 0x1F, bits 5-0 (mask 0x3F): RX Group List ID (0-63, 0=None)
   slotOperation?: number;      // Byte 0x1D, bits 3-0: Slot Operation (0-15)
+  // ---- UV-K1 (25Ja) channel fields ----------------------------------------
+  // JA: すべて省略可。未設定（undefined）は「無線機の値をそのまま保つ。新規チャンネルは FW の既定値」。
+  /** 受信モード（変調）: 0 FM, 1 AM, 2 USB。レコード byte 11 上位4bit。 */
+  uvk1Modulation?: number;
+  /** ステップ番号 0-22（0 2.5k, 1 5k, 2 6.25k, 3 10k, 4 12.5k, 5 25k, 6 8.33k, 7-22 カスタム）。byte 14。 */
+  uvk1Step?: number;
+  /** 周波数反転。byte 12 bit 0。 */
+  uvk1Reverse?: boolean;
+  /** ビジーロック（BCLO: 使用中は送信しない）。byte 12 bit 5。 */
+  uvk1Bclo?: boolean;
+  /** DTMF 受信デコード。byte 13 bit 0。 */
+  uvk1DtmfDecode?: boolean;
+  /** PTT ID 0-4。byte 13 bit 1-3。 */
+  uvk1PttId?: number;
+  /** コンパンド 0 OFF, 1 送信, 2 受信, 3 送受信。属性 bit 3-4。 */
+  uvk1Compander?: number;
   // ---- DA-7X2 channel fields -------------------------------------------
   // All optional: radios that do not decode them leave them undefined, which is
   // distinguishable from a decoded false. Offsets confirmed against the vendor

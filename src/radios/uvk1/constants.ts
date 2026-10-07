@@ -135,3 +135,14 @@ export const UVK1_FREQ_MIN_MHZ = 18;
 export const UVK1_FREQ_MAX_MHZ = 1300;
 
 export type UVK1FontId = (typeof UVK1_FONT_PROFILES)[number]['id'] | 'unknown';
+
+/**
+ * 25Ja (v0.3 以降): 起動画面の下端に出すユーザー文言。SPI 0x0089A0、24 バイト、UTF-8、終端 0x00 か 0xFF。
+ * 表示幅は 128 px 以内（半角 7 px、漢字・かな 13 px、幅 = 合計 − 1）。FW 側が超えた分を切る。
+ * 0x00A170/71（起動表示の選択値）は書かない。選択は本体メニューで行う。
+ */
+export const UVK1_BOOT_TEXT_BASE = 0x89a0;
+export const UVK1_BOOT_TEXT_SIZE = 24;
+export const UVK1_BOOT_TEXT_MAX_PX = 128;
+export const UVK1_BOOT_TEXT_HALF_PX = 7;
+export const UVK1_BOOT_TEXT_FULL_PX = 13;

@@ -4,6 +4,7 @@ import { createDefaultProtocol, createProtocolForModel } from '../radios';
 import { D890UVProtocol } from '../radios/d890uv/protocol';
 import { DM32UVProtocol } from '../radios/dm32uv/protocol';
 import { UVK1Protocol } from '../radios/uvk1/protocol';
+import { useBootTextStore } from '../store/bootTextStore';
 import { listNamesFromScanLists, mergeRadioListNames } from '../radios/uvk1/scanListNames';
 import { BaseDigitalProtocol } from '../radios/shared/BaseProtocols';
 import type { OptionalDigitalReads } from '../radios/optionalReads';
@@ -393,6 +394,19 @@ export function useRadioConnection() {
           label: 'Scan list names',
           run: async () => {
             setScanLists(mergeRadioListNames(useScanListsStore.getState().scanLists, proto.readScanListNames()));
+          },
+        });
+      }
+
+      // UV-K1 (25Ja v0.3 以降): 起動画面の文言。対応しない無線機を読んだときは入力欄を隠す。
+      if (!(proto instanceof UVK1Protocol)) useBootTextStore.getState().clear();
+      if (proto instanceof UVK1Protocol) {
+        configSteps.push({
+          label: 'Boot text',
+          run: async () => {
+            const text = proto.readBootText();
+            if (text === null) useBootTextStore.getState().clear();
+            else useBootTextStore.getState().setFromRadio(text);
           },
         });
       }
@@ -1343,6 +1357,11 @@ export function useRadioConnection() {
           const uvk1 = protocol instanceof UVK1Protocol ? protocol : null;
           if (uvk1 && uvk1.supportsScanListNames()) {
             uvk1.setScanListNames(listNamesFromScanLists(useScanListsStore.getState().scanLists));
+          }
+          // 起動画面の文言: 読み込んで対応を確認した無線機のときだけ。欄の値をそのまま渡す（空は消去）。
+          if (uvk1 && uvk1.supportsBootText()) {
+            const bt = useBootTextStore.getState();
+            uvk1.setBootText(bt.supported ? bt.text : null);
           }
           await protocol.writeChannels(validChannels);
         }

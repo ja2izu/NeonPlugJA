@@ -191,8 +191,10 @@ describe('UV-K1 書込の計画', () => {
     const t = buildTarget(cur, list);
     expect(t.image[UVK1_ADDR.CHANNELS + 14]).toBe(4);
     putSlot(cur, 5, 146, 'OLD', 7); // deleted leftovers
+    cur[UVK1_ADDR.CHANNELS + 5 * 16 + 14] = 9; // 残骸のステップ（9 を引き継がない）
     const t2 = buildTarget(cur, [...listOf(), ch(6, 'NEW', 146)]);
-    expect(t2.image[UVK1_ADDR.CHANNELS + 5 * 16 + 14]).toBe(0);
+    // 0.93: 新規 CH のステップは FW の既定 12.5 kHz（番号 4）。以前は 0（2.5 kHz）だった
+    expect(t2.image[UVK1_ADDR.CHANNELS + 5 * 16 + 14]).toBe(4);
   });
 });
 

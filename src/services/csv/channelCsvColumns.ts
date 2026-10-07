@@ -188,6 +188,14 @@ export const CHANNEL_CSV_COLUMNS = {
   unknown29_3_2: num('unknown29_3_2'),
   unknown29_1_0: num('unknown29_1_0'),
   unknown2A: num('unknown2A'),
+  // UV-K1 (25Ja) fields. 空欄は「未設定」（無線機の値を保つ／新規は FW の既定値）。
+  uvk1Modulation: num('UVK1 Modulation'),
+  uvk1Step: num('UVK1 Step'),
+  uvk1Reverse: flag('UVK1 Reverse'),
+  uvk1Bclo: flag('UVK1 BCLO'),
+  uvk1DtmfDecode: flag('UVK1 DTMF Decode'),
+  uvk1PttId: num('UVK1 PTT ID'),
+  uvk1Compander: num('UVK1 Compander'),
   // DA-7X2 fields. Empty for radios that don't decode them, and read back unset,
   // never as 0.
   reverse: flag('Reverse'),
