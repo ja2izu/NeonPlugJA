@@ -90,7 +90,7 @@ export const UVK1_SETTINGS_PROFILE: SettingsProfile = {
         },
         { key: 'radioSpecific.priorityScan', label: '優先スキャン', type: 'checkbox' },
         { key: 'radioSpecific.defaultList', label: '既定スキャングループ（SList）', type: 'select', options: LIST_OPTIONS },
-        { key: 'radioSpecific.priorityCh1', label: '優先 CH 1', type: 'number', min: 0, max: 1024, hint: 'チャンネル番号（1〜1024）。0 = なし。番号は 1 始まりと解釈（実機未確認）。' },
+        { key: 'radioSpecific.priorityCh1', label: '優先 CH 1', type: 'number', min: 0, max: 1024, hint: 'チャンネル番号（1〜1024）。0 = なし。保存値は 0 始まり、なしは 1024（ファームのソースで確認・実機未確認）。' },
         { key: 'radioSpecific.priorityCh2', label: '優先 CH 2', type: 'number', min: 0, max: 1024, hint: 'チャンネル番号（1〜1024）。0 = なし。' },
         { key: 'radioSpecific.callCh', label: 'ワンキー呼出 CH', type: 'number', min: 1, max: 1024, hint: 'チャンネル番号（1〜1024）。' },
       ],
