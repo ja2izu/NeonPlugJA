@@ -62,7 +62,7 @@ export interface RadioPickerOption {
   status?: 'alpha';
 }
 
-const RADIO_PICKER_OPTIONS: RadioPickerOption[] = RADIO_DESCRIPTORS.map((d) => ({
+const RADIO_PICKER_OPTIONS: RadioPickerOption[] = RADIO_DESCRIPTORS.filter((d) => !d.hiddenFromPicker).map((d) => ({
   modelId: d.modelIds[0],
   label: d.label,
   icon: d.icon,

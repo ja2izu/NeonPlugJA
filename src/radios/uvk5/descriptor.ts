@@ -19,6 +19,8 @@ export const UVK5_DESCRIPTOR: RadioDescriptor = {
   group: 'Quansheng',
   supportsBle: false,
   status: 'alpha',
+  // NeonPlugJA: reading only and not announced; kept registered for later, not offered in the picker.
+  hiddenFromPicker: true,
   protocolFactory: () => new UVK5Protocol(),
   capabilities: UVK5_CAPS,
 };

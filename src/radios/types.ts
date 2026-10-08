@@ -26,6 +26,12 @@ export interface RadioDescriptor {
    * means no badge, which is the claim that it is ordinary.
    */
   status?: 'alpha';
+  /**
+   * NeonPlugJA: true keeps the radio out of the "Pick a radio" modal and the
+   * conversion targets. The driver stays registered (protocol, capabilities, saved
+   * codeplug files of that model still open); it is just not offered.
+   */
+  hiddenFromPicker?: boolean;
   /** Factory that returns a new protocol instance. */
   protocolFactory: () => RadioProtocol;
   /** Capabilities for this radio (limits, feature flags, parsers). */
