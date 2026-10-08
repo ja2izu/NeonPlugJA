@@ -17,7 +17,7 @@
 - 著作権：Copyright (c) 2026 JA2IZU（このフォークの変更部分）
 - ライセンス：MIT License（`LICENSE`）
 - 原作：NeonPlug, MIT License, Copyright (c) NeonPlug contributors
-- ベース：NeonPlug v2026.9.0（コミット `fb22b49`）
+- ベース：NeonPlug の main（2026-09-20 のコミット `fb22b49`「Tidy the README (#193)」。v2026.9.0 の後、v2026.9.1 の前）
 - 字表：`tools/data/master_1990.csv` は JA2IZU が別プロジェクトで作成したもので、著作権は JA2IZU、ライセンスは同じ MIT です（`tools/data/README.md`）
 
 ## 前提
