@@ -149,7 +149,7 @@ function fakeRadio(image: Uint8Array, opts: { spi: boolean; longNames?: boolean;
     if (id === 0x0514) {
       const r = new Uint8Array(4 + 36); r.set([0x15, 0x05, 36, 0]); r.set(utf8('F4HWN v5.2.8'), 4);
       if (opts.longNames) r.set([0x25, 0x4a, 0x01], 17); // 25Ja: Version[13..15]
-      if (opts.fwVersion) r.set(opts.fwVersion, 22); // 25Ja 0.3+: Padding[0..1] = (major<<4)|minor, patch
+      if (opts.fwVersion) r.set(opts.fwVersion, 22); // 25Ja 0.4+: Padding[0..1] = (major<<4)|minor, patch
       reply(r);
     } else if (id === 0x051b) {
       const off = payload[4] | (payload[5] << 8); const len = payload[6];

@@ -398,7 +398,7 @@ export function useRadioConnection() {
         });
       }
 
-      // UV-K1 (25Ja v0.3 以降): 起動画面の文言。対応しない無線機を読んだときは入力欄を隠す。
+      // UV-K1 (25Ja v0.4 以降): 起動画面の文言。対応しない無線機を読んだときは入力欄を隠す。
       if (!(proto instanceof UVK1Protocol)) useBootTextStore.getState().clear();
       if (proto instanceof UVK1Protocol) {
         configSteps.push({

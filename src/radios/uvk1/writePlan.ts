@@ -55,7 +55,7 @@ export const WRITABLE_EXT_RANGE: readonly [number, number] =
 export const WRITABLE_LIST_NAME_RANGE: readonly [number, number] =
   [UVK1_LIST_KANJI_BASE, UVK1_LIST_KANJI_BASE + UVK1_SCAN_LISTS * UVK1_LIST_KANJI_SIZE];
 
-/** 25Ja v0.3 以降の起動文言（24 バイト）。文言があるときだけ書ける。 */
+/** 25Ja v0.4 以降の起動文言（24 バイト）。文言があるときだけ書ける。 */
 export const WRITABLE_BOOT_TEXT_RANGE: readonly [number, number] =
   [UVK1_BOOT_TEXT_BASE, UVK1_BOOT_TEXT_BASE + UVK1_BOOT_TEXT_SIZE];
 

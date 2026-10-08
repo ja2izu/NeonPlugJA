@@ -5,7 +5,7 @@
 import { create } from 'zustand';
 
 interface BootTextState {
-  /** 読み込んだ無線機が起動文言（25Ja v0.3 以降）に対応している */
+  /** 読み込んだ無線機が起動文言（25Ja v0.4 以降）に対応している */
   supported: boolean;
   /** 編集中の文言（空は「文言なし」＝本体の既定の表示） */
   text: string;

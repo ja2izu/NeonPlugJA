@@ -74,7 +74,7 @@ export class UVK1Protocol extends BaseAnalogProtocol {
   private font: UVK1FontId = 'unknown';
   /** 25Ja with names of up to 31 bytes (hello marker bit 0 and the 25ja font). */
   private longNames = false;
-  /** 25Ja firmware version from hello ("0.3"), or null when the radio gives none. */
+  /** 25Ja firmware version from hello ("0.4"), or null when the radio gives none. */
   private fwVersion: string | null = null;
   /** Last image read. Bytes of blocks that were skipped stay 0xFF. */
   private image: Uint8Array | null = null;
@@ -82,7 +82,7 @@ export class UVK1Protocol extends BaseAnalogProtocol {
   private readBlocks = new Set<number>();
   /** Scan list names to write (index = list number - 1). Null: leave the radio's names alone. */
   private listNames: ReadonlyArray<string | undefined> | null = null;
-  /** 起動画面の文言（25Ja v0.3 以降）。Null: 無線機の値のまま。 */
+  /** 起動画面の文言（25Ja v0.4 以降）。Null: 無線機の値のまま。 */
   private bootText: string | null = null;
   /** Settings as last read (decoded), the baseline for the next settings write. */
   private settingsBaseline: Uvk1Settings | null = null;
@@ -150,7 +150,7 @@ export class UVK1Protocol extends BaseAnalogProtocol {
 
   async getRadioInfo(): Promise<RadioInfo> {
     const profile = UVK1_FONT_PROFILES.find((p) => p.id === this.font);
-    // 25ja: "25Ja v0.3(F4HWN v5.2.8)"; without a version (older builds): "25Ja(F4HWN v5.2.8)".
+    // 25ja: "25Ja v0.4(F4HWN v5.2.8)"; without a version (older builds): "25Ja(F4HWN v5.2.8)".
     const firmware = this.font === '25ja'
       ? `25Ja${this.fwVersion ? ` v${this.fwVersion}` : ''}(${this.firmware})`
       : this.firmware;
@@ -222,7 +222,7 @@ export class UVK1Protocol extends BaseAnalogProtocol {
         done.add(UVK1_LIST_KANJI_BASE + off);
       }
     }
-    // 起動文言（25Ja v0.3 以降）: 24 バイト。応答が無ければ「文言なし」（0xFF）のまま続ける。
+    // 起動文言（25Ja v0.4 以降）: 24 バイト。応答が無ければ「文言なし」（0xFF）のまま続ける。
     if (this.supportsBootText()) {
       const data = await conn.spiRead(UVK1_BOOT_TEXT_BASE, UVK1_BOOT_TEXT_SIZE);
       if (data) {
@@ -336,7 +336,7 @@ export class UVK1Protocol extends BaseAnalogProtocol {
   }
 
   /**
-   * 起動画面の文言を扱えるか。25ja のフォントで、ファームが版数（v0.3 以降）を返すときだけ。
+   * 起動画面の文言を扱えるか。25ja のフォントで、ファームが版数（v0.4 以降）を返すときだけ。
    * 版数を返さない旧 25Ja では 0x0089A0 が使われていない保証が無い（FW 側の申し送り §5）。
    */
   supportsBootText(): boolean {

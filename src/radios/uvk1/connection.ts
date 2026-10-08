@@ -37,7 +37,7 @@ import {
 } from './framing';
 import { UVK1_BAUD_RATE, UVK1_BLOCK_SIZE, UVK1_HELLO_MARKER, UVK1_HELLO_VERSION, UVK1_SPI_READ_MAX, UVK1_SPI_WRITE_MAX } from './constants';
 
-/** "0.3" / "0.3.1" from the two version bytes ((major << 4) | minor, patch); null for 00 00 = no version. */
+/** "0.4" / "0.4.1" from the two version bytes ((major << 4) | minor, patch); null for 00 00 = no version. */
 export function formatFirmwareVersion(majorMinor: number, patch: number): string | null {
   if (majorMinor === 0 && patch === 0) return null;
   const base = `${majorMinor >> 4}.${majorMinor & 0x0f}`;
@@ -174,7 +174,7 @@ export class UVK1Connection {
   }
 
   /**
-   * 25Ja firmware version from the last hello reply, as "0.3" (or "0.3.1" when patch is not 0),
+   * 25Ja firmware version from the last hello reply, as "0.4" (or "0.4.1" when patch is not 0),
    * or null when the reply has no 25Ja marker, is too short, or carries 00 00 (older builds).
    */
   helloFirmwareVersion(): string | null {

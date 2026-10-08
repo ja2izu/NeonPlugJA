@@ -100,7 +100,7 @@ export const UVK1_IMAGE_EXT_BASE = 0x9000;
 export const UVK1_HELLO_MARKER = { offset: 17, tag: [0x25, 0x4a] as const, flagLongNames: 0x01 } as const;
 
 /**
- * 25Ja firmware version in the hello reply (25Ja firmware 0.3 and later; App/app/uart.c SendVersion).
+ * 25Ja firmware version in the hello reply (25Ja firmware 0.4 and later; App/app/uart.c SendVersion).
  * Offsets are from the start of the reply, 4-byte header included, like UVK1_HELLO_MARKER.offset:
  * [22] = (major << 4) | minor, [23] = patch. 00 00 means "no version" (older builds).
  */
@@ -137,7 +137,7 @@ export const UVK1_FREQ_MAX_MHZ = 1300;
 export type UVK1FontId = (typeof UVK1_FONT_PROFILES)[number]['id'] | 'unknown';
 
 /**
- * 25Ja (v0.3 以降): 起動画面の下端に出すユーザー文言。SPI 0x0089A0、24 バイト、UTF-8、終端 0x00 か 0xFF。
+ * 25Ja (v0.4 以降): 起動画面の下端に出すユーザー文言。SPI 0x0089A0、24 バイト、UTF-8、終端 0x00 か 0xFF。
  * 表示幅は 128 px 以内（半角 7 px、漢字・かな 13 px、幅 = 合計 − 1）。FW 側が超えた分を切る。
  * 0x00A170/71（起動表示の選択値）は書かない。選択は本体メニューで行う。
  */
