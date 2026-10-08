@@ -23,7 +23,7 @@ import { FrequencyInput } from './FrequencyInput';
 import { useJapaneseNamesActive } from '../../hooks/useJapaneseNamesActive';
 import { fitNameBytes, fitUtf8NameBytes, nameByteLength, unwritableChars, utf8NameByteLength } from '../../utils/japaneseNames';
 
-import { tr } from '../../utils/tr';  // NeonPlugJA: 日本語表示
+import { tr, channelGroupLabel } from '../../utils/tr';  // NeonPlugJA: 日本語表示
 import { useScanListsStore } from '../../store/scanListsStore';
 import { scanListByReference, scanListReference } from '../../utils/scanListReference';
 interface ChannelEditModalProps {
@@ -701,7 +701,7 @@ export const ChannelEditModal: React.FC<ChannelEditModalProps> = ({
               {caps?.scanListAllValue !== undefined ? (
               <div>
                 <label className="block text-xs font-medium text-cool-gray mb-1">
-                  {tr("Scan List")}
+                  {channelGroupLabel()}
                 </label>
                 <select
                   value={editedChannel.scanListId}

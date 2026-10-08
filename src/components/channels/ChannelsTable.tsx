@@ -48,7 +48,7 @@ const SortButton: React.FC<{ label: string; state: SortState; onClick: () => voi
 import { isDialogOpen, isInteractive, isTextEntry, MOD_KEY } from '../../utils/keyboardTargets';
 import { EmptyState } from '../ui/EmptyState';
 
-import { tr } from '../../utils/tr';  // NeonPlugJA: 日本語表示
+import { tr, channelGroupLabel } from '../../utils/tr';  // NeonPlugJA: 日本語表示
 interface ChannelsTableProps {
   channels?: Channel[];
   scrollToChannel?: number | null;  // Channel number to scroll to
@@ -381,7 +381,7 @@ export const ChannelsTable: React.FC<ChannelsTableProps> = ({
             <th className="px-2 py-2 text-left text-neon-cyan font-bold min-w-[75px]" title={tr("Receive tone (CTCSS/DCS)")}>{tr("RX Tone")}</th>
             <th className="px-2 py-2 text-left text-neon-cyan font-bold min-w-[75px]" title={tr("Transmit tone (CTCSS/DCS)")}>{tr("TX Tone")}</th>
             {hasColumn('loneWorker') && (<th className="px-2 py-2 text-center text-neon-cyan font-bold min-w-[30px]" title={tr("Lone Worker")}>LW</th>)}
-            <th className="px-2 py-2 text-left text-neon-cyan font-bold min-w-[100px]" title={tr("Scan list assignment")}>{tr("Scan List")}</th>
+            <th className="px-2 py-2 text-left text-neon-cyan font-bold min-w-[100px]" title={tr("Scan list assignment")}>{channelGroupLabel()}</th>
             {hasColumn('freeToAir') && (<th className="px-2 py-2 text-center text-neon-cyan font-bold min-w-[35px]" title={tr("Forbid Talkaround")}>FTA</th>)}
             {hasColumn('emergency') && (<th className="px-2 py-2 text-center text-neon-cyan font-bold min-w-[35px]" title={tr("Emergency")}>{tr("Emerg")}</th>)}
             {hasColumn('emergency') && (<th className="px-2 py-2 text-center text-neon-cyan font-bold min-w-[35px]" title={tr("Emergency acknowledge")}>{tr("Emerg Ack")}</th>)}

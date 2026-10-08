@@ -26,6 +26,14 @@ export function scanTerm(ja: string): string {
   return scanTermGroup ? ja.replace(/スキャン ?リスト/g, 'スキャングループ') : ja;
 }
 
+/**
+ * UV-K1 (25Ja 0.4 以降): チャンネルごとの項目の名前は「所属 グループ」（本体のメニュー）。
+ * 全体の「スキャン グループ」と区別するため。日本語表示で、無線機がグループと呼ぶときだけ。
+ */
+export function channelGroupLabel(): string {
+  return isJaUi() && scanTermGroup ? '所属グループ' : tr('Scan List');
+}
+
 export function tr(en: string, ...args: Array<string | number>): string {
   const ja = isJaUi() && JA_DICT[en];
   const s = ja ? scanTerm(ja) : en;
