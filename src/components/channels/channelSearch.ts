@@ -50,6 +50,12 @@ export const CHANNEL_SEARCH_HELP =
   'Narrow further with mode:dig, bw:n, power:low, band:uhf, zone:none, zone:<name> or tone:123. ' +
   '#12 scrolls to channel 12.';
 
+/** NeonPlugJA: the same, for a radio without digital modes or zones (caps.compactUi). */
+export const CHANNEL_SEARCH_HELP_COMPACT =
+  'Words match the name, a channel number exactly, or the start of a frequency. ' +
+  'Narrow further with bw:n, power:low, band:uhf or tone:123. ' +
+  '#12 scrolls to channel 12.';
+
 export function parseChannelSearch(query: string): ParsedChannelSearch {
   const tokens = query.trim().toLowerCase().split(/\s+/).filter(Boolean);
   if (tokens.length === 1 && /^#\d+$/.test(tokens[0])) {

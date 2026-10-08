@@ -282,6 +282,7 @@ export const ChannelEditModal: React.FC<ChannelEditModalProps> = ({
               </div>
 
               <div className="grid grid-cols-2 gap-3">
+                {!caps?.compactUi && (
                 <div>
                   <label className="block text-xs font-medium text-cool-gray mb-1">
                     {tr("Channel Mode")}
@@ -298,6 +299,7 @@ export const ChannelEditModal: React.FC<ChannelEditModalProps> = ({
                   </select>
                   <p className="text-xs text-cool-gray mt-0.5">{tr("Communication mode for this channel")}</p>
                 </div>
+                )}
                 <div>
                   <label className="block text-xs font-medium text-cool-gray mb-1">
                     {tr("Bandwidth")}

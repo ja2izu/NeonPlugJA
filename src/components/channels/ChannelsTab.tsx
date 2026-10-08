@@ -37,7 +37,7 @@ import { useChannelWriteRule } from '../../hooks/useChannelWriteRule';
 import { isChannelWritable } from '../../services/validation/writeFilter';
 import { MOD_KEY } from '../../utils/keyboardTargets';
 import { useZonesStore } from '../../store/zonesStore';
-import { CHANNEL_SEARCH_HELP, matchesChannelSearch, parseChannelSearch } from './channelSearch';
+import { CHANNEL_SEARCH_HELP, CHANNEL_SEARCH_HELP_COMPACT, matchesChannelSearch, parseChannelSearch } from './channelSearch';
 import { useJapaneseNamesActive } from '../../hooks/useJapaneseNamesActive';
 import { readCsvText } from '../../utils/readCsvText';
 
@@ -355,9 +355,11 @@ export const ChannelsTab: React.FC = () => {
             placeholder={
               isBroadcast
                 ? tr("Search by name, frequency, number...")
-                : tr("Search name, number or frequency · #12 jumps · mode:dig zone:none")
+                : caps?.compactUi
+                  ? tr("Search name, number or frequency · #12 jumps · bw:n power:low")
+                  : tr("Search name, number or frequency · #12 jumps · mode:dig zone:none")
             }
-            title={isBroadcast ? undefined : tr(CHANNEL_SEARCH_HELP)}
+            title={isBroadcast ? undefined : tr(caps?.compactUi ? CHANNEL_SEARCH_HELP_COMPACT : CHANNEL_SEARCH_HELP)}
             aria-label={tr("Search channels")}
             className={`${FIELD} w-full border rounded px-4 py-2 pl-10 text-sm`}
           />

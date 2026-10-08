@@ -428,6 +428,8 @@ export const SettingsTab: React.FC = () => {
                   )}
                 </div>
               </div>
+              {!caps?.compactUi && (
+              <>
               <div>
                 <span className="text-cool-gray text-sm block mb-1">Build Date</span>
                 <div className="text-white font-mono">{deviceValue(radioInfo.buildDate)}</div>
@@ -444,6 +446,8 @@ export const SettingsTab: React.FC = () => {
                 <span className="text-cool-gray text-sm block mb-1">Codeplug Version</span>
                 <div className="text-white font-mono text-sm">{deviceValue(radioInfo.codeplugVersion)}</div>
               </div>
+              </>
+              )}
             </div>
           </Card>
 
@@ -451,7 +455,7 @@ export const SettingsTab: React.FC = () => {
           <Card>
             <SectionTitle underline>Memory & Storage</SectionTitle>
             <div className="space-y-6 mt-4">
-              {radioInfo?.memoryLayout && (
+              {radioInfo?.memoryLayout && !caps?.compactUi && (
                 <div>
                   <SectionTitle as="h4" size="md">Memory Layout</SectionTitle>
                   <div className="space-y-2 font-mono text-sm">

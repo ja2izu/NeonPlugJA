@@ -61,7 +61,6 @@ export const UVK1_SETTINGS_PROFILE: SettingsProfile = {
         {
           key: 'radioSpecific.roger', label: 'ラジャー音（Roger）', type: 'select',
           options: [{ value: 0, label: 'OFF' }, { value: 1, label: 'ROGER' }, { value: 4, label: 'Custom 1' }, { value: 5, label: 'Custom 2' }, { value: 6, label: 'Custom 3' }],
-          hint: 'MDC・Yan ID は 25Ja で使えないため選べません。本体にその値が入っていると OFF と表示します。',
         },
         { key: 'radioSpecific.keyBeep', label: 'キービープ（Beep）', type: 'checkbox' },
       ],

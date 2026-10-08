@@ -257,6 +257,11 @@ export interface RadioCapabilities {
   supportsContacts?: boolean;
   /** If true, analog-only radio — no DMR/digital features. */
   analogOnly?: boolean;
+  /**
+   * NeonPlugJA: show only what this radio has. Hides the channel-mode selector (analog / fixed analog),
+   * the digital/zone search hints, the empty version rows and the raw memory-layout row of the Settings tab.
+   */
+  compactUi?: boolean;
   /** If true, radio supports BLE in addition to serial (transport option in connect). */
   supportsBle?: boolean;
   /** When radio supports both serial and BLE, default transport to offer (store can override). */

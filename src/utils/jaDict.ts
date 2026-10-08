@@ -418,6 +418,8 @@ export const JA_DICT: Readonly<Record<string, string>> = {
   "Add new channel": "チャンネルを追加",
   "⚠ Out-of-band frequencies are ON. Channels aren't checked against the radio's bands, and a write keeps them as they are. Turn it off in About.": "⚠ バンド外の周波数が ON です。チャンネルを無線機のバンドで検査せず、書込でもそのまま書きます。「情報」タブで OFF にしてください。",
   "Search by name, frequency, number...": "名前・周波数・番号で検索...",
+  "Search name, number or frequency · #12 jumps · bw:n power:low": "名前・番号・周波数で検索 · #12 で移動 · bw:n power:low",
+  "Words match the name, a channel number exactly, or the start of a frequency. Narrow further with bw:n, power:low, band:uhf or tone:123. #12 scrolls to channel 12.": "語は名前、チャンネル番号（完全一致）、周波数の先頭に一致します。さらに bw:n、power:low、band:uhf、tone:123 で絞れます。#12 でチャンネル 12 へ移動します。",
   "Search name, number or frequency · #12 jumps · mode:dig zone:none": "名前・番号・周波数で検索 · #12 で移動 · mode:dig zone:none",
   "Search channels": "チャンネルを検索",
   "Clear search": "検索を消す",
