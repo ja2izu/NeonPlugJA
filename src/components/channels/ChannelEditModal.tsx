@@ -1157,7 +1157,7 @@ export const ChannelEditModal: React.FC<ChannelEditModalProps> = ({
                             {tr(c.label)}
                             {extraColumnMarker(c)}
                           </span>
-                          <p className="text-xs text-cool-gray">{c.offset}</p>
+                          {!c.hideOffset && <p className="text-xs text-cool-gray">{c.offset}</p>}
                         </div>
                       </label>
                     );
@@ -1195,7 +1195,7 @@ export const ChannelEditModal: React.FC<ChannelEditModalProps> = ({
                           className={`${FIELD} w-full border rounded px-2 py-1 text-sm`}
                         />
                       )}
-                      <p className="text-xs text-cool-gray mt-0.5">{c.offset}</p>
+                      {!c.hideOffset && <p className="text-xs text-cool-gray mt-0.5">{c.offset}</p>}
                     </div>
                   );
                 })}

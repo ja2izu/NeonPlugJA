@@ -59,6 +59,8 @@ export interface ExtraChannelColumn {
   note?: string;
   /** Where in the channel record it lives, for the tooltip. */
   offset: string;
+  /** NeonPlugJA: do not print the offset under the field in the edit dialog (it stays in the tooltip). */
+  hideOffset?: boolean;
   provenance: ExtraColumnProvenance;
   editor: ExtraColumnEditor;
   /** True for fields only meaningful on a digital channel. */
@@ -412,36 +414,36 @@ export const UVK1_STEP_LABELS: readonly string[] = [
 export const UVK1_CHANNEL_COLUMNS: readonly ExtraChannelColumn[] = [
   {
     group: 'uvk1Channel', field: 'uvk1Modulation', header: '受信モード', label: '受信モード（変調）',
-    offset: 'レコード byte 11 上位4bit', provenance: 'firmware',
+    offset: 'レコード byte 11 上位4bit', hideOffset: true, provenance: 'firmware',
     editor: { kind: 'select', options: ['FM', 'AM', 'USB'] }, unsetValue: 0,
   },
   {
     group: 'uvk1Channel', field: 'uvk1Step', header: 'ステップ', label: 'ステップ',
-    offset: 'レコード byte 14（番号 0-22）', provenance: 'firmware',
+    offset: 'レコード byte 14（番号 0-22）', hideOffset: true, provenance: 'firmware',
     editor: { kind: 'select', options: UVK1_STEP_LABELS }, unsetValue: 4,
     note: '7 以上のカスタムの周波数は本体側の設定による',
   },
   {
     group: 'uvk1Channel', field: 'uvk1Reverse', header: '反転', label: '周波数反転（Reverse）',
-    offset: 'レコード byte 12 bit 0', provenance: 'firmware', editor: { kind: 'boolean' },
+    offset: 'レコード byte 12 bit 0', hideOffset: true, provenance: 'firmware', editor: { kind: 'boolean' },
   },
   {
     group: 'uvk1Channel', field: 'uvk1Bclo', header: 'ビジーロック', label: 'ビジーロック（使用中は送信しない）',
-    offset: 'レコード byte 12 bit 5', provenance: 'firmware', editor: { kind: 'boolean' },
+    offset: 'レコード byte 12 bit 5', hideOffset: true, provenance: 'firmware', editor: { kind: 'boolean' },
   },
   {
     group: 'uvk1Channel', field: 'uvk1DtmfDecode', header: 'DTMF受信', label: 'DTMF 受信デコード',
-    offset: 'レコード byte 13 bit 0', provenance: 'firmware', editor: { kind: 'boolean' },
+    offset: 'レコード byte 13 bit 0', hideOffset: true, provenance: 'firmware', editor: { kind: 'boolean' },
   },
   {
     group: 'uvk1Channel', field: 'uvk1PttId', header: 'PTT ID', label: 'PTT ID',
-    offset: 'レコード byte 13 bit 1-3（0-4）', provenance: 'firmware',
+    offset: 'レコード byte 13 bit 1-3（0-4）', hideOffset: true, provenance: 'firmware',
     editor: { kind: 'select', options: ['0', '1', '2', '3', '4'] }, unsetValue: 0,
     note: '25Ja の本体メニューでは PTT ID は隠れており、読込時は常に「なし」として扱われる',
   },
   {
     group: 'uvk1Channel', field: 'uvk1Compander', header: 'コンパンド', label: 'コンパンド',
-    offset: '属性 bit 3-4', provenance: 'firmware',
+    offset: '属性 bit 3-4', hideOffset: true, provenance: 'firmware',
     editor: { kind: 'select', options: ['OFF', '送信', '受信', '送受信'] }, unsetValue: 0,
   },
 ];

@@ -30,6 +30,7 @@ version says how old a build is, not how big its changes are. Whether a saved
 - NeonPlugJA 0.94.1: UV-K1 (25Ja) settings: writes and read-backs are now 2-byte aligned and even-sized (a 1-byte read-back was refused by the connection guard after the write had been sent).
 - NeonPlugJA 0.94.5: Japanese UI (UV-K1, scan-group wording): the per-channel column / field is now called "所属グループ" (the radio's "所属 グループ"); the global selection stays "スキャングループ". Display only; no data change.
 - NeonPlugJA 0.94.6: UV-K1 (25Ja) shows only what the radio has: no channel-mode selector (analog / fixed analog), no digital / zone hints in the channel search, no empty version rows or raw memory-layout row in the Settings tab; the Roger hint about MDC / Yan ID is removed. Display only; no data change.
+- NeonPlugJA 0.94.7: UV-K1 (25Ja): the channel edit dialog no longer prints record byte / bit positions under the radio-specific fields (they stay in the tooltip). Display only.
 - NeonPlugJA 0.92.1: UV-K1 (25Ja): the write confirmation no longer lists empty scan lists as "left out" (their names are written; a list belongs to a channel by its number).
 - MMDVM hotspot channels can be duplex, use either timeslot, and pick existing talk groups.
 - Every list exports to CSV and imports back, adding to what's there or replacing it.
