@@ -53,7 +53,8 @@ export function applyUvk1Power(record: Uint8Array, power: PowerLevel, previousRe
 
 /** FW default step (12.5 kHz) for a channel the app creates. */
 export const UVK1_DEFAULT_STEP = 4;
-export const UVK1_MAX_STEP = 22;
+/** Step numbers 0-23 are valid on 25Ja (gStepFrequencyTable has 24 entries); 24 and above the firmware reads as 12.5 kHz. */
+export const UVK1_MAX_STEP = 23;
 
 /** The record fields beyond the shared K5 record that the app edits, as the firmware reads them. */
 export interface UVK1RecordFields {

@@ -67,6 +67,16 @@ describe('UV-K1 チャンネル項目：書き', () => {
     expect(out[REC(0) + 15]).toBe(0xaa);
     expect(out[ATTR(0)]).toBe(2 | (3 << 3) | 0x60); // コンパンド 3、属性 bit5・6 は元のまま
   });
+  it('ステップ 23（500kHz）を読み書きできる。24 以上は 12.5kHz と読み、変えなければ元の値のまま', () => {
+    expect(read(image({ 14: 23 })).uvk1Step).toBe(23);
+    const out = write(image({ 14: 4 }), { ...read(image({ 14: 4 })), uvk1Step: 23 });
+    expect(out[REC(0) + 14]).toBe(23);
+    const odd = image({ 14: 30 });
+    expect(read(odd).uvk1Step).toBe(4);
+    expect(write(odd, read(odd))[REC(0) + 14]).toBe(30);
+    const bad = write(image({ 14: 4 }), { ...read(image({ 14: 4 })), uvk1Step: 24 });
+    expect(bad[REC(0) + 14]).toBe(4); // 範囲外の値は書かない
+  });
   it('属性 bit 5・6 を保つ（0.92.1 までは 0 にしていた）', () => {
     const img = image({}, 2 | 0x60);
     expect(write(img, read(img))[ATTR(0)] & 0x60).toBe(0x60);

@@ -1,4 +1,4 @@
-# NeonPlugJA Ver.0.94.7
+# NeonPlugJA Ver.0.94.8
 
 ブラウザで動くチャンネル設定ソフト [NeonPlug](https://github.com/infamy/NeonPlug) のフォークです。次の 2 つに対応します。
 

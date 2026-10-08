@@ -130,7 +130,7 @@ export interface Channel {
   // JA: すべて省略可。未設定（undefined）は「無線機の値をそのまま保つ。新規チャンネルは FW の既定値」。
   /** 受信モード（変調）: 0 FM, 1 AM, 2 USB。レコード byte 11 上位4bit。 */
   uvk1Modulation?: number;
-  /** ステップ番号 0-22（0 2.5k, 1 5k, 2 6.25k, 3 10k, 4 12.5k, 5 25k, 6 8.33k, 7-22 カスタム）。byte 14。 */
+  /** ステップ番号 0-23（0 2.5k, 1 5k, 2 6.25k, 3 10k, 4 12.5k, 5 25k, 6 8.33k, 7-23 は FW 内の固定周波数 0.01k〜500k）。byte 14。 */
   uvk1Step?: number;
   /** 周波数反転。byte 12 bit 0。 */
   uvk1Reverse?: boolean;

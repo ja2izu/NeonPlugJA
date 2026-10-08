@@ -401,10 +401,14 @@ export const EXTRA_CHANNEL_COLUMNS: readonly ExtraChannelColumn[] = [
   },
 ];
 
-/** UV-K1 (25Ja) のステップ表示（番号 0-22。7 以上はカスタム）。 */
+/**
+ * UV-K1 (25Ja) のステップ表示（番号 0-23。FW の gStepFrequencyTable の 24 件。周波数は FW 内で固定）。
+ * 24 以上が入っていると、本体は 12.5kHz として扱う。
+ */
 export const UVK1_STEP_LABELS: readonly string[] = [
   '2.5kHz', '5kHz', '6.25kHz', '10kHz', '12.5kHz', '25kHz', '8.33kHz',
-  ...Array.from({ length: 16 }, (_, i) => `カスタム${7 + i}`),
+  '0.01kHz', '0.05kHz', '0.1kHz', '0.25kHz', '0.5kHz', '1kHz', '1.25kHz', '9kHz', '15kHz',
+  '20kHz', '30kHz', '50kHz', '100kHz', '125kHz', '200kHz', '250kHz', '500kHz',
 ];
 
 /**
@@ -419,9 +423,9 @@ export const UVK1_CHANNEL_COLUMNS: readonly ExtraChannelColumn[] = [
   },
   {
     group: 'uvk1Channel', field: 'uvk1Step', header: 'ステップ', label: 'ステップ',
-    offset: 'レコード byte 14（番号 0-22）', hideOffset: true, provenance: 'firmware',
+    offset: 'レコード byte 14（番号 0-23）', hideOffset: true, provenance: 'firmware',
     editor: { kind: 'select', options: UVK1_STEP_LABELS }, unsetValue: 4,
-    note: '7 以上のカスタムの周波数は本体側の設定による',
+    note: '周波数は本体のファーム内で固定。24 以上の値が入っていると、本体は 12.5kHz として扱う（ここでは 12.5kHz と表示し、変更しなければ元の値のまま）',
   },
   {
     group: 'uvk1Channel', field: 'uvk1Reverse', header: '反転', label: '周波数反転（Reverse）',
