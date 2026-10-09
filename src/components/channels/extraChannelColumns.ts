@@ -425,7 +425,7 @@ export const UVK1_CHANNEL_COLUMNS: readonly ExtraChannelColumn[] = [
     group: 'uvk1Channel', field: 'uvk1Step', header: 'ステップ', label: 'ステップ',
     offset: 'レコード byte 14（番号 0-23）', hideOffset: true, provenance: 'firmware',
     editor: { kind: 'select', options: UVK1_STEP_LABELS }, unsetValue: 4,
-    note: '周波数は本体のファーム内で固定。24 以上の値が入っていると、本体は 12.5kHz として扱う（ここでは 12.5kHz と表示し、変更しなければ元の値のまま）',
+    note: '周波数は本体のF/W内で固定。24 以上の値が入っていると、本体は 12.5kHz として扱う（ここでは 12.5kHz と表示し、変更しなければ元の値のまま）',
   },
   {
     group: 'uvk1Channel', field: 'uvk1Reverse', header: '反転', label: '周波数反転（Reverse）',
@@ -469,7 +469,7 @@ export function extraColumnTitle(c: ExtraChannelColumn): string {
     c.provenance === 'hardware'
       ? ''
       : c.provenance === 'firmware'
-        ? ' — ' + 'ファームのソースによる。実機では未確認 (not yet confirmed)'
+        ? ' — ' + 'F/Wのソースによる。実機では未確認 (not yet confirmed)'
         : c.provenance === 'marshaller'
         ? ' ' + tr('— offset from the vendor CPS; not yet confirmed against a radio')
         : ' ' + tr('— offset from the vendor CPS; encoding inferred, not confirmed');

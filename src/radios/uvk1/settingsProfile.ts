@@ -43,7 +43,7 @@ const LIST_OPTIONS: OptionItem[] = [
   { value: 25, label: 'ALL（すべて）' },
 ];
 
-const PROVENANCE = '値は 25Ja ファームのソースの読み。JA2IZU の実機確認済み（2026-10-07）。';
+const PROVENANCE = '値は 25Ja F/Wのソースの読み。JA2IZU の実機確認済み（2026-10-07）。';
 
 export const UVK1_SETTINGS_PROFILE: SettingsProfile = {
   radioType: 'UV-K1 (25Ja)',
@@ -89,7 +89,7 @@ export const UVK1_SETTINGS_PROFILE: SettingsProfile = {
         },
         { key: 'radioSpecific.priorityScan', label: '優先スキャン', type: 'checkbox' },
         { key: 'radioSpecific.defaultList', label: '既定スキャングループ（SList）', type: 'select', options: LIST_OPTIONS },
-        { key: 'radioSpecific.priorityCh1', label: '優先 CH 1', type: 'number', min: 0, max: 1024, hint: 'チャンネル番号（1〜1024）。0 = なし。保存値は 0 始まり、なしは 1024（ファームのソースで確認）。' },
+        { key: 'radioSpecific.priorityCh1', label: '優先 CH 1', type: 'number', min: 0, max: 1024, hint: 'チャンネル番号（1〜1024）。0 = なし。保存値は 0 始まり、なしは 1024（F/Wのソースで確認）。' },
         { key: 'radioSpecific.priorityCh2', label: '優先 CH 2', type: 'number', min: 0, max: 1024, hint: 'チャンネル番号（1〜1024）。0 = なし。' },
         { key: 'radioSpecific.callCh', label: 'ワンキー呼出 CH', type: 'number', min: 1, max: 1024, hint: 'チャンネル番号（1〜1024）。' },
       ],

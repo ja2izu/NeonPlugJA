@@ -2,7 +2,7 @@
 
 **日本語** | [English](#english)
 
-ブラウザで動く無線機のチャンネル設定ソフト [NeonPlug](https://github.com/infamy/NeonPlug)（infamy 氏）のフォークです。日本語の名前（DM-32UV）と、UV-K1（25Ja ファーム）の漢字・かな名に対応します。インストール不要で、1 つの HTML ファイルをブラウザ（Chrome / Edge）で開いて使います。
+ブラウザで動く無線機のチャンネル設定ソフト [NeonPlug](https://github.com/infamy/NeonPlug)（infamy 氏）のフォークです。日本語の名前（DM-32UV）と、UV-K1（25Ja F/W）の漢字・かな名に対応します。インストール不要で、1 つの HTML ファイルをブラウザ（Chrome / Edge）で開いて使います。
 
 - 使い方・仕様：[README_JA.md](README_JA.md)
 - ダウンロード：[Releases](../../releases) の `neonplugja-latest.html`（単一ファイル、ネット接続なしで使えます）

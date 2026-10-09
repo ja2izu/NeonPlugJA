@@ -33,6 +33,7 @@ version says how old a build is, not how big its changes are. Whether a saved
 - NeonPlugJA 0.94.7: UV-K1 (25Ja): the channel edit dialog no longer prints record byte / bit positions under the radio-specific fields (they stay in the tooltip). Display only.
 - NeonPlugJA 0.94.8: UV-K1 (25Ja): the channel step list now shows the firmware's 24 steps by frequency (0.01 kHz to 500 kHz) instead of "custom 7-22"; step 23 (500 kHz) can be read and written; a step of 24 or more is shown as 12.5 kHz (as the firmware reads it) and kept unless changed. Source reading only; not confirmed on a real radio.
 - NeonPlugJA 0.94.9: wording only: the 25Ja firmware version that adds the version display and the boot-screen text is now written as 0.4 or later (0.3 was a test build and is not published). No behaviour change.
+- NeonPlugJA 0.94.10: wording only: the Japanese UI, READMEs and hints now write the firmware as "F/W" (the author's decision). No behaviour change.
 - NeonPlugJA 0.92.1: UV-K1 (25Ja): the write confirmation no longer lists empty scan lists as "left out" (their names are written; a list belongs to a channel by its number).
 - MMDVM hotspot channels can be duplex, use either timeslot, and pick existing talk groups.
 - Every list exports to CSV and imports back, adding to what's there or replacing it.
