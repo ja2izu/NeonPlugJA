@@ -8,7 +8,7 @@ import type { OptionItem, SettingsProfile } from '../../types/settingsProfile';
 import { UVK1_KEY_ACTIONS } from './settings';
 
 /**
- * 25Ja (UV-K1) 設定タブ。値・範囲は 25Ja ファームのソースの読みによる。JA2IZU の実機確認済み（2026-10-07）。
+ * 25Ja (UV-K1) 設定タブ。値・範囲は 25Ja F/W のソースの読みによる。JA2IZU の実機確認済み（2026-10-07）。
  * 項目名は本体メニューの英語名を括弧内に併記する。
  */
 

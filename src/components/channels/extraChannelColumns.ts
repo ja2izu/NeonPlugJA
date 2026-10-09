@@ -34,7 +34,7 @@ export type ExtraColumnProvenance =
   | 'marshaller'
   /** Offset from the marshaller AND the stored encoding is reasoned, not read. */
   | 'inferred'
-  /** UV-K1 (25Ja): ファームのソース（radio.c / settings.c）の読みによる。実機では未確認。 */
+  /** UV-K1 (25Ja): F/W のソース（radio.c / settings.c）の読みによる。実機では未確認。 */
   | 'firmware';
 
 export type ExtraColumnEditor =

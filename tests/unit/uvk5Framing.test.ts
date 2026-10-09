@@ -63,7 +63,7 @@ describe('UV-K5 の枠組み立て', () => {
 });
 
 describe('UV-K5 の応答の読み取り', () => {
-  it('挨拶の応答からファームの版を取り出す', () => {
+  it('挨拶の応答から F/W の版を取り出す', () => {
     const reply = fromHex('15052000463448574E2076342E3300000000000000000000');
     expect(payloadCommand(reply)).toBe(CMD.HELLO_REPLY);
     expect(firmwareFromHello(reply)).toBe('F4HWN v4.3');

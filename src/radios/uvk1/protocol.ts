@@ -336,7 +336,7 @@ export class UVK1Protocol extends BaseAnalogProtocol {
   }
 
   /**
-   * 起動画面の文言を扱えるか。25ja のフォントで、ファームが版数（v0.4 以降）を返すときだけ。
+   * 起動画面の文言を扱えるか。25ja のフォントで、F/W が版数（v0.4 以降）を返すときだけ。
    * 版数を返さない旧 25Ja では 0x0089A0 が使われていない保証が無い（FW 側の申し送り §5）。
    */
   supportsBootText(): boolean {

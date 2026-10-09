@@ -4,7 +4,7 @@
  * Based on NeonPlug (https://github.com/infamy/NeonPlug), MIT License,
  * Copyright (c) NeonPlug contributors.
  *
- * 書式は 25Ja ファーム担当の申し送り「起動表示ユーザー文言（0x0089A0）」による（実機では未確認）。
+ * 書式は 25Ja F/W 担当の申し送り「起動表示ユーザー文言（0x0089A0）」による（実機では未確認）。
  */
 import {
   UVK1_BOOT_TEXT_BASE, UVK1_BOOT_TEXT_FULL_PX, UVK1_BOOT_TEXT_HALF_PX, UVK1_BOOT_TEXT_MAX_PX, UVK1_BOOT_TEXT_SIZE,
