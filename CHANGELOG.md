@@ -35,6 +35,7 @@ version says how old a build is, not how big its changes are. Whether a saved
 - NeonPlugJA 0.94.9: wording only: the 25Ja firmware version that adds the version display and the boot-screen text is now written as 0.4 or later (0.3 was a test build and is not published). No behaviour change.
 - NeonPlugJA 0.94.10: wording only: the Japanese UI, READMEs and hints now write the firmware as "F/W" (the author's decision). No behaviour change.
 - NeonPlugJA 0.94.11: wording only: code comments and one test name use "F/W" as well. No behaviour change.
+- NeonPlugJA 0.94.12: UV-K1 (25Ja): the "*" mark is removed from the seven channel columns (reception mode, step, reverse, busy lock, DTMF decode, PTT ID, compander). Their bit positions were checked against the F/W source (radio.c, settings.c, misc.h) with an all-values write/read comparison; this is a source check, not a test on a real radio.
 - NeonPlugJA 0.92.1: UV-K1 (25Ja): the write confirmation no longer lists empty scan lists as "left out" (their names are written; a list belongs to a channel by its number).
 - MMDVM hotspot channels can be duplex, use either timeslot, and pick existing talk groups.
 - Every list exports to CSV and imports back, adding to what's there or replacing it.

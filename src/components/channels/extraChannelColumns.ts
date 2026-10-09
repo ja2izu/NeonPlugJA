@@ -34,7 +34,7 @@ export type ExtraColumnProvenance =
   | 'marshaller'
   /** Offset from the marshaller AND the stored encoding is reasoned, not read. */
   | 'inferred'
-  /** UV-K1 (25Ja): F/W のソース（radio.c / settings.c）の読みによる。実機では未確認。 */
+  /** UV-K1 (25Ja): F/W のソース（radio.c / settings.c）と突き合わせ済み。見出しに * は付けない。 */
   | 'firmware';
 
 export type ExtraColumnEditor =
@@ -413,7 +413,7 @@ export const UVK1_STEP_LABELS: readonly string[] = [
 
 /**
  * UV-K1 (25Ja) のチャンネル項目。レコードの位置は FW の radio.c / settings.c から。
- * 実機では未確認なので provenance は 'firmware'（見出しに * が付く）。
+ * F/W のソースと突き合わせ済み（書込→F/W読込、F/W読込→画面表示を全値で確認）なので provenance は 'firmware'（* は付けない）。
  */
 export const UVK1_CHANNEL_COLUMNS: readonly ExtraChannelColumn[] = [
   {
@@ -466,17 +466,15 @@ export function extraColumnsFor(
  */
 export function extraColumnTitle(c: ExtraChannelColumn): string {
   const caveat =
-    c.provenance === 'hardware'
+    c.provenance === 'hardware' || c.provenance === 'firmware'
       ? ''
-      : c.provenance === 'firmware'
-        ? ' — ' + 'F/Wのソースによる。実機では未確認 (not yet confirmed)'
-        : c.provenance === 'marshaller'
+      : c.provenance === 'marshaller'
         ? ' ' + tr('— offset from the vendor CPS; not yet confirmed against a radio')
         : ' ' + tr('— offset from the vendor CPS; encoding inferred, not confirmed');
   return `${tr(c.label)} (${c.offset})${caveat}${c.note ? `. ${c.note}` : ''}`;
 }
 
-/** Marker appended to the header of anything not hardware-confirmed. */
+/** Marker appended to the header of anything not hardware-confirmed (firmware-source-checked columns get none). */
 export function extraColumnMarker(c: ExtraChannelColumn): string {
-  return c.provenance === 'hardware' ? '' : '*';
+  return c.provenance === 'hardware' || c.provenance === 'firmware' ? '' : '*';
 }
