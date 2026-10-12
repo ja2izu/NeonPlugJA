@@ -21,6 +21,7 @@ import {
 } from '../../src/radios/dm32uv/structures';
 import { OFFSET } from '../../src/radios/dm32uv/constants';
 import { encodeNameJa } from '../../src/radios/dm32uv/nameCodec';
+import { migrate } from '../helpers/nameMigrate';
 import { useJapaneseNamesStore } from '../../src/store/japaneseNamesStore';
 import { createDefaultChannel } from '../../src/utils/channelHelpers';
 import type { Contact, QuickContact, RXGroup, DMRRadioID, DigitalEmergency, AnalogEmergency, EncryptionKey } from '../../src/models';
@@ -61,8 +62,9 @@ describe('日本語名 ON', () => {
   it('Zone: 実データ 21 件（CPS で書き実機表示を確認済み）と同じバイト列を書き、読み戻せる', () => {
     for (const z of parity.zoneTest) {
       const data = encodeZone({ id: 'z', name: z.ja, channels: [1, 2, 3] }, 1);
-      const len = z.hex.length / 2;
-      expect(hex(data.slice(0, len))).toBe(z.hex);
+      const want = migrate(z.hex)!; // 旧い区点で書いた実データは、書き直すと移し先の区点になる
+      const len = want.length / 2;
+      expect(hex(data.slice(0, len))).toBe(want);
       if (len < 16) expect(data[len]).toBe(0);
       expect(data[16]).toBe(3);
       const buf = new Uint8Array(4096).fill(0xff);

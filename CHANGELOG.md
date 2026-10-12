@@ -19,6 +19,7 @@ version says how old a build is, not how big its changes are. Whether a saved
 
 ## [Unreleased]
 
+- NeonPlugJA 0.99: DM-32UV: kana, full-width symbols and name symbols are written to free hanzi-zone slots of the Japanese font (master_1990_v2) so they show on 16-dot screens too. Name inputs no longer lose composing text at the length limit (IME). When the display is Japanese, the radio font is checked on read and Japanese names are switched on if the Japanese font is found ("ModJaFont" is shown next to the model). Top-right brand text is now NeonPlugJA.
 - NeonPlugJA 0.92: UV-K1 (25Ja firmware) support: channels with kanji/kana names (up to 31 bytes), scan lists with kanji names, scan list CSV, exclude flag, power Low1-Low5/Medium/High.
 - NeonPlugJA 0.92: starts in Japanese when the browser language is Japanese; Japanese display with seasonal colour themes.
 - NeonPlugJA 0.92: release links point to the NeonPlugJA repository.

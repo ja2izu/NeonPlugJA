@@ -365,7 +365,7 @@ export const Toolbar: React.FC = () => {
       showAlertBody(<WriteBlockedBody findings={integrity} />, 'Write blocked');
       return;
     }
-    // 日本語名 ON: 字庫に無い字を含む名前があれば、何も送らずに止める
+    // 日本語名 ON: フォントに無い字を含む名前があれば、何も送らずに止める
     if (isJapaneseNamesActive()) {
       const unwritable = findUnwritableNames({
         channels,

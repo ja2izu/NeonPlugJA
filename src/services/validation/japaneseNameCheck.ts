@@ -5,7 +5,7 @@
  * Copyright (c) NeonPlug contributors.
  */
 /**
- * 日本語名 ON のときの書込前の検査: 書けない字（字庫に無い字）を含む名前を探す。
+ * 日本語名 ON のときの書込前の検査: 書けない字（フォントに無い字）を含む名前を探す。
  *
  * findUnwritableNames は通常の書込（ツールバーの Write）で送るレコードを見る。
  * CSV Contacts は別の書込なので findUnwritableContactNames で別に見る。

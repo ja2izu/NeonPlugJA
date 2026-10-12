@@ -15,7 +15,7 @@ import { EmptyState } from '../ui/EmptyState';
 import { ConfirmModal } from '../ui/ConfirmModal';
 import { BUTTON, FIELD } from '../ui/controlStyles';
 import { useJapaneseNamesActive } from '../../hooks/useJapaneseNamesActive';
-import { fitNameBytes, JA_NAME_BYTES } from '../../utils/japaneseNames';
+import { fitNameBytes, imeFitHandlers, JA_NAME_BYTES } from '../../utils/japaneseNames';
 
 /** One of the two per-zone VFO channel pickers. Hoisted, not nested in its
  *  parent's render: a component defined inside a render is a new type on every
@@ -164,7 +164,7 @@ export const ZonesList: React.FC = () => {
 
   const handleAddZone = () => {
     if (newZoneName.trim()) {
-      const zoneName = newZoneName.trim();
+      const zoneName = ja ? fitNameBytes(newZoneName.trim(), JA_NAME_BYTES.zone) : newZoneName.trim();
       addZone({
         name: zoneName,
         channels: [],
@@ -188,7 +188,7 @@ export const ZonesList: React.FC = () => {
 
   const handleSaveEdit = (zoneId: string, e?: React.MouseEvent) => {
     e?.stopPropagation();
-    const success = renameZone(zoneId, editZoneName);
+    const success = renameZone(zoneId, ja ? fitNameBytes(editZoneName, JA_NAME_BYTES.zone) : editZoneName);
     if (success) {
       setEditingZoneId(null);
       setEditZoneName('');
@@ -235,7 +235,7 @@ export const ZonesList: React.FC = () => {
                     <input
                       type="text"
                       value={editZoneName}
-                      onChange={(e) => setEditZoneName(ja ? fitNameBytes(e.target.value, JA_NAME_BYTES.zone) : e.target.value)}
+                      {...imeFitHandlers((v) => (ja ? fitNameBytes(v, JA_NAME_BYTES.zone) : v), setEditZoneName)}
                           onKeyPress={(e) => {
                             if (e.key === 'Enter') {
                               handleSaveEdit(zone.id);
@@ -345,7 +345,8 @@ export const ZonesList: React.FC = () => {
         listSubtitle={`${zones.length}/${maxZones} zones`}
         addInputPlaceholder="Zone name..."
         addInputValue={newZoneName}
-        onAddInputChange={ja ? (v: string) => setNewZoneName(fitNameBytes(v, JA_NAME_BYTES.zone)) : setNewZoneName}
+        onAddInputChange={setNewZoneName}
+        addInputFit={ja ? (v: string) => fitNameBytes(v, JA_NAME_BYTES.zone) : undefined}
         onAdd={handleAddZone}
         addDisabled={zones.length >= maxZones}
         addInputMaxLength={ja ? undefined : 10}

@@ -28,6 +28,7 @@ import { getContactCapacityWithFallback } from '../../utils/firmware';
 import { withTimeout } from './connection';
 import { assertBlockWritable, type WriteGuardContext } from './writeGuard';
 import { log } from '../../utils/protocolLogger';
+import { isJapaneseFontBlock, PROBE_BLOCK_ADDRESS, PROBE_BLOCK_LENGTH } from './japaneseFontProbe';
 
 /**
  * DM-32UV Protocol Implementation
@@ -482,6 +483,24 @@ export class DM32UVProtocol extends BaseDigitalProtocol implements DM32Protocol 
    * NOTE: Does NOT clear cached block data - it's needed for parsing after disconnect.
    * Safe to call even if not connected.
    */
+  /**
+   * 無線機に日本語化フォント（master_1990_v2）が入っているかを調べる。
+   * 接続直後に呼ぶ（接続したまま待つと、無線機が書込・読出を断ることがあるため）。
+   * 読めなかったとき・一致しないときは false。読み込み全体は止めない。
+   */
+  async probeJapaneseFont(): Promise<boolean> {
+    requireConnection(this.connection, this.radioInfo);
+    try {
+      const block = await this.connection!.readMemory(PROBE_BLOCK_ADDRESS, PROBE_BLOCK_LENGTH);
+      const found = isJapaneseFontBlock(block);
+      log.info(`Japanese font probe at 0x${PROBE_BLOCK_ADDRESS.toString(16).toUpperCase()}: ${found ? 'found' : 'not found'}`, 'Protocol');
+      return found;
+    } catch (err) {
+      log.warn(`Japanese font probe failed: ${err instanceof Error ? err.message : String(err)}`, 'Protocol');
+      return false;
+    }
+  }
+
   async disconnect(): Promise<void> {
     if (this.connection) {
       await this.connection.disconnect();

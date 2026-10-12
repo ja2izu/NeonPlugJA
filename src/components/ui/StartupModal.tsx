@@ -144,7 +144,7 @@ export const StartupModal: React.FC<StartupModalProps> = ({
         className="my-auto bg-deep-gray rounded-lg p-6 sm:p-8 max-w-md w-full border border-neon-cyan shadow-glow-cyan"
       >
         <div className="text-center mb-6">
-          <h1 className="text-4xl font-bold text-neon-cyan mb-2">NEONPLUG</h1>
+          <h1 className="text-4xl font-bold text-neon-cyan mb-2">NeonPlugJA</h1>
           <p className="text-cool-gray text-sm">{tr("Channel programming software")}</p>
         </div>
 

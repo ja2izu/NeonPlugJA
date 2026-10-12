@@ -39,7 +39,7 @@ import { describeTalkGroupUsage, talkGroupMatchesSearch, talkGroupUsage } from '
 import { nothingImportedMessage } from '../../services/csv/importProblems';
 import { useCsvImport } from '../../hooks/useCsvImport';
 import { useJapaneseNamesActive } from '../../hooks/useJapaneseNamesActive';
-import { fitNameBytes, JA_NAME_BYTES } from '../../utils/japaneseNames';
+import { fitNameBytes, imeFitHandlers, JA_NAME_BYTES } from '../../utils/japaneseNames';
 import { readCsvText } from '../../utils/readCsvText';
 
 const DEFAULT_TALK_GROUPS_MAX = 800;
@@ -502,10 +502,10 @@ export const DigitalTab: React.FC = () => {
                           <input
                             type="text"
                             value={radioId.name}
-                            onChange={(e) => {
-                              const newName = ja ? fitNameBytes(e.target.value, JA_NAME_BYTES.radioId) : e.target.value.slice(0, 12);
-                              updateRadioId(radioId.index, { name: newName });
-                            }}
+                            {...imeFitHandlers(
+                              (v) => (ja ? fitNameBytes(v, JA_NAME_BYTES.radioId) : v.slice(0, 12)),
+                              (v) => updateRadioId(radioId.index, { name: v }),
+                            )}
                             maxLength={ja ? undefined : 12}
                             className={`${FIELD} border rounded px-2 py-1 w-full text-xs`}
                             placeholder="Enter name"
@@ -653,7 +653,7 @@ export const DigitalTab: React.FC = () => {
                             <input
                               type="text"
                               value={contact.name}
-                              onChange={(e) => handleContactChange(contact.index, 'name', ja ? fitNameBytes(e.target.value, JA_NAME_BYTES.talkGroup) : e.target.value)}
+                              {...imeFitHandlers((v) => (ja ? fitNameBytes(v, JA_NAME_BYTES.talkGroup) : v), (v) => handleContactChange(contact.index, 'name', v))}
                               className={`${FIELD} border rounded px-2 py-1 w-full text-xs`}
                             />
                           </td>
@@ -812,7 +812,7 @@ export const DigitalTab: React.FC = () => {
                           <input
                             type="text"
                             value={system.name}
-                            onChange={(e) => updateSystem(i, { name: ja ? fitNameBytes(e.target.value, JA_NAME_BYTES.digitalEmergency) : e.target.value.slice(0, 10) })}
+                            {...imeFitHandlers((v) => (ja ? fitNameBytes(v, JA_NAME_BYTES.digitalEmergency) : v.slice(0, 10)), (v) => updateSystem(i, { name: v }))}
                             maxLength={ja ? undefined : 10}
                             className={`${FIELD} border rounded px-2 py-1 w-full text-xs`}
                           />
@@ -981,7 +981,7 @@ export const DigitalTab: React.FC = () => {
                           <input
                             type="text"
                             value={key.name}
-                            onChange={(e) => handleKeyChange(key.entryNumber, 'name', ja ? fitNameBytes(e.target.value, JA_NAME_BYTES.encryptionKey) : e.target.value.slice(0, 10))}
+                            {...imeFitHandlers((v) => (ja ? fitNameBytes(v, JA_NAME_BYTES.encryptionKey) : v.slice(0, 10)), (v) => handleKeyChange(key.entryNumber, 'name', v))}
                             maxLength={ja ? undefined : 10}
                             className={`${FIELD} border rounded px-2 py-1 w-full text-xs`}
                             placeholder="Enter name"

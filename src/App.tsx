@@ -207,7 +207,7 @@ function App() {
       }
     } else {
       // Legacy CSV import support
-      // 日本語名 ON: UTF-8／GB2312（字庫の区点）／CP932 を判定して読む
+      // 日本語名 ON: UTF-8／GB2312（フォントの区点）／CP932 を判定して読む
       const ja = isJapaneseNamesActive();
       const text = await readCsvText(file, ja);
 

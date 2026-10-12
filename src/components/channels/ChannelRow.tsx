@@ -19,7 +19,7 @@ import {
 } from './extraChannelColumns';
 import { BUTTON, FIELD, FIELD_INVALID } from '../ui/controlStyles';
 import { FrequencyInput } from './FrequencyInput';
-import { fitNameBytes, fitUtf8NameBytes } from '../../utils/japaneseNames';
+import { fitNameBytes, fitUtf8NameBytes, imeFitHandlers } from '../../utils/japaneseNames';
 import {
   channelProblems,
   type ChannelProblems,
@@ -254,7 +254,10 @@ export const ChannelRow: React.FC<ChannelRowProps> = React.memo(({
         <input
           type="text"
           value={isVFOChannel(channel.number) ? '' : channel.name}
-          onChange={(e) => handleCellChange(channel.number, 'name', writeRule.nameBytes ? fitNameBytes(e.target.value, writeRule.maxNameLength) : writeRule.nameUtf8 ? fitUtf8NameBytes(e.target.value, writeRule.maxNameLength) : e.target.value)}
+          {...imeFitHandlers(
+            (v) => (writeRule.nameBytes ? fitNameBytes(v, writeRule.maxNameLength) : writeRule.nameUtf8 ? fitUtf8NameBytes(v, writeRule.maxNameLength) : v),
+            (v) => handleCellChange(channel.number, 'name', v),
+          )}
           disabled={isVFOChannel(channel.number)}
           className={`${problems.name ? FIELD_INVALID : FIELD} border rounded px-2 py-1 w-full text-xs ${
             isVFOChannel(channel.number) ? 'text-cool-gray cursor-not-allowed' : ''

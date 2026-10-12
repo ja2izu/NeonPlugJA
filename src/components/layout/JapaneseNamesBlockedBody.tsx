@@ -15,7 +15,7 @@ const SHOWN = 30;
 
 export const JapaneseNamesBlockedBody: React.FC<{ items: readonly UnwritableName[] }> = ({ items }) => (
   <div className="space-y-4 text-sm pb-1">
-    <Callout tone="danger" title="字庫に無い字を含む名前があるため、書込を止めました">
+    <Callout tone="danger" title="フォントに無い字を含む名前があるため、書込を止めました">
       無線機には何も送っていません。
     </Callout>
     <section>

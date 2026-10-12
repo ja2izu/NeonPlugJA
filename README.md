@@ -2,7 +2,7 @@
 
 **日本語** | [English](#english)
 
-ブラウザで動く無線機のチャンネル設定ソフト [NeonPlug](https://github.com/infamy/NeonPlug)（infamy 氏）のフォークです。日本語の名前（DM-32UV）と、UV-K1（25Ja F/W）の漢字・かな名に対応します。インストール不要で、1 つの HTML ファイルをブラウザ（Chrome / Edge）で開いて使います。
+ブラウザで動く無線機のチャンネル設定ソフト [NeonPlug](https://github.com/infamy/NeonPlug)（infamy 氏）のフォークです。日本語の名前（DM-32UV。日本語化したフォントは [DM32UV-ModJaFont](https://github.com/ja2izu/DM32UV-ModJaFont) で書き込みます）と、UV-K1（[25Ja F/W](https://github.com/ja2izu/25Ja)）の漢字・かな名に対応します。インストール不要で、1 つの HTML ファイルをブラウザ（Chrome / Edge）で開いて使います。
 
 - 使い方・仕様：[README_JA.md](README_JA.md)
 - ダウンロード：[Releases](../../releases) の `neonplugja-latest.html`（単一ファイル、ネット接続なしで使えます）
@@ -19,7 +19,7 @@
 
 ## English
 
-NeonPlugJA is a fork of [NeonPlug](https://github.com/infamy/NeonPlug) (by infamy), a browser-based channel programming software for radios. It adds Japanese channel names for the DM-32UV and kanji/kana names (channels, scan lists) for the UV-K1 running the 25Ja firmware. No installation: open one HTML file in Chrome or Edge. Documentation is in Japanese ([README_JA.md](README_JA.md)); the upstream README is [README_UPSTREAM.md](README_UPSTREAM.md).
+NeonPlugJA is a fork of [NeonPlug](https://github.com/infamy/NeonPlug) (by infamy), a browser-based channel programming software for radios. It adds Japanese channel names for the DM-32UV (radios with the Japanese font from [DM32UV-ModJaFont](https://github.com/ja2izu/DM32UV-ModJaFont)) and kanji/kana names (channels, scan lists) for the UV-K1 running the [25Ja firmware](https://github.com/ja2izu/25Ja). No installation: open one HTML file in Chrome or Edge. Documentation is in Japanese ([README_JA.md](README_JA.md)); the upstream README is [README_UPSTREAM.md](README_UPSTREAM.md).
 
 **Please read before use**
 

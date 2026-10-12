@@ -10,6 +10,7 @@
  * 長さは文字数ではなくバイト数で数える（英数字 1、それ以外 2）。
  * 書けない字（絵文字など）も 2 と数えて入力欄には残し、書込前の検査で止める。
  */
+import type { ChangeEvent, CompositionEvent } from 'react';
 import { encodeNameJa } from '../radios/dm32uv/nameCodec';
 import { useJapaneseNamesStore } from '../store/japaneseNamesStore';
 import { useRadioStore } from '../store/radioStore';
@@ -46,6 +47,41 @@ export function nameByteLength(name: string): number {
   let n = 0;
   for (const ch of name) n += isAscii(ch) ? 1 : 2;
   return n;
+}
+
+/**
+ * 名前の入力欄用: IME の変換中は切り詰めず、確定したあとに fit で切り詰める。
+ *
+ * 変換中の文字（未確定のかな・変換候補）まで毎回 fit で切ると、上限の近くでは変換中の文字が
+ * 消えて、末尾の字が変換入力できない（貼り付けなら入る）。変換中の値は上限を超えてよい
+ * （書込はバイト数で切るので、途中の長い値は無線機に書かれない）。
+ * 使い方: <input value={v} {...imeFitHandlers((x) => fitNameBytes(x, 16), setV)} />
+ */
+let imeComposing = false;
+export function imeFitHandlers(
+  fit: (v: string) => string,
+  apply: (v: string) => void,
+): {
+  onChange: (e: ChangeEvent<HTMLInputElement>) => void;
+  onCompositionStart: () => void;
+  onCompositionEnd: (e: CompositionEvent<HTMLInputElement>) => void;
+} {
+  return {
+    onChange: (e) => {
+      // 入力イベント自身の isComposing があればそれを使う（確定せずに閉じても、旗が残らない）。
+      // 無いときだけ compositionstart/end の旗を使う。
+      const native = (e.nativeEvent as InputEvent).isComposing;
+      const composing = typeof native === 'boolean' ? native : imeComposing;
+      apply(composing ? e.target.value : fit(e.target.value));
+    },
+    onCompositionStart: () => {
+      imeComposing = true;
+    },
+    onCompositionEnd: (e) => {
+      imeComposing = false;
+      apply(fit(e.currentTarget.value));
+    },
+  };
 }
 
 /** maxBytes に収まるように後ろを落とす（2 バイト文字の途中では切らない） */

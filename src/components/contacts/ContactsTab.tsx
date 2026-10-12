@@ -349,7 +349,7 @@ export const ContactsTab: React.FC = () => {
       return;
     }
 
-    // 日本語名 ON: 字庫に無い字を含む連絡先があれば、何も送らずに止める
+    // 日本語名 ON: フォントに無い字を含む連絡先があれば、何も送らずに止める
     if (isJapaneseNamesActive()) {
       const unwritable = findUnwritableContactNames(contacts);
       if (unwritable.length) {

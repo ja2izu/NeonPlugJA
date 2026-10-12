@@ -21,7 +21,7 @@ import { ConfirmModal } from '../ui/ConfirmModal';
 import { BUTTON, FIELD, FIELD_INVALID } from '../ui/controlStyles';
 import { useJapaneseNamesActive } from '../../hooks/useJapaneseNamesActive';
 import { tr } from '../../utils/tr';
-import { fitNameBytes, fitUtf8NameBytes, utf8NameByteLength } from '../../utils/japaneseNames';
+import { fitNameBytes, fitUtf8NameBytes, imeFitHandlers, utf8NameByteLength } from '../../utils/japaneseNames';
 
 export const ScanListsList: React.FC = () => {
   const { caps } = useRadioCapabilities();
@@ -132,7 +132,7 @@ export const ScanListsList: React.FC = () => {
 
   const handleSaveEdit = (index: number, e?: React.MouseEvent) => {
     e?.stopPropagation();
-    const success = renameScanList(index, editScanListName);
+    const success = renameScanList(index, ja ? fitName(editScanListName) : editScanListName);
     if (success) {
       setEditingScanList(null);
       setEditScanListName('');
@@ -175,7 +175,7 @@ export const ScanListsList: React.FC = () => {
                   <input
                     type="text"
                     value={editScanListName}
-                    onChange={(e) => setEditScanListName(ja ? fitName(e.target.value) : e.target.value)}
+                    {...imeFitHandlers((v) => (ja ? fitName(v) : v), setEditScanListName)}
                     onKeyPress={(e) => {
                       if (e.key === 'Enter') {
                         handleSaveEdit(index);
@@ -286,7 +286,8 @@ export const ScanListsList: React.FC = () => {
         listSubtitle={`${scanLists.length}/${maxScanLists} scan lists`}
         addInputPlaceholder="Scan list name..."
         addInputValue={newScanListName}
-        onAddInputChange={ja ? (v: string) => setNewScanListName(fitName(v)) : setNewScanListName}
+        onAddInputChange={setNewScanListName}
+        addInputFit={ja ? fitName : undefined}
         onAdd={handleAddScanList}
         addDisabled={scanLists.length >= maxScanLists}
         addInputMaxLength={ja ? undefined : maxNameLength}
@@ -503,7 +504,7 @@ const ScanListNameField: React.FC<{ index: number; name: string; maxLength: numb
 
   const commit = () => {
     if (draft === null) return;
-    const next = draft.trim();
+    const next = (ja ? fit(draft) : draft).trim();
     if (next === name) {
       setDraft(null);
       setError(null);
@@ -529,10 +530,10 @@ const ScanListNameField: React.FC<{ index: number; name: string; maxLength: numb
         type="text"
         value={shown}
         maxLength={ja ? undefined : maxLength}
-        onChange={(e) => {
-          setDraft(ja ? fit(e.target.value) : e.target.value);
+        {...imeFitHandlers((v) => (ja ? fit(v) : v), (v) => {
+          setDraft(v);
           setError(null);
-        }}
+        })}
         onBlur={commit}
         onKeyDown={(e) => {
           if (e.key === 'Enter') e.currentTarget.blur();

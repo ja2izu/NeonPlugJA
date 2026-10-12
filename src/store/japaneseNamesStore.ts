@@ -7,7 +7,7 @@
 import { create } from 'zustand';
 
 /**
- * 日本語名スイッチ（About）。日本語化した字庫（master_1990）を焼いた DM-32 向け。
+ * 日本語名スイッチ（About）。日本語化したフォント（master_1990_v2）を焼いた DM-32 向け。
  * ON のあいだ、名前を GB2312 と供出区点で読み書きする（src/radios/dm32uv/nameCodec.ts）。
  * OFF のときは上流と同じ読み書きをする。
  * 切り替えたら、読み込み済みの名前の解釈が変わるので無線機から読み直すこと。
@@ -15,6 +15,9 @@ import { create } from 'zustand';
 interface JapaneseNamesState {
   japaneseNames: boolean;
   setJapaneseNames: (on: boolean) => void;
+  /** 接続時の判定で日本語化フォント（ModJaFont）を確認できたか。保存しない。 */
+  fontDetected: boolean;
+  setFontDetected: (on: boolean) => void;
 }
 
 const STORAGE_KEY = 'neonplug-japanese-names';
@@ -29,6 +32,8 @@ const load = (): boolean => {
 
 export const useJapaneseNamesStore = create<JapaneseNamesState>((set) => ({
   japaneseNames: load(),
+  fontDetected: false,
+  setFontDetected: (on) => set({ fontDetected: on }),
   setJapaneseNames: (on) => {
     try {
       localStorage.setItem(STORAGE_KEY, on ? 'true' : 'false');

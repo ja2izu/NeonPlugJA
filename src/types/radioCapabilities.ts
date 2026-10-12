@@ -188,7 +188,7 @@ export interface RadioCapabilities {
    */
   supportsOutOfBandFrequencies?: boolean;
   /**
-   * 日本語名スイッチ（About）がこの無線機に効く。日本語化した字庫を焼いた DM-32 向け。
+   * 日本語名スイッチ（About）がこの無線機に効く。日本語化したフォントを焼いた DM-32 向け。
    * ON のあいだ、名前を GB2312 と供出区点で読み書きする。DM-32 のみ。
    */
   supportsJapaneseNames?: boolean;

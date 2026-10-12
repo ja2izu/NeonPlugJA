@@ -21,7 +21,7 @@ import {
 import { BUTTON, FIELD } from '../ui/controlStyles';
 import { FrequencyInput } from './FrequencyInput';
 import { useJapaneseNamesActive } from '../../hooks/useJapaneseNamesActive';
-import { fitNameBytes, fitUtf8NameBytes, nameByteLength, unwritableChars, utf8NameByteLength } from '../../utils/japaneseNames';
+import { fitNameBytes, fitUtf8NameBytes, imeFitHandlers, nameByteLength, unwritableChars, utf8NameByteLength } from '../../utils/japaneseNames';
 
 import { tr, channelGroupLabel } from '../../utils/tr';  // NeonPlugJA: 日本語表示
 import { useScanListsStore } from '../../store/scanListsStore';
@@ -182,7 +182,10 @@ export const ChannelEditModal: React.FC<ChannelEditModalProps> = ({
                     <input
                       type="text"
                       value={editedChannel.name}
-                      onChange={(e) => handleChange('name', nameBytes ? fitNameBytes(e.target.value, maxNameLength) : nameUtf8 ? fitUtf8NameBytes(e.target.value, maxNameLength) : e.target.value)}
+                      {...imeFitHandlers(
+                        (v) => (nameBytes ? fitNameBytes(v, maxNameLength) : nameUtf8 ? fitUtf8NameBytes(v, maxNameLength) : v),
+                        (v) => handleChange('name', v),
+                      )}
                       className={`${FIELD} w-full border rounded px-2 py-1 text-sm`}
                       maxLength={nameBytes || nameUtf8 ? undefined : maxNameLength}
                     />

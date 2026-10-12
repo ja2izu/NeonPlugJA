@@ -15,6 +15,8 @@ interface ListDetailLayoutProps {
   addDisabled?: boolean;
   addButtonLabel?: string;
   addInputMaxLength?: number;
+  /** 日本語名: 確定後に名前を切り詰める関数（IME の変換中は切らない）。 */
+  addInputFit?: (value: string) => string;
   /** If true, right panel stretches full height (e.g. when list has flex). */
   fullHeight?: boolean;
 }
@@ -39,6 +41,7 @@ export const ListDetailLayout: React.FC<ListDetailLayoutProps> = ({
   addDisabled = false,
   addButtonLabel = 'Add',
   addInputMaxLength,
+  addInputFit,
   fullHeight = false,
 }) => {
   const showAddRow =
@@ -69,6 +72,7 @@ export const ListDetailLayout: React.FC<ListDetailLayoutProps> = ({
                 placeholder={addInputPlaceholder}
                 disabled={addDisabled}
                 maxLength={addInputMaxLength}
+                fit={addInputFit}
                 buttonLabel={addButtonLabel}
               />
             )}

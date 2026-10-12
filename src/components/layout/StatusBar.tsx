@@ -6,12 +6,14 @@ import { BUTTON } from '../ui/controlStyles';
 import { FORK_VERSION, FORK_AUTHOR } from '../../utils/forkVersion';
 import { UiLanguageSwitch } from './UiLanguageSwitch';  // NeonPlugJA: 日本語表示
 
+import { useJapaneseNamesStore } from '../../store/japaneseNamesStore';
 import { tr } from '../../utils/tr';  // NeonPlugJA: 日本語表示
 const USER_GESTURE_MESSAGE = 'Unable to read from radio, please read from a radio or load a codeplug to continue';
 
 export const StatusBar: React.FC = () => {
   const { radioInfo, connectionError, setConnectionError } = useRadioStore();
   const { caps } = useRadioCapabilities();
+  const fontDetected = useJapaneseNamesStore((s) => s.fontDetected);
   const [showFirmwareWarning, setShowFirmwareWarning] = useState(false);
   const showUserGestureInBar = connectionError?.includes('Please click the button directly') ?? false;
   const hasRealFirmware = !!(radioInfo?.firmware && radioInfo.firmware !== '-' && radioInfo.firmware.trim() !== '');
@@ -32,6 +34,7 @@ export const StatusBar: React.FC = () => {
               <div className="flex items-center space-x-2">
                 <span className="text-sm text-cool-gray">{tr("Radio:")}</span>
                 <span className="text-sm text-white font-medium">{radioInfo.model}</span>
+                {fontDetected && <span className="text-sm text-neon-cyan font-medium">ModJaFont</span>}
               </div>
               <span className="text-cool-gray">|</span>
               <div className="flex items-center space-x-2">
@@ -84,7 +87,7 @@ export const StatusBar: React.FC = () => {
         <UiLanguageSwitch />
         {/* NeonPlugJA: Web プログラム作成基準 — 右上に Ver とコールサインを常に出す */}
         <div className="text-sm text-cool-gray flex-shrink-0 whitespace-nowrap">
-          NEONPLUG
+          NeonPlugJA
           <span className="ml-3 text-white">Ver {FORK_VERSION}</span>
           <span className="ml-2 text-white">{FORK_AUTHOR}</span>
         </div>

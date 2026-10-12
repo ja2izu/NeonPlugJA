@@ -50,7 +50,7 @@ export const AboutTab: React.FC = () => {
             <span className="text-xs font-mono text-muted">NeonPlug {VERSION_LABEL} ベース</span>
           </div>
           <p className="text-cool-gray text-sm">
-            DM-32UV の日本語（GB2312・供出区点）対応フォークです。日本語化した字庫（master_1990）を焼いた
+            DM-32UV の日本語（GB2312・供出区点）対応フォークです。日本語化したフォント（master_1990_v2）を焼いた
             無線機で、チャンネル名などに日本語を使えます。About の「日本語名」で切り替えます。
           </p>
           <p className="text-xs text-muted mt-2">
@@ -441,14 +441,14 @@ export const AboutTab: React.FC = () => {
           </div>
         )}
 
-        {/* 日本語名。日本語化した字庫を焼いた DM-32 向け。shown whenever the radio supports it
+        {/* 日本語名。日本語化したフォントを焼いた DM-32 向け。shown whenever the radio supports it
             or the switch is on, so it can always be turned off. */}
         {(caps?.supportsJapaneseNames || japaneseNames) && (
           <div className="bg-deep-gray rounded-lg border-2 border-yellow-500 p-6">
             <h3 className="text-2xl font-bold text-yellow-400 mb-3">日本語名（Japanese names）</h3>
             <div className="space-y-3">
               <p className="text-base font-semibold text-yellow-300">
-                日本語化した字庫（master_1990）を焼いた無線機専用です。純正の字庫のままでは、
+                日本語化したフォント（master_1990_v2）を焼いた無線機専用です。純正のフォントのままでは、
                 GB2312 に無い字（ー 東 関 塚 など）が別の中国漢字で表示されます。
               </p>
               <p className="text-cool-gray text-sm">
@@ -503,8 +503,8 @@ export const AboutTab: React.FC = () => {
       onConfirm={() => setJapaneseNames(true)}
       title="日本語名を ON にしますか？"
       message={
-        '日本語化した字庫（master_1990）を焼いた無線機専用です。\n\n' +
-        '純正の字庫のままだと、GB2312 に無い字が別の中国漢字で表示されます。\n\n' +
+        '日本語化したフォント（master_1990_v2）を焼いた無線機専用です。\n\n' +
+        '純正のフォントのままだと、GB2312 に無い字が別の中国漢字で表示されます。\n\n' +
         'ON にしたら、無線機から読み直してください。About で OFF にするまで ON のままです。'
       }
       confirmLabel="ON にする"

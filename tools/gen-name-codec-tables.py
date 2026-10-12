@@ -8,7 +8,7 @@
 gen-name-codec-tables.py - DM32 日本語名コーデックの変換表を master から生成する
 
 使い方:
-    python3 tools/gen-name-codec-tables.py tools/data/master_1990.csv \
+    python3 tools/gen-name-codec-tables.py tools/data/master_1990_v2.csv \
         src/radios/dm32uv/nameCodecTables.ts
 
 出力先の拡張子が .py なら、同じ表を Python の形式で書き出す（連絡先の生成ツール用）。
@@ -52,7 +52,7 @@ def gb2312_char(ku, ten):
 
 def main():
     if len(sys.argv) != 3:
-        die("usage: gen-name-codec-tables.py <master_1990.csv> <out.ts>")
+        die("usage: gen-name-codec-tables.py <master_1990_v2.csv> <out.ts>")
     master_path, out_path = sys.argv[1], sys.argv[2]
 
     raw = open(master_path, "rb").read()
@@ -74,6 +74,7 @@ def main():
     seen_slot = set()
     donor_ja = []
     donor_slot = []
+    moved_slot = {}
     counts = {}
     for r in rows:
         ch, kind = r["char"], r["kind"]
@@ -99,9 +100,19 @@ def main():
                 die("donor 行の字が GB2312 にある: %r" % ch)
             donor_ja.append(ch)
             donor_slot.append((ku - 1) * TEN_MAX + (ten - 1))
+        elif kind == "moved":
+            # GB2312 にある字（かな・記号・全角英数）を、漢字域の空きの区点へ移したもの。
+            # 書くときは移した区点を使い、元の区点は読みだけに残す（古い名前を読めるように）
+            if ch not in grid.values():
+                die("moved 行の字が GB2312 に無い: %r" % ch)
+            if ku < 16:
+                die("moved 行の区点が漢字域でない: %r" % r)
+            donor_ja.append(ch)
+            donor_slot.append((ku - 1) * TEN_MAX + (ten - 1))
+            moved_slot[ch] = (ku - 1) * TEN_MAX + (ten - 1)
         else:
             die("未知の kind: %r" % kind)
-    if counts != {"native_kana": 478, "native_kanji": 3331, "donor_jisonly": 3070}:
+    if counts != {"native_kana": 146, "native_kanji": 3331, "donor_jisonly": 3070, "moved": 332}:
         die("件数が想定と違う: %r" % counts)
 
     # 別名（GBK 経由で同じ区点のバイトになる Unicode）
@@ -113,6 +124,11 @@ def main():
             aliases[g] = (ku - 1) * TEN_MAX + (ten - 1)
     if sorted(aliases) != ["\u00b7", "\u2014"]:
         die("別名が想定と違う: %r" % sorted(aliases))
+    # 別名の元の字（・ ―）が移されているときは、移した先の区点へ向ける
+    for g, slot in list(aliases.items()):
+        c0 = grid[(slot // TEN_MAX + 1, slot % TEN_MAX + 1)]
+        if c0 in moved_slot:
+            aliases[g] = moved_slot[c0]
 
     # GBK 拡張（GB2312 の区点に無い GBK の2バイト）
     gbk_rows = []

@@ -5,6 +5,8 @@ import { D890UVProtocol } from '../radios/d890uv/protocol';
 import { DM32UVProtocol } from '../radios/dm32uv/protocol';
 import { UVK1Protocol } from '../radios/uvk1/protocol';
 import { useBootTextStore } from '../store/bootTextStore';
+import { useJapaneseNamesStore } from '../store/japaneseNamesStore';
+import { isJaUi } from '../store/uiLanguageStore';
 import { listNamesFromScanLists, mergeRadioListNames } from '../radios/uvk1/scanListNames';
 import { BaseDigitalProtocol } from '../radios/shared/BaseProtocols';
 import type { OptionalDigitalReads } from '../radios/optionalReads';
@@ -282,6 +284,19 @@ export function useRadioConnection() {
       const digital = proto instanceof BaseDigitalProtocol
         ? (proto as BaseDigitalProtocol & Partial<OptionalDigitalReads>)
         : null;
+
+      // 日本語名の自動判定: 表示が日本語のときだけ、無線機のフォントを 1 ブロック読んで、
+      // 日本語化フォント（master_1990_v2）が入っていれば日本語名を ON にする。
+      // 名前は、このあとの読み込みの中で解釈されるので、ここで決めておく。
+      // 見つからなくても OFF にはしない（手動の設定のまま）。
+      useJapaneseNamesStore.getState().setFontDetected(false);
+      if (dm32 && caps?.supportsJapaneseNames && isJaUi()) {
+        onProgress?.(14, 'Checking the radio font...', steps[3]);
+        if (await dm32.probeJapaneseFont()) {
+          useJapaneseNamesStore.getState().setFontDetected(true);
+          useJapaneseNamesStore.getState().setJapaneseNames(true);
+        }
+      }
 
       if (caps?.supportsBulkRead && dm32) {
         onProgress?.(15, 'Reading all memory blocks...', steps[3]);

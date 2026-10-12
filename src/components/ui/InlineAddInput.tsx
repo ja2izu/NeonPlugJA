@@ -1,6 +1,7 @@
 import React from 'react';
 import { Button } from './Button';
 import { FIELD } from './controlStyles';
+import { imeFitHandlers } from '../../utils/japaneseNames';
 
 interface InlineAddInputProps {
   value: string;
@@ -9,6 +10,8 @@ interface InlineAddInputProps {
   placeholder: string;
   disabled?: boolean;
   maxLength?: number;
+  /** 指定すると、IME の変換中は切らず、確定後に fit で切り詰める（日本語名用）。 */
+  fit?: (value: string) => string;
   buttonLabel?: string;
   inputClassName?: string;
 }
@@ -23,6 +26,7 @@ export const InlineAddInput: React.FC<InlineAddInputProps> = ({
   placeholder,
   disabled = false,
   maxLength,
+  fit,
   buttonLabel = 'Add',
   inputClassName = '',
 }) => {
@@ -35,7 +39,7 @@ export const InlineAddInput: React.FC<InlineAddInputProps> = ({
       <input
         type="text"
         value={value}
-        onChange={(e) => onChange(e.target.value)}
+        {...(fit ? imeFitHandlers(fit, onChange) : { onChange: (e: React.ChangeEvent<HTMLInputElement>) => onChange(e.target.value) })}
         onKeyPress={handleKeyPress}
         placeholder={placeholder}
         className={`${INPUT_CLASS} ${inputClassName}`.trim()}

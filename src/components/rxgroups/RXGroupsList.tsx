@@ -16,7 +16,7 @@ import { EmptyState } from '../ui/EmptyState';
 import { ConfirmModal } from '../ui/ConfirmModal';
 import { BUTTON, FIELD } from '../ui/controlStyles';
 import { useJapaneseNamesActive } from '../../hooks/useJapaneseNamesActive';
-import { fitNameBytes, JA_NAME_BYTES } from '../../utils/japaneseNames';
+import { fitNameBytes, imeFitHandlers, JA_NAME_BYTES } from '../../utils/japaneseNames';
 
 /** 日本語名 ON: 10 バイト（書きと同じ）。OFF: 上流どおり 11 文字 */
 const fitRxName = (v: string, ja: boolean) => (ja ? fitNameBytes(v, JA_NAME_BYTES.rxGroup) : v.slice(0, 11));
@@ -82,7 +82,7 @@ export const RXGroupsList: React.FC = () => {
                 <input
                   type="text"
                   value={editingNameValue}
-                  onChange={(e) => setEditingNameValue(fitRxName(e.target.value, ja))}
+                  {...imeFitHandlers((v) => fitRxName(v, ja), setEditingNameValue)}
                   onBlur={() => {
                     if (editingNameValue.trim()) {
                       updateGroup(group.index, { name: fitRxName(editingNameValue.trim(), ja) });
@@ -152,7 +152,7 @@ export const RXGroupsList: React.FC = () => {
               <input
                 type="text"
                 value={editingNameValue}
-                onChange={(e) => setEditingNameValue(fitRxName(e.target.value, ja))}
+                {...imeFitHandlers((v) => fitRxName(v, ja), setEditingNameValue)}
                 onBlur={() => {
                   if (editingNameValue.trim()) {
                     updateGroup(selectedGroupData.index, { name: fitRxName(editingNameValue.trim(), ja) });
@@ -305,7 +305,7 @@ const RXGroupEditor: React.FC<RXGroupEditorProps> = ({ group, onAlert }) => {
         <input
           type="text"
           value={group.name}
-          onChange={(e) => updateGroup(group.index, { name: fitRxName(e.target.value, ja) })}
+          {...imeFitHandlers((v) => fitRxName(v, ja), (v) => updateGroup(group.index, { name: v }))}
           maxLength={ja ? undefined : 11}
           className={`${FIELD} flex-1 border rounded px-3 py-2 text-sm`}
           placeholder="Enter group name"

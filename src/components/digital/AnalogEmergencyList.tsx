@@ -9,7 +9,7 @@ import { ConfirmModal } from '../ui/ConfirmModal';
 import { LIMITS } from '../../radios/dm32uv/constants';
 import { BUTTON, FIELD } from '../ui/controlStyles';
 import { useJapaneseNamesActive } from '../../hooks/useJapaneseNamesActive';
-import { fitNameBytes, JA_NAME_BYTES } from '../../utils/japaneseNames';
+import { fitNameBytes, imeFitHandlers, JA_NAME_BYTES } from '../../utils/japaneseNames';
 
 const ALARM_TYPES = ['None', 'Only Whistle', 'Normal', 'Secret', 'Secret With Voice'];
 const ALARM_MODES = ['Emergency Alarm', 'Alarm Call'];
@@ -119,7 +119,7 @@ export const AnalogEmergencyList: React.FC = () => {
                           <input
                             type="text"
                             value={system.name}
-                            onChange={(e) => updateSystem(i, { name: ja ? fitNameBytes(e.target.value, JA_NAME_BYTES.analogEmergency) : e.target.value.slice(0, 16) })}
+                            {...imeFitHandlers((v) => (ja ? fitNameBytes(v, JA_NAME_BYTES.analogEmergency) : v.slice(0, 16)), (v) => updateSystem(i, { name: v }))}
                             maxLength={ja ? undefined : 16}
                             className={`${FIELD} border rounded px-2 py-1 w-full text-xs`}
                           />
